@@ -13,7 +13,7 @@ El sistema se ejecuta de manera distribuida en múltiples instancias dentro de A
 
 | Microservicio | Puerto / Ubicación | DB Name | Funcionalidad | Link de Repositorio |
 | :--- | :--- | :--- | :--- | :--- |
-| **Usuario** | Puerto | *N/A* |base de datos  | Funcionalidad | lINK DE REPO | 
+| **Usuario** | HIHI | UsuarioDB | CRUD de usuario. | LINK | 
 
 
   
