@@ -5,8 +5,6 @@ proyecto de agendamiento de citas para nicollet estudio de belleza
 * **Felipe Acuña**
 * **Felipe Gallegos**
 
---
-
 ## Descripción del Dominio
 **Agendamiento de citas** es un proyecto que permite agendar bla bla bla bla
 ## Estado del Sistema y Listado de Microservicios
