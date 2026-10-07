@@ -174,3 +174,84 @@ Resultado esperado:
 [INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
+
+---
+
+## 🌿 Flujo de Trabajo con Git y GitHub (Ramas, Push y Pull)
+
+Para mantener el orden y la estabilidad del proyecto en las ramas `main` y `Test`, utiliza la siguiente guía de comandos:
+
+### 1. Sincronizar tu repositorio local (Git Pull)
+Antes de crear una nueva rama o comenzar a trabajar, asegúrate de tener siempre la versión más reciente del repositorio remoto:
+
+```bash
+# 1. Cambiar a la rama base (main o Test)
+git checkout main
+
+# 2. Descargar y combinar los últimos cambios de GitHub
+git pull origin main
+```
+
+---
+
+### 2. Crear y cambiarte a una nueva rama
+Cada nueva funcionalidad o arreglo debe desarrollarse en su propia rama aislada (ej: `feature/nombre-tarea` o `fix/descripcion`):
+
+```bash
+# Crear la rama y posicionarte en ella automáticamente:
+git checkout -b feature/nueva-funcionalidad
+```
+
+Para ver la lista de todas las ramas locales y saber en cuál te encuentras:
+```bash
+git branch
+```
+
+---
+
+### 3. Guardar cambios y subirlos a GitHub (Git Push)
+Cuando termines de realizar y probar tus cambios en el código:
+
+```bash
+# 1. Verificar los archivos modificados
+git status
+
+# 2. Preparar todos los cambios para el commit
+git add .
+
+# 3. Guardar los cambios con un mensaje descriptivo
+git commit -m "feat: descripción de los cambios realizados"
+
+# 4. Subir la rama a GitHub por primera vez (configura el rastreo remoto)
+git push -u origin feature/nueva-funcionalidad
+```
+
+> **Tip**: En los commits posteriores dentro de esa misma rama, solo necesitarás escribir:
+> ```bash
+> git push
+> ```
+
+---
+
+### 4. Integrar los cambios a `main` (Pull Request)
+1. Ingresa al repositorio en GitHub: [https://github.com/Felipex360x/Agendamiento-Cita-Main](https://github.com/Felipex360x/Agendamiento-Cita-Main).
+2. Verás un aviso con el botón verde **Compare & pull request**. Haz clic en él.
+3. Revisa los cambios y presiona **Create pull request**.
+4. Haz clic en **Merge pull request** y confirma la fusión.
+
+---
+
+### 5. Limpieza y eliminación de ramas terminadas
+Una vez que tu rama fue aprobada y fusionada en `main`, elimínala para mantener el repositorio limpio:
+
+```bash
+# 1. Vuelve a la rama principal y actualízala
+git checkout main
+git pull origin main
+
+# 2. Eliminar la rama en tu equipo local
+git branch -d feature/nueva-funcionalidad
+
+# 3. Eliminar la rama en GitHub remoto
+git push origin --delete feature/nueva-funcionalidad
+```
