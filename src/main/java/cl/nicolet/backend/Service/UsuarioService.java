@@ -10,8 +10,11 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cl.nicolet.backend.Model.TipoUsuario;
 import cl.nicolet.backend.Model.Usuario;
+import cl.nicolet.backend.Repository.TipoUsuarioRepository;
 import cl.nicolet.backend.Repository.UsuarioRepository;
+import cl.nicolet.backend.DTO.TipoUsuarioDTO;
 import cl.nicolet.backend.DTO.UsuarioCreateDTO;
 import cl.nicolet.backend.DTO.UsuarioDTO;
 import cl.nicolet.backend.Exception.RecursoNoEncontradoException;
@@ -23,6 +26,9 @@ public class UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired(required = false)
+    private TipoUsuarioRepository tipoUsuarioRepository;
 
     public List<UsuarioDTO> findAll(){
         Log.info("Consultando a todos los usuarios");
@@ -43,6 +49,13 @@ public class UsuarioService {
         u.setApellidoP(dto.getApellidoP());
         u.setCorreo(dto.getCorreo());
         u.setPassword(dto.getPassword());
+
+        if (dto.getTipoUsuarioId() != null && tipoUsuarioRepository != null) {
+            TipoUsuario tipo = tipoUsuarioRepository.findById(dto.getTipoUsuarioId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Tipo de usuario no encontrado: " + dto.getTipoUsuarioId()));
+            u.setTipoUsuario(tipo);
+        }
+
         Usuario guardar = usuarioRepository.save(u);
         Log.info("usuario creado id={}", guardar.getId());
         return toDTO(guardar);
@@ -55,6 +68,13 @@ public class UsuarioService {
         u.setApellidoP(dto.getApellidoP());
         u.setCorreo(dto.getCorreo());
         u.setPassword(dto.getPassword());
+
+        if (dto.getTipoUsuarioId() != null && tipoUsuarioRepository != null) {
+            TipoUsuario tipo = tipoUsuarioRepository.findById(dto.getTipoUsuarioId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Tipo de usuario no encontrado: " + dto.getTipoUsuarioId()));
+            u.setTipoUsuario(tipo);
+        }
+
         return toDTO(usuarioRepository.save(u));
     }
 
@@ -68,12 +88,21 @@ public class UsuarioService {
     }
 
     private UsuarioDTO toDTO(Usuario u) {
+        TipoUsuarioDTO tipoDTO = null;
+        if (u.getTipoUsuario() != null) {
+            tipoDTO = new TipoUsuarioDTO(
+                u.getTipoUsuario().getId(),
+                u.getTipoUsuario().getNombre(),
+                u.getTipoUsuario().getDescripcion()
+            );
+        }
         return new UsuarioDTO(
             u.getId(),
             u.getNombre(),
             u.getApellidoP(),
             u.getCorreo(),
-            u.getPassword()
+            u.getPassword(),
+            tipoDTO
         );
     }
 
