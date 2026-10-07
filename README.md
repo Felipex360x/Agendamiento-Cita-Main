@@ -34,6 +34,8 @@ Agendamiento-Cita-Main/
 │   └── README.md                # Guía de uso del frontend
 ├── docker-compose.yml            # Orquestación de MySQL 8.0 y phpMyAdmin
 ├── Dockerfile                    # Empaquetado del microservicio Backend
+├── start.ps1                     # Script de inicio seguro en PowerShell (libera puerto 8080)
+├── start.cmd                     # Script de inicio seguro en CMD (libera puerto 8080)
 ├── mvnw / mvnw.cmd               # Wrapper de Maven (no requiere instalar Maven)
 ├── pom.xml                       # Dependencias y build del proyecto
 └── README.md                     # Guía principal de instalación y ejecución
@@ -116,54 +118,86 @@ Get-Content "db\init.sql" | mysql -u root
 
 ### Paso 3: Iniciar el Backend
 
-No necesitas tener Maven instalado; el proyecto incluye su propio envoltorio ejecutable (`mvnw`).
+Existen dos alternativas para iniciar el servidor:
 
-- **En Windows (PowerShell o CMD)**:
+#### Opcion A (Recomendada): Inicio Seguro con Auto-liberacion de Puerto
+Los scripts de inicio seguro revisan si el puerto 8080 esta ocupado por un proceso previo de Java, lo liberan y arrancan la aplicacion:
+
+- En Windows PowerShell:
+  ```powershell
+  .\start.ps1
+  ```
+
+- En Windows CMD:
+  ```cmd
+  start.cmd
+  ```
+
+#### Opcion B: Inicio Estandar con Maven Wrapper
+No necesitas tener Maven instalado; el proyecto incluye su propio envoltorio ejecutable (mvnw):
+
+- En Windows (PowerShell o CMD):
   ```powershell
   .\mvnw.cmd spring-boot:run
   ```
 
-- **En Linux o macOS**:
+- En Linux o macOS:
   ```bash
   ./mvnw spring-boot:run
   ```
 
-El servidor iniciará en el puerto **`8080`**.
+El servidor iniciara en el puerto 8080.
+
+#### Liberacion Manual del Puerto 8080
+Si alguna vez un proceso anterior queda colgado reteniendo el puerto 8080, puedes liberarlo directamente en PowerShell:
+```powershell
+Stop-Process -Id (Get-NetTCPConnection -LocalPort 8080).OwningProcess -Force
+```
 
 ---
 
 ### Paso 4: Abrir la Interfaz Visual (Frontend)
 
-Ve a la carpeta [`front/pantallas/`](front/pantallas/) y haz **doble clic en `index.html`** para abrirlo en tu navegador favorito (Chrome, Edge, Brave, Firefox).
+Ve a la carpeta [`front/pantallas/`](front/pantallas/) y haz doble clic en `index.html` para abrirlo en tu navegador (Chrome, Edge, Brave, Firefox).
 
-- La interfaz detectará automáticamente el Backend encendido (indicador verde).
-- Podrás ver el listado de usuarios cargados desde MySQL.
-- Podrás registrar nuevos usuarios y eliminarlos en tiempo real.
+- La interfaz detectara automaticamente el Backend encendido.
+- Podras ver el listado de usuarios cargados desde MySQL con sus respectivos roles.
+- Podras buscar usuarios por ID, registrarlos, editarlos y eliminarlos en tiempo real (soporte completo GET, POST, PUT, DELETE).
 
 ---
 
-## Documentación Interactiva de la API (Swagger UI)
+## Documentacion Interactiva de la API (Swagger UI)
 
 Con el backend iniciado, puedes probar y consultar todos los endpoints REST directamente desde el explorador:
 
- **[http://localhost:8080/doc/swagger-ui.html](http://localhost:8080/doc/swagger-ui.html)**
+[http://localhost:8080/doc/swagger-ui.html](http://localhost:8080/doc/swagger-ui.html)
 
 ### Endpoints Principales:
 
-| Método | Endpoint | Descripción |
+#### Usuarios:
+| Metodo | Endpoint | Descripcion |
 |---|---|---|
-| `GET` | `/api/v2/nicolet/usuarios` | Lista todos los usuarios registrados |
-| `GET` | `/api/v2/nicolet/usuarios/{id}` | Busca un usuario por su ID único |
-| `POST` | `/api/v2/nicolet/usuarios` | Registra un nuevo usuario |
-| `PUT` | `/api/v2/nicolet/usuarios/{id}` | Actualiza datos de un usuario existente |
-| `DELETE` | `/api/v2/nicolet/usuarios/{id}` | Elimina un usuario por su ID |
-| `POST` | `/api/v2/nicolet/usuarios/manual` | Validación manual de existencia de correo |
+| GET | /api/v2/nicolet/usuarios | Lista todos los usuarios registrados |
+| GET | /api/v2/nicolet/usuarios/{id} | Busca un usuario por su ID unico |
+| POST | /api/v2/nicolet/usuarios | Registra un nuevo usuario |
+| PUT | /api/v2/nicolet/usuarios/{id} | Actualiza datos de un usuario existente |
+| DELETE | /api/v2/nicolet/usuarios/{id} | Elimina un usuario por su ID |
+| POST | /api/v2/nicolet/usuarios/manual | Validacion manual de existencia de correo |
+
+#### Tipos de Usuario (Roles):
+| Metodo | Endpoint | Descripcion |
+|---|---|---|
+| GET | /api/v2/nicolet/tipos-usuario | Lista todos los tipos de usuario |
+| GET | /api/v2/nicolet/tipos-usuario/{id} | Busca un tipo de usuario por su ID unico |
+| POST | /api/v2/nicolet/tipos-usuario | Registra un nuevo tipo de usuario |
+| PUT | /api/v2/nicolet/tipos-usuario/{id} | Actualiza un tipo de usuario existente |
+| DELETE | /api/v2/nicolet/tipos-usuario/{id} | Elimina un tipo de usuario por su ID |
 
 ---
 
-## Ejecución de Pruebas Automatizadas
+## Ejecucion de Pruebas Automatizadas
 
-El proyecto cuenta con una suite completa de pruebas unitarias y de integración (JPA, Servicios, Modelos y Contexto Spring Boot):
+El proyecto cuenta con una suite completa de pruebas unitarias y de integracion (JPA, Servicios, Modelos y Contexto Spring Boot):
 
 ```powershell
 .\mvnw.cmd test
@@ -171,7 +205,7 @@ El proyecto cuenta con una suite completa de pruebas unitarias y de integración
 
 Resultado esperado:
 ```text
-[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 25, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
