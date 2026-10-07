@@ -142,7 +142,7 @@ Ve a la carpeta [`front/pantallas/`](front/pantallas/) y haz **doble clic en `in
 
 ---
 
-## 📖 Documentación Interactiva de la API (Swagger UI)
+## Documentación Interactiva de la API (Swagger UI)
 
 Con el backend iniciado, puedes probar y consultar todos los endpoints REST directamente desde el explorador:
 
@@ -161,7 +161,7 @@ Con el backend iniciado, puedes probar y consultar todos los endpoints REST dire
 
 ---
 
-## 🧪 Ejecución de Pruebas Automatizadas
+## Ejecución de Pruebas Automatizadas
 
 El proyecto cuenta con una suite completa de pruebas unitarias y de integración (JPA, Servicios, Modelos y Contexto Spring Boot):
 
