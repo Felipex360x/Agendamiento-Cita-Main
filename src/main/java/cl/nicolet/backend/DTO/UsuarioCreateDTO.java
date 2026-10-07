@@ -27,4 +27,15 @@ public class UsuarioCreateDTO {
     @NotBlank(message = "la contraseña no puede estar vacia")
     private String password;
 
+    @Schema(description = "ID del tipo de usuario asignado", example = "1")
+    private Long tipoUsuarioId;
+
+    public UsuarioCreateDTO(String nombre, String apellidoP, String correo, String password) {
+        this.nombre = nombre;
+        this.apellidoP = apellidoP;
+        this.correo = correo;
+        this.password = password;
+        this.tipoUsuarioId = null;
+    }
+
 }

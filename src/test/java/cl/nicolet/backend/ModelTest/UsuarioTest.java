@@ -76,4 +76,15 @@ class UsuarioTest {
         assertNotNull(texto);
         assertTrue(texto.contains("Martina"));
     }
+
+    @Test
+    @DisplayName("TipoUsuario - debe permitir asignar y obtener el tipo de usuario asociado")
+    void debePermitirAsignarYObtenerTipoUsuario() {
+        cl.nicolet.backend.Model.TipoUsuario tipo = new cl.nicolet.backend.Model.TipoUsuario(1L, "ADMINISTRADOR", "Rol admin");
+        Usuario usuario = new Usuario();
+        usuario.setTipoUsuario(tipo);
+
+        assertNotNull(usuario.getTipoUsuario());
+        assertEquals("ADMINISTRADOR", usuario.getTipoUsuario().getNombre());
+    }
 }
