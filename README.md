@@ -177,7 +177,7 @@ Resultado esperado:
 
 ---
 
-##  Flujo de Trabajo con Git y GitHub (Ramas, Push y Pull)
+## 🌿 Flujo de Trabajo con Git y GitHub (Ramas, Push y Pull)
 
 Para mantener el orden y la estabilidad del proyecto en las ramas `main` y `Test`, utiliza la siguiente guía de comandos:
 
