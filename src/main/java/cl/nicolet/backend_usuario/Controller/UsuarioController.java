@@ -129,7 +129,7 @@ public class UsuarioController {
         if(!errores.isEmpty()){
             return new ResponseEntity<>(errores, HttpStatus.BAD_REQUEST);
         }
-        UsuarioDTO nuevoAuto = usuarioService.crear(dto);
-        return new ResponseEntity<>(nuevoAuto,HttpStatus.CREATED);
+        UsuarioDTO nuevoUsuario = usuarioService.crear(dto);
+        return new ResponseEntity<>(nuevoUsuario,HttpStatus.CREATED);
     }
 }

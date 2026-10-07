@@ -32,14 +32,14 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
 
     public List<UsuarioDTO> findAll(){
-        Log.info("Consultadondo a todos los usuarios");
+        Log.info("Consultando a todos los usuarios");
         return usuarioRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     public UsuarioDTO findById(Long id){
         Log.info("Buscando Usuario id={}",id);
-        Usuario u = usuarioRepository.findById(id).orElseThrow(()-> new RecursoNoEncontradoException("Usuario no encontrado:"+id));
-        Log.info("Usuario encotrado: username={},correo={}", u.getCorreo(),u.getNombre());
+        Usuario u = usuarioRepository.findById(id).orElseThrow(()-> new RecursoNoEncontradoException("Usuario no encontrado: "+id));
+        Log.info("Usuario encontrado: nombre={}, correo={}", u.getNombre(), u.getCorreo());
         return toDTO(u);
     }
     public UsuarioDTO crear(UsuarioCreateDTO dto){
@@ -50,13 +50,13 @@ public class UsuarioService {
         u.setCorreo(dto.getCorreo());
         u.setPassword(dto.getPassword());
         Usuario guardar = usuarioRepository.save(u);
-        Log.info("uusario creado id={}",guardar.getId());
+        Log.info("usuario creado id={}",guardar.getId());
         return toDTO(guardar);
     }
 
     public UsuarioDTO actualizar(Long id,UsuarioCreateDTO dto){
-        Log.info("actualizando usuari id ={}",id);
-        Usuario u = usuarioRepository.findById(id) .orElseThrow(()-> new RecursoNoEncontradoException("Usuaro no encotrado:" +id));
+        Log.info("actualizando usuario id={}",id);
+        Usuario u = usuarioRepository.findById(id) .orElseThrow(()-> new RecursoNoEncontradoException("Usuario no encontrado: " +id));
         u.setNombre(dto.getNombre());
         u.setApellidoP(dto.getApellidoP());
         u.setCorreo(dto.getCorreo());
