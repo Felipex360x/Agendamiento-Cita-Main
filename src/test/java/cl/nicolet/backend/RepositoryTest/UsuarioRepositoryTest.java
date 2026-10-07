@@ -1,4 +1,4 @@
-package cl.nicolet.backend_usuario.RepositoryTest;
+package cl.nicolet.backend.RepositoryTest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import cl.nicolet.backend_usuario.Model.Usuario;
-import cl.nicolet.backend_usuario.Repository.UsuarioRepository;
+import cl.nicolet.backend.Model.Usuario;
+import cl.nicolet.backend.Repository.UsuarioRepository;
 
 @DataJpaTest
 class UsuarioRepositoryTest {

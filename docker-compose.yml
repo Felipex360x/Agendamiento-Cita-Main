@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Servidor de Base de Datos MySQL
   mysql_usuario:
     image: mysql:8.0
     container_name: mysql_usuario
@@ -13,7 +14,32 @@ services:
     ports:
       - "3306:3306"
     volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
       - mysql_data:/var/lib/mysql
+    networks:
+      - red_agendamiento
+
+  # Panel de administración visual phpMyAdmin (Opcional - acceso en http://localhost:8081)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin_usuario
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql_usuario
+      PMA_PORT: 3306
+      PMA_USER: desarrollador
+      PMA_PASSWORD: password_seguro_123
+    depends_on:
+      - mysql_usuario
+    networks:
+      - red_agendamiento
 
 volumes:
   mysql_data:
+    driver: local
+
+networks:
+  red_agendamiento:
+    driver: bridge

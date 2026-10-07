@@ -1,4 +1,4 @@
-package cl.nicolet.backend_usuario.Exception;
+package cl.nicolet.backend.Exception;
 
 public class ServicioNoDisponibleException extends RuntimeException {
     public ServicioNoDisponibleException(String mensaje) {

@@ -1,4 +1,4 @@
-package cl.nicolet.backend_usuario.ModelTest;
+package cl.nicolet.backend.ModelTest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import cl.nicolet.backend_usuario.Model.Usuario;
+import cl.nicolet.backend.Model.Usuario;
 
 class UsuarioTest {
 

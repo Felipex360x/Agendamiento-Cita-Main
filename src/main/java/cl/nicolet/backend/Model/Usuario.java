@@ -1,14 +1,12 @@
-package cl.nicolet.backend_usuario.Model;
+package cl.nicolet.backend.Model;
 
-
-import  jakarta.persistence.Id;
+import jakarta.persistence.Id;
 import jakarta.persistence.Entity;
-import  jakarta.persistence.GeneratedValue;
-import  jakarta.persistence.GenerationType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 @Data 
 @Entity 
@@ -17,11 +15,9 @@ import lombok.NoArgsConstructor;
 public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private  Long id;
-    /*apellido paterno */
+    private Long id;
     private String nombre;
     private String apellidoP;
-    /*nombre de usuario */
     private String correo;
     private String password;
 }

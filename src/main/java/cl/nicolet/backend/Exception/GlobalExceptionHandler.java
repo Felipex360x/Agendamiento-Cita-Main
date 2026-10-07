@@ -1,4 +1,4 @@
-package cl.nicolet.backend_usuario.Exception;
+package cl.nicolet.backend.Exception;
 
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 import org.springframework.http.*;
-/*validaciones automaticas */
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

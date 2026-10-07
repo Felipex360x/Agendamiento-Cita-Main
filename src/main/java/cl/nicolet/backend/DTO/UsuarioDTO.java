@@ -1,4 +1,4 @@
-package cl.nicolet.backend_usuario.DTO;
+package cl.nicolet.backend.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,18 +9,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UsuarioDTO {
 
-private Long id;
-
-/*apellido paterno */
-
-private String nombre;
-
-private String apellidoP;
-
-/*nombre de usuario */
-
-private String correo;
-
-private String password;
+    private Long id;
+    private String nombre;
+    private String apellidoP;
+    private String correo;
+    private String password;
 
 }

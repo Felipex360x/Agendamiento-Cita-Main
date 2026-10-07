@@ -1,13 +1,13 @@
-package cl.nicolet.backend_usuario;
+package cl.nicolet.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class BackendUsuarioApplication {
+public class BackendApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BackendUsuarioApplication.class, args);
+		SpringApplication.run(BackendApplication.class, args);
 	}
 
 }
