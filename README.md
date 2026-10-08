@@ -4,32 +4,34 @@ Sistema integral de gestión y agendamiento de citas para **Nicolet Estudio**, d
 
 ---
 
-##  Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```text
 Agendamiento-Cita-Main/
 ├── src/                          # Backend: Código fuente Java Spring Boot
 │   ├── main/java/cl/nicolet/backend/
-│   │   ├── config/              # Configuraciones (Swagger / OpenAPI)
-│   │   ├── controller/          # Controladores REST API
-│   │   ├── dto/                 # Objetos de Transferencia de Datos
+│   │   ├── config/              # Configuraciones (Swagger / OpenAPI, DataInitializer)
+│   │   ├── controller/          # Controladores REST API (Usuarios, Citas, Servicios, etc.)
+│   │   ├── dto/                 # Objetos de Transferencia de Datos (DTOs)
 │   │   ├── exception/           # Manejador global de excepciones
-│   │   ├── model/               # Entidades JPA (Usuario, etc.)
+│   │   ├── model/               # Entidades JPA (Usuario, Cliente, Trabajador, Cita, etc.)
 │   │   ├── repository/          # Repositorios Spring Data JPA
-│   │   ├── service/             # Lógica de negocio
+│   │   ├── service/             # Lógica de negocio (Agendamiento, Antisolapamiento, etc.)
 │   │   └── BackendApplication.java
 │   └── main/resources/
-│       ├── application.properties      # Configuración de base de datos MySQL
-│       └── application-dev.properties  # Perfil de desarrollo alternativo
+│       ├── application.properties      # Configuración de base de datos MySQL (MySQLDialect)
+│       └── application-dev.properties  # Perfil de desarrollo alternativo (H2)
 ├── db/                           # Base de Datos
-│   ├── init.sql                 # Script de creación de tablas y datos semilla
-│   └── README.md                # Documentación de la base de datos
+│   ├── init.sql                 # Script de creación de 8 tablas y datos semilla
+│   └── README.md                # Documentación detallada de la base de datos
 ├── front/                        # Frontend Web (HTML / CSS / JS)
-│   ├── index.html               # Pantalla web principal
+│   ├── index.html               # Pantalla de gestión de usuarios
+│   ├── citas.html               # Pantalla interactiva de agendamiento de citas
 │   ├── css/
-│   │   └── index.css            # Estilos visuales
+│   │   └── index.css            # Estilos visuales compartidos
 │   ├── js/
-│   │   └── index.js             # Lógica e integración REST
+│   │   ├── index.js             # Lógica e integración REST de usuarios
+│   │   └── citas.js             # Lógica e integración REST de citas y modales rápidos
 │   └── README.md                # Guía de uso del frontend
 ├── docker-compose.yml            # Orquestación de MySQL 8.0 y phpMyAdmin
 ├── Dockerfile                    # Empaquetado del microservicio Backend
@@ -42,7 +44,7 @@ Agendamiento-Cita-Main/
 
 ---
 
-## Requisitos Previos y Dependencias a Instalar
+## 🛠️ Requisitos Previos y Dependencias
 
 Para ejecutar este proyecto en cualquier computadora, se necesitan los siguientes componentes:
 
@@ -52,7 +54,6 @@ Para ejecutar este proyecto en cualquier computadora, se necesitan los siguiente
   ```powershell
   winget install --id EclipseAdoptium.Temurin.17.JDK -e --accept-source-agreements --accept-package-agreements
   ```
-- **Descarga manual**: [https://adoptium.net/temurin/releases/?version=17](https://adoptium.net/temurin/releases/?version=17)
 - **Verificación**:
   ```bash
   java -version
@@ -61,25 +62,24 @@ Para ejecutar este proyecto en cualquier computadora, se necesitan los siguiente
 ---
 
 ### 2. Motor de Base de Datos (MySQL o Docker)
-Elige **entre la a o b ** de las siguientes dos alternativas:
+Elige una de las siguientes alternativas:
 
 #### Opción A: Usando Docker Desktop (Recomendada)
 - Instala Docker Desktop si no lo tienes: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
 
-#### Opción B: MySQL Server o MariaDB Local (Nativo)
+#### Opción B: MySQL Server Local (Nativo)
 - **Instalación rápida en Windows (PowerShell)**:
   ```powershell
-  winget install --id MariaDB.Server -e --accept-source-agreements --accept-package-agreements
+  winget install --id Oracle.MySQL -e --accept-source-agreements --accept-package-agreements
   ```
-- **Descarga MySQL**: [https://dev.mysql.com/downloads/installer/](https://dev.mysql.com/downloads/installer/)
 
 ---
 
-##  Guía Paso a Paso para Ejecutar el Proyecto
+## 🚀 Guía Paso a Paso para Ejecutar el Proyecto
 
-### Paso 1: Clonar o Descargar el Repositorio
+### Paso 1: Clonar el Repositorio
 ```bash
-git clone <URL de nuestro repositorio >
+git clone https://github.com/Felipex360x/Agendamiento-Cita-Main.git
 cd Agendamiento-Cita-Main
 ```
 
@@ -94,109 +94,93 @@ docker compose up -d
 ```
 Esto creará automáticamente:
 - El contenedor **`mysql_usuario`** en el puerto `3306`.
-- La base de datos `universidad_backend` con las tablas y datos iniciales de [`db/init.sql`](db/init.sql).
-- Un panel visual **phpMyAdmin** en [http://localhost:8081](http://localhost:8081).
-
-#### Si usas MySQL / MariaDB local instalado en Windows:
-Asegúrate de que el servicio esté iniciado e importa el script inicial:
-```powershell
-# En Windows PowerShell con MariaDB/MySQL:
-Get-Content "db\init.sql" | mysql -u root
-```
-
-#### Credenciales Configuradas:
-| Parámetro | Valor |
-|---|---|
-| **Host** | `localhost` |
-| **Puerto** | `3306` |
-| **Base de Datos** | `universidad_backend` |
-| **Usuario** | `desarrollador` |
-| **Contraseña** | `password_seguro_123` |
+- La base de datos `universidad_backend` con las 8 tablas de [`db/init.sql`](db/init.sql).
+- Panel **phpMyAdmin** en [http://localhost:8081](http://localhost:8081) (`desarrollador` / `password_seguro_123`).
 
 ---
 
-### Paso 3: Iniciar el Backend
+### Paso 3: Iniciar el Backend (Spring Boot)
 
-Existen dos alternativas para iniciar el servidor:
-
-#### Opcion A (Recomendada): Inicio Seguro con Auto-liberacion de Puerto
-Los scripts de inicio seguro revisan si el puerto 8080 esta ocupado por un proceso previo de Java, lo liberan y arrancan la aplicacion:
-
+#### Opción Recomendada (Inicio Seguro con auto-liberación de puerto 8080):
 - En Windows PowerShell:
   ```powershell
   .\start.ps1
   ```
-
 - En Windows CMD:
   ```cmd
   start.cmd
   ```
 
-#### Opcion B: Inicio Estandar con Maven Wrapper
-No necesitas tener Maven instalado; el proyecto incluye su propio envoltorio ejecutable (mvnw):
-
-- En Windows (PowerShell o CMD):
+#### Opción Estándar con Maven Wrapper:
+- En Windows:
   ```powershell
   .\mvnw.cmd spring-boot:run
   ```
-
 - En Linux o macOS:
   ```bash
   ./mvnw spring-boot:run
   ```
 
-El servidor iniciara en el puerto 8080.
-
-#### Liberacion Manual del Puerto 8080
-Si alguna vez un proceso anterior queda colgado reteniendo el puerto 8080, puedes liberarlo directamente en PowerShell:
-```powershell
-Stop-Process -Id (Get-NetTCPConnection -LocalPort 8080).OwningProcess -Force
-```
+El servidor iniciará en el puerto `8080`.  
+> **Nota:** La aplicación incluye un componente **`DataInitializer`** que verifica y crea automáticamente los datos iniciales necesarios (servicios, clientes, profesionales, turnos de disponibilidad y citas) al momento del arranque.
 
 ---
 
 ### Paso 4: Abrir la Interfaz Visual (Frontend)
 
-Ve a la carpeta [`front/`](front/) y haz doble clic en `index.html` para abrirlo en tu navegador (Chrome, Edge, Brave, Firefox).
-
-- La interfaz detectara automaticamente el Backend encendido.
-- Podras ver el listado de usuarios cargados desde MySQL con sus respectivos roles.
-- Podras buscar usuarios por ID, registrarlos, editarlos y eliminarlos en tiempo real (soporte completo GET, POST, PUT, DELETE).
+Ve a la carpeta [`front/`](front/) y abre en tu navegador:
+* **[`index.html`](front/index.html):** Gestión y CRUD interactivo de usuarios y roles.
+* **[`citas.html`](front/citas.html):** Módulo de agendamiento de citas, visualización de agenda y modales de registro rápido de clientes y profesionales.
 
 ---
 
-## Documentacion Interactiva de la API (Swagger UI)
+## 📖 Documentación Interactiva de la API (Swagger UI)
 
 Con el backend iniciado, puedes probar y consultar todos los endpoints REST directamente desde el explorador:
 
-[http://localhost:8080/doc/swagger-ui.html](http://localhost:8080/doc/swagger-ui.html)
+👉 **[http://localhost:8080/doc/swagger-ui.html](http://localhost:8080/doc/swagger-ui.html)**
 
 ### Endpoints Principales:
 
-#### Usuarios:
-| Metodo | Endpoint | Descripcion |
+#### 1. Citas (Agendamiento Central)
+| Método | Endpoint | Descripción |
 |---|---|---|
-| GET | /api/v2/nicolet/usuarios | Lista todos los usuarios registrados |
-| GET | /api/v2/nicolet/usuarios/{id} | Busca un usuario por su ID unico |
-| POST | /api/v2/nicolet/usuarios | Registra un nuevo usuario |
-| PUT | /api/v2/nicolet/usuarios/{id} | Actualiza datos de un usuario existente |
-| DELETE | /api/v2/nicolet/usuarios/{id} | Elimina un usuario por su ID |
-| POST | /api/v2/nicolet/usuarios/manual | Validacion manual de existencia de correo |
+| `GET` | `/api/v2/nicolet/citas` | Lista todas las citas agendadas |
+| `GET` | `/api/v2/nicolet/citas/{id}` | Busca una cita por su ID único |
+| `GET` | `/api/v2/nicolet/citas/codigo/{codigo}` | Busca cita por código de reserva (ej: `RES-2026-0001`) |
+| `GET` | `/api/v2/nicolet/citas/trabajador/{id}` | Agenda de un profesional específico |
+| `GET` | `/api/v2/nicolet/citas/cliente/{id}` | Historial de citas de un cliente |
+| `POST` | `/api/v2/nicolet/citas` | Agenda una nueva cita (con validación antisolapamiento y duración automática) |
+| `PATCH` | `/api/v2/nicolet/citas/{id}/estado` | Cambia estado de una cita (`COMPLETADA`, `CANCELADA`) |
 
-#### Tipos de Usuario (Roles):
-| Metodo | Endpoint | Descripcion |
+#### 2. Servicios
+| Método | Endpoint | Descripción |
 |---|---|---|
-| GET | /api/v2/nicolet/tipos-usuario | Lista todos los tipos de usuario |
-| GET | /api/v2/nicolet/tipos-usuario/{id} | Busca un tipo de usuario por su ID unico |
-| POST | /api/v2/nicolet/tipos-usuario | Registra un nuevo tipo de usuario |
-| PUT | /api/v2/nicolet/tipos-usuario/{id} | Actualiza un tipo de usuario existente |
-| DELETE | /api/v2/nicolet/tipos-usuario/{id} | Elimina un tipo de usuario por su ID |
+| `GET` | `/api/v2/nicolet/servicios` | Catálogo de servicios activos |
+| `GET` | `/api/v2/nicolet/servicios/{id}` | Detalle de un servicio por ID |
+| `POST` | `/api/v2/nicolet/servicios` | Registra un nuevo servicio |
+| `PUT` | `/api/v2/nicolet/servicios/{id}` | Actualiza datos de un servicio |
+| `DELETE` | `/api/v2/nicolet/servicios/{id}` | Desactiva un servicio (baja lógica) |
+
+#### 3. Clientes y Trabajadores
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` | `/api/v2/nicolet/clientes` | Lista todos los clientes |
+| `POST` | `/api/v2/nicolet/clientes` | Crea perfil especializado de cliente |
+| `GET` | `/api/v2/nicolet/trabajadores` | Lista todos los trabajadores activos |
+| `POST` | `/api/v2/nicolet/trabajadores` | Crea perfil especializado de trabajador con servicios |
+
+#### 4. Usuarios y Roles
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` / `POST` | `/api/v2/nicolet/usuarios` | CRUD de cuentas de usuario base |
+| `GET` / `POST` | `/api/v2/nicolet/tipos-usuario` | Gestión de roles (`ADMINISTRADOR`, `CLIENTE`, `PROFESIONAL`) |
 
 ---
 
-## Ejecucion de Pruebas Automatizadas
+## 🧪 Ejecución de Pruebas Automatizadas
 
-El proyecto cuenta con una suite completa de pruebas unitarias y de integracion (JPA, Servicios, Modelos y Contexto Spring Boot):
+El proyecto cuenta con una suite completa de **61 pruebas unitarias y de integración** (Modelos, Repositorios, Servicios y Controladores MockMvc):
 
 ```powershell
 .\mvnw.cmd test
@@ -204,87 +188,18 @@ El proyecto cuenta con una suite completa de pruebas unitarias y de integracion 
 
 Resultado esperado:
 ```text
-[INFO] Tests run: 25, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Results:
+[INFO] Tests run: 61, Failures: 0, Errors: 0, Skipped: 0
+[INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
 ```
 
 ---
 
-## Flujo de Trabajo con Git y GitHub (Ramas, Push y Pull)
+## 🔀 Flujo de Trabajo con Git y GitHub
 
-Para mantener el orden y la estabilidad del proyecto en las ramas `main` y `Test`, utiliza la siguiente guía de comandos:
-
-### 1. Sincronizar tu repositorio local (Git Pull)
-Antes de crear una nueva rama o comenzar a trabajar, asegúrate de tener siempre la versión más reciente del repositorio remoto:
-
-```bash
-# 1. Cambiar a la rama base (main o Test)
-git checkout main
-
-# 2. Descargar y combinar los últimos cambios de GitHub
-git pull origin main
-```
-
----
-
-### 2. Crear y cambiarte a una nueva rama
-Cada nueva funcionalidad o arreglo debe desarrollarse en su propia rama aislada (ej: `feature/nombre-tarea` o `fix/descripcion`):
-
-```bash
-# Crear la rama y posicionarte en ella automáticamente:
-git checkout -b feature/nueva-funcionalidad
-```
-
-Para ver la lista de todas las ramas locales y saber en cuál te encuentras:
-```bash
-git branch
-```
-
----
-
-### 3. Guardar cambios y subirlos a GitHub (Git Push)
-Cuando termines de realizar y probar tus cambios en el código:
-
-```bash
-# 1. Verificar los archivos modificados
-git status
-
-# 2. Preparar todos los cambios para el commit
-git add .
-
-# 3. Guardar los cambios con un mensaje descriptivo
-git commit -m "feat: descripción de los cambios realizados"
-
-# 4. Subir la rama a GitHub por primera vez (configura el rastreo remoto)
-git push -u origin feature/nueva-funcionalidad
-```
-
-> **Tip**: En los commits posteriores dentro de esa misma rama, solo necesitarás escribir:
-> ```bash
-> git push
-> ```
-
----
-
-### 4. Integrar los cambios a `main` (Pull Request)
-1. Ingresa al repositorio en GitHub: [https://github.com/Felipex360x/Agendamiento-Cita-Main](https://github.com/Felipex360x/Agendamiento-Cita-Main).
-2. Verás un aviso con el botón verde **Compare & pull request**. Haz clic en él.
-3. Revisa los cambios y presiona **Create pull request**.
-4. Haz clic en **Merge pull request** y confirma la fusión.
-
----
-
-### 5. Limpieza y eliminación de ramas terminadas
-Una vez que tu rama fue aprobada y fusionada en `main`, elimínala para mantener el repositorio limpio:
-
-```bash
-# 1. Vuelve a la rama principal y actualízala
-git checkout main
-git pull origin main
-
-# 2. Eliminar la rama en tu equipo local
-git branch -d feature/nueva-funcionalidad
-
-# 3. Eliminar la rama en GitHub remoto
-git push origin --delete feature/nueva-funcionalidad
-```
+1. **Sincronizar cambios:** `git pull origin main`
+2. **Crear ramas de trabajo:** `git checkout -b feature/nombre-tarea`
+3. **Guardar y subir cambios:** `git add .` $\rightarrow$ `git commit -m "..."` $\rightarrow$ `git push -u origin feature/nombre-tarea`
+4. **Integración:** Crear Pull Request hacia `Test` o `main`.

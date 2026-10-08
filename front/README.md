@@ -57,6 +57,7 @@ Para interactuar con la base de datos y crear/eliminar registros, el servicio **
 
 ### 2. Agendamiento de Citas (`citas.html`)
 - **Formulario de Agendamiento:** Selección dinámica de Cliente, Profesional y Servicio con cálculo automático de duración y precio.
+- **Modales de Creación Rápida:** Botones `+ Nuevo Cliente` y `+ Nuevo Profesional` para registrar y seleccionar perfiles sin salir de la pantalla de citas.
 - **Tabla de Agenda:** Muestra código de reserva, cliente, profesional, servicio, horario (inicio a fin) y estado.
 - **Acciones Rápidas:** Finalizar / completar citas o cancelarlas con motivo registrado.
 - **Alertas reactivas:** Notificación visual al agendar o en caso de solapamiento o error.
