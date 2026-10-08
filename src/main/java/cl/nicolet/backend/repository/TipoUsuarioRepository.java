@@ -1,6 +1,6 @@
-package cl.nicolet.backend.Repository;
+package cl.nicolet.backend.repository;
 
-import cl.nicolet.backend.Model.TipoUsuario;
+import cl.nicolet.backend.model.TipoUsuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

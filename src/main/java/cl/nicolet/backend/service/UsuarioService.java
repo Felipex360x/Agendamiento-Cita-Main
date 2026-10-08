@@ -1,4 +1,4 @@
-package cl.nicolet.backend.Service;
+package cl.nicolet.backend.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,14 +10,14 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cl.nicolet.backend.Model.TipoUsuario;
-import cl.nicolet.backend.Model.Usuario;
-import cl.nicolet.backend.Repository.TipoUsuarioRepository;
-import cl.nicolet.backend.Repository.UsuarioRepository;
-import cl.nicolet.backend.DTO.TipoUsuarioDTO;
-import cl.nicolet.backend.DTO.UsuarioCreateDTO;
-import cl.nicolet.backend.DTO.UsuarioDTO;
-import cl.nicolet.backend.Exception.RecursoNoEncontradoException;
+import cl.nicolet.backend.model.TipoUsuario;
+import cl.nicolet.backend.model.Usuario;
+import cl.nicolet.backend.repository.TipoUsuarioRepository;
+import cl.nicolet.backend.repository.UsuarioRepository;
+import cl.nicolet.backend.dto.TipoUsuarioDTO;
+import cl.nicolet.backend.dto.UsuarioCreateDTO;
+import cl.nicolet.backend.dto.UsuarioDTO;
+import cl.nicolet.backend.exception.RecursoNoEncontradoException;
 
 @Service
 public class UsuarioService {

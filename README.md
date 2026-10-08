@@ -10,13 +10,13 @@ Sistema integral de gestión y agendamiento de citas para **Nicolet Estudio**, d
 Agendamiento-Cita-Main/
 ├── src/                          # Backend: Código fuente Java Spring Boot
 │   ├── main/java/cl/nicolet/backend/
-│   │   ├── Config/              # Configuraciones (Swagger / OpenAPI)
-│   │   ├── Controller/          # Controladores REST API
-│   │   ├── DTO/                 # Objetos de Transferencia de Datos
-│   │   ├── Exception/           # Manejador global de excepciones
-│   │   ├── Model/               # Entidades JPA (Usuario, etc.)
-│   │   ├── Repository/          # Repositorios Spring Data JPA
-│   │   ├── Service/             # Lógica de negocio
+│   │   ├── config/              # Configuraciones (Swagger / OpenAPI)
+│   │   ├── controller/          # Controladores REST API
+│   │   ├── dto/                 # Objetos de Transferencia de Datos
+│   │   ├── exception/           # Manejador global de excepciones
+│   │   ├── model/               # Entidades JPA (Usuario, etc.)
+│   │   ├── repository/          # Repositorios Spring Data JPA
+│   │   ├── service/             # Lógica de negocio
 │   │   └── BackendApplication.java
 │   └── main/resources/
 │       ├── application.properties      # Configuración de base de datos MySQL
@@ -24,13 +24,12 @@ Agendamiento-Cita-Main/
 ├── db/                           # Base de Datos
 │   ├── init.sql                 # Script de creación de tablas y datos semilla
 │   └── README.md                # Documentación de la base de datos
-├── front/                        # Frontend (Interfaz Visual Organizada)
-│   ├── pantallas/
-│   │   └── index.html           # Pantalla web principal
+├── front/                        # Frontend Web (HTML / CSS / JS)
+│   ├── index.html               # Pantalla web principal
 │   ├── css/
-│   │   └── index.css            # Estilos visuales de index.html
+│   │   └── index.css            # Estilos visuales
 │   ├── js/
-│   │   └── index.js             # Lógica e integración REST de index.html
+│   │   └── index.js             # Lógica e integración REST
 │   └── README.md                # Guía de uso del frontend
 ├── docker-compose.yml            # Orquestación de MySQL 8.0 y phpMyAdmin
 ├── Dockerfile                    # Empaquetado del microservicio Backend
@@ -158,7 +157,7 @@ Stop-Process -Id (Get-NetTCPConnection -LocalPort 8080).OwningProcess -Force
 
 ### Paso 4: Abrir la Interfaz Visual (Frontend)
 
-Ve a la carpeta [`front/pantallas/`](front/pantallas/) y haz doble clic en `index.html` para abrirlo en tu navegador (Chrome, Edge, Brave, Firefox).
+Ve a la carpeta [`front/`](front/) y haz doble clic en `index.html` para abrirlo en tu navegador (Chrome, Edge, Brave, Firefox).
 
 - La interfaz detectara automaticamente el Backend encendido.
 - Podras ver el listado de usuarios cargados desde MySQL con sus respectivos roles.

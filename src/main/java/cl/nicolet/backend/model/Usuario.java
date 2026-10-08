@@ -1,4 +1,4 @@
-package cl.nicolet.backend.Model;
+package cl.nicolet.backend.model;
 
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;

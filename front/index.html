@@ -2,10 +2,153 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=pantallas/index.html">
-  <title>Redirigiendo...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nicolet Estudio - Gestión de Usuarios</title>
+  <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
-  <p>Redirigiendo al panel... <a href="pantallas/index.html">Haz clic aquí si no redirige automáticamente</a></p>
+
+  <!-- Barra de Navegación -->
+  <header class="navbar">
+    <div class="brand">
+      <div class="brand-icon">N</div>
+      <div>
+        <div class="brand-title">Nicolet Estudio</div>
+        <div class="brand-subtitle">Agendamiento de Citas</div>
+      </div>
+    </div>
+    <div id="statusBadge" class="status-badge">
+      <span class="status-dot"></span>
+      <span id="statusText">Verificando conexión...</span>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal -->
+  <main class="container">
+
+    <!-- Tarjetas de Estadísticas / Info -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-title">Usuarios Registrados</span>
+        <span id="totalUsers" class="stat-value">-</span>
+        <span class="stat-footer">Persistidos en Base de Datos MySQL</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Tipos de Usuario</span>
+        <span id="totalTipos" class="stat-value">-</span>
+        <span class="stat-footer">Roles activos en sistema</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Documentación API</span>
+        <a href="http://localhost:8080/doc/swagger-ui.html" target="_blank" style="text-decoration:none; color: var(--primary); font-weight:700; font-size:1.15rem; margin-top:0.25rem;">
+          Ver Swagger UI ↗
+        </a>
+        <span class="stat-footer">OpenAPI v3 en /doc/swagger-ui.html</span>
+      </div>
+    </section>
+
+    <!-- Sección Principal: Formulario y Tabla -->
+    <div class="layout-grid">
+
+      <!-- Formulario para Registrar / Editar Usuario -->
+      <section class="card" id="formCard">
+        <div class="card-header">
+          <h2 class="card-title" id="formTitle">Registrar Usuario</h2>
+          <span id="formMethodBadge" class="badge-role cliente" style="font-size: 0.72rem;">POST</span>
+        </div>
+
+        <!-- Banner de modo edición -->
+        <div id="editAlert" class="edit-indicator" style="display: none;">
+          <span>✏️ Editando Usuario <strong id="editTargetId">#0</strong></span>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="cancelarEdicion()">✕ Cancelar</button>
+        </div>
+
+        <form id="userForm">
+          <input type="hidden" id="editUserId" value="">
+
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" placeholder="Ej: Valentina" required>
+          </div>
+          <div class="form-group">
+            <label for="apellidoP">Apellido Paterno</label>
+            <input type="text" id="apellidoP" placeholder="Ej: Soto" required>
+          </div>
+          <div class="form-group">
+            <label for="correo">Correo Electrónico</label>
+            <input type="email" id="correo" placeholder="Ej: valentina.soto@gmail.com" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" placeholder="••••••••" required>
+          </div>
+          <div class="form-group">
+            <label for="tipoUsuarioId">Tipo de Usuario / Rol</label>
+            <select id="tipoUsuarioId" required>
+              <option value="" disabled selected>Cargando roles...</option>
+            </select>
+          </div>
+          <button type="submit" id="btnSubmit" class="btn btn-primary">
+            + Guardar Usuario (POST)
+          </button>
+          <button type="button" id="btnCancelEdit" class="btn btn-secondary" style="display: none; margin-top: 0.5rem;" onclick="cancelarEdicion()">
+            ✕ Cancelar Edición
+          </button>
+        </form>
+      </section>
+
+      <!-- Tabla de Usuarios Registrados -->
+      <section class="card">
+        <div class="card-header" style="flex-wrap: wrap; gap: 0.75rem;">
+          <h2 class="card-title">Listado de Usuarios</h2>
+          
+          <!-- Barra de Búsqueda por ID (GET) y Refrescar -->
+          <div class="search-container">
+            <input type="number" id="searchIdInput" placeholder="ID (ej: 1)" min="1">
+            <button id="btnSearchId" class="btn btn-sm btn-primary" type="button">
+              🔍 Buscar ID (GET)
+            </button>
+            <button id="btnResetSearch" class="btn btn-sm btn-secondary" type="button" style="display: none;">
+              Ver Todos
+            </button>
+            <button id="btnRefresh" class="btn btn-sm btn-refresh" type="button">
+              ↻ Listar Todos (GET)
+            </button>
+          </div>
+        </div>
+
+        <!-- Notificación de filtro activo -->
+        <div id="searchNotice" style="display: none; padding: 0.5rem 0.85rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; justify-content: space-between; align-items: center;">
+          <span>🔍 Resultado para ID: <strong id="searchNoticeId">#0</strong></span>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="restablecerBusqueda()">Ver Todos los Usuarios</button>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Correo</th>
+                <th>Tipo Usuario</th>
+                <th style="min-width: 140px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+              <!-- Se cargan dinámicamente con js/index.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Notificaciones Toast -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="js/index.js"></script>
 </body>
 </html>

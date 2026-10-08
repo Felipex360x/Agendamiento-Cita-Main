@@ -1,4 +1,4 @@
-package cl.nicolet.backend.Service;
+package cl.nicolet.backend.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,11 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import cl.nicolet.backend.DTO.TipoUsuarioCreateDTO;
-import cl.nicolet.backend.DTO.TipoUsuarioDTO;
-import cl.nicolet.backend.Exception.RecursoNoEncontradoException;
-import cl.nicolet.backend.Model.TipoUsuario;
-import cl.nicolet.backend.Repository.TipoUsuarioRepository;
+import cl.nicolet.backend.dto.TipoUsuarioCreateDTO;
+import cl.nicolet.backend.dto.TipoUsuarioDTO;
+import cl.nicolet.backend.exception.RecursoNoEncontradoException;
+import cl.nicolet.backend.model.TipoUsuario;
+import cl.nicolet.backend.repository.TipoUsuarioRepository;
 
 @Service
 public class TipoUsuarioService {

@@ -1,11 +1,11 @@
-package cl.nicolet.backend.ServiceTest;
+package cl.nicolet.backend.service;
 
-import cl.nicolet.backend.DTO.TipoUsuarioCreateDTO;
-import cl.nicolet.backend.DTO.TipoUsuarioDTO;
-import cl.nicolet.backend.Exception.RecursoNoEncontradoException;
-import cl.nicolet.backend.Model.TipoUsuario;
-import cl.nicolet.backend.Repository.TipoUsuarioRepository;
-import cl.nicolet.backend.Service.TipoUsuarioService;
+import cl.nicolet.backend.dto.TipoUsuarioCreateDTO;
+import cl.nicolet.backend.dto.TipoUsuarioDTO;
+import cl.nicolet.backend.exception.RecursoNoEncontradoException;
+import cl.nicolet.backend.model.TipoUsuario;
+import cl.nicolet.backend.repository.TipoUsuarioRepository;
+import cl.nicolet.backend.service.TipoUsuarioService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

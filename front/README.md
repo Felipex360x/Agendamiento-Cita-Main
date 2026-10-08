@@ -8,13 +8,11 @@ Interfaz web visual interactiva para la administración y visualización de usua
 
 ```text
 front/
-├── pantallas/
-│   └── index.html      # Pantalla visual de gestión de usuarios
 ├── css/
-│   └── index.css       # Estilos específicos para pantallas/index.html
+│   └── index.css       # Estilos específicos de la interfaz
 ├── js/
 │   └── index.js        # Lógica e integración con la API REST
-├── index.html          # Redirección automática a pantallas/index.html
+├── index.html          # Pantalla visual de gestión de usuarios
 └── README.md           # Guía de uso
 ```
 
@@ -25,11 +23,11 @@ front/
 Puedes abrir la interfaz de cualquiera de las siguientes formas:
 
 ### Opción 1: Directo desde el navegador (Más rápido)
-Abre directamente [`pantallas/index.html`](pantallas/index.html) haciendo doble clic sobre él en tu explorador de archivos.
+Abre directamente [`index.html`](index.html) haciendo doble clic sobre él en tu explorador de archivos.
 
 ### Opción 2: Con Live Server (VS Code)
 1. Instala la extensión **Live Server** en Visual Studio Code.
-2. Haz clic derecho sobre [`pantallas/index.html`](pantallas/index.html) y selecciona **Open with Live Server**.
+2. Haz clic derecho sobre [`index.html`](index.html) y selecciona **Open with Live Server**.
 
 ### Opción 3: Con Node.js
 ```bash

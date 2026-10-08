@@ -1,4 +1,4 @@
-package cl.nicolet.backend.Exception;
+package cl.nicolet.backend.exception;
 
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;

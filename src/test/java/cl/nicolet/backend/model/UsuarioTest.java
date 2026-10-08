@@ -1,4 +1,4 @@
-package cl.nicolet.backend.ModelTest;
+package cl.nicolet.backend.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import cl.nicolet.backend.Model.Usuario;
+import cl.nicolet.backend.model.Usuario;
 
 class UsuarioTest {
 
@@ -80,7 +80,7 @@ class UsuarioTest {
     @Test
     @DisplayName("TipoUsuario - debe permitir asignar y obtener el tipo de usuario asociado")
     void debePermitirAsignarYObtenerTipoUsuario() {
-        cl.nicolet.backend.Model.TipoUsuario tipo = new cl.nicolet.backend.Model.TipoUsuario(1L, "ADMINISTRADOR", "Rol admin");
+        cl.nicolet.backend.model.TipoUsuario tipo = new cl.nicolet.backend.model.TipoUsuario(1L, "ADMINISTRADOR", "Rol admin");
         Usuario usuario = new Usuario();
         usuario.setTipoUsuario(tipo);
 

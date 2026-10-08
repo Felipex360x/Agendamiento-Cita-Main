@@ -1,4 +1,4 @@
-package cl.nicolet.backend.DTO;
+package cl.nicolet.backend.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

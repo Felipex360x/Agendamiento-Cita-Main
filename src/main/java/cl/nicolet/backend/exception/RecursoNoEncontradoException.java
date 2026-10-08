@@ -1,4 +1,4 @@
-package cl.nicolet.backend.Exception;
+package cl.nicolet.backend.exception;
 
 public class RecursoNoEncontradoException extends RuntimeException {
 

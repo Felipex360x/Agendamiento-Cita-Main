@@ -1,4 +1,4 @@
-package cl.nicolet.backend.DTO;
+package cl.nicolet.backend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

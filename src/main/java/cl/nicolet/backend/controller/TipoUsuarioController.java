@@ -1,4 +1,4 @@
-package cl.nicolet.backend.Controller;
+package cl.nicolet.backend.controller;
 
 import java.util.List;
 
@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import cl.nicolet.backend.DTO.TipoUsuarioCreateDTO;
-import cl.nicolet.backend.DTO.TipoUsuarioDTO;
-import cl.nicolet.backend.Service.TipoUsuarioService;
+import cl.nicolet.backend.dto.TipoUsuarioCreateDTO;
+import cl.nicolet.backend.dto.TipoUsuarioDTO;
+import cl.nicolet.backend.service.TipoUsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

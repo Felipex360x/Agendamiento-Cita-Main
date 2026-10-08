@@ -1,8 +1,8 @@
-package cl.nicolet.backend.Controller;
+package cl.nicolet.backend.controller;
 
-import cl.nicolet.backend.Service.UsuarioService;
-import cl.nicolet.backend.DTO.UsuarioCreateDTO;
-import cl.nicolet.backend.DTO.UsuarioDTO;
+import cl.nicolet.backend.service.UsuarioService;
+import cl.nicolet.backend.dto.UsuarioCreateDTO;
+import cl.nicolet.backend.dto.UsuarioDTO;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
