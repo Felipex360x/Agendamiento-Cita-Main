@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nicolet Estudio - Agendamiento de Citas</title>
+  <link rel="stylesheet" href="css/index.css">
+  <style>
+    .nav-links {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .nav-link {
+      text-decoration: none;
+      color: var(--gray-dark);
+      font-weight: 600;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .nav-link:hover {
+      background: var(--gray-light);
+      color: var(--primary);
+    }
+    .nav-link.active {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .badge-estado {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-estado.CONFIRMADA {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .badge-estado.PENDIENTE {
+      background: #fef9c3;
+      color: #a16207;
+    }
+    .badge-estado.EN_ATENCION {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+    .badge-estado.COMPLETADA {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    .badge-estado.CANCELADA {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .badge-estado.NO_ASISTIO {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+    .btn-action-group {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .alert-banner {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 0.88rem;
+      font-weight: 500;
+      display: none;
+    }
+    .alert-banner.success {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+      display: block;
+    }
+    .alert-banner.error {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+      display: block;
+    }
+    .info-helper {
+      font-size: 0.8rem;
+      color: var(--gray);
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de Navegación -->
+  <header class="navbar">
+    <div class="brand">
+      <div class="brand-icon">N</div>
+      <div>
+        <div class="brand-title">Nicolet Estudio</div>
+        <div class="brand-subtitle">Módulo de Agendamiento de Citas</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html" class="nav-link">👥 Gestión de Usuarios</a>
+      <a href="citas.html" class="nav-link active">📅 Agendamiento de Citas</a>
+      <div id="statusBadge" class="status-badge">
+        <span class="status-dot"></span>
+        <span id="statusText">Conectando...</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Contenedor Principal -->
+  <main class="container">
+
+    <!-- Tarjetas de Estadísticas -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-title">Total de Citas</span>
+        <span id="totalCitas" class="stat-value">-</span>
+        <span class="stat-footer">Histórico registrado en base de datos</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Citas Confirmadas</span>
+        <span id="citasConfirmadas" class="stat-value">-</span>
+        <span class="stat-footer">Listas para ser atendidas</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Servicios Disponibles</span>
+        <span id="totalServicios" class="stat-value">-</span>
+        <span class="stat-footer">Catálogo activo en Nicolet Estudio</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Documentación API</span>
+        <a href="http://localhost:8080/doc/swagger-ui.html" target="_blank" style="text-decoration:none; color: var(--primary); font-weight:700; font-size:1.15rem; margin-top:0.25rem;">
+          Swagger UI ↗
+        </a>
+        <span class="stat-footer">OpenAPI v3 en /doc/swagger-ui.html</span>
+      </div>
+    </section>
+
+    <!-- Alertas en pantalla -->
+    <div id="alertMessage" class="alert-banner"></div>
+
+    <!-- Layout Formulario + Tabla -->
+    <div class="layout-grid">
+
+      <!-- Formulario de Agendamiento -->
+      <section class="card" id="citaFormCard">
+        <div class="card-header">
+          <h2 class="card-title">Agendar Nueva Cita</h2>
+          <span class="badge-role cliente" style="font-size: 0.72rem;">POST /citas</span>
+        </div>
+
+        <form id="citaForm">
+          <div class="form-group">
+            <label for="clienteId">Cliente</label>
+            <select id="clienteId" required>
+              <option value="" disabled selected>Cargando clientes...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="trabajadorId">Profesional / Especialista</label>
+            <select id="trabajadorId" required>
+              <option value="" disabled selected>Cargando profesionales...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="servicioId">Servicio</label>
+            <select id="servicioId" required>
+              <option value="" disabled selected>Cargando servicios...</option>
+            </select>
+            <div id="servicioInfo" class="info-helper"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="fechaHoraInicio">Fecha y Hora de Inicio</label>
+            <input type="datetime-local" id="fechaHoraInicio" required>
+            <div class="info-helper">La hora de término se calcula automáticamente según la duración del servicio.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="notasCliente">Notas o Instrucciones (Opcional)</label>
+            <textarea id="notasCliente" rows="2" placeholder="Ej: Primera cita, consultar por diseño personalizado..." style="width:100%; padding:0.6rem; border:1px solid var(--border); border-radius:8px; resize:vertical;"></textarea>
+          </div>
+
+          <button type="submit" id="btnSubmitCita" class="btn btn-primary" style="width: 100%;">
+            📅 Confirmar y Agendar Cita
+          </button>
+        </form>
+      </section>
+
+      <!-- Tabla de Citas -->
+      <section class="card" id="tablaCard">
+        <div class="card-header">
+          <h2 class="card-title">Agenda de Citas</h2>
+          <button class="btn btn-sm btn-secondary" onclick="cargarCitas()">🔄 Refrescar</button>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Cliente</th>
+                <th>Profesional</th>
+                <th>Servicio</th>
+                <th>Fecha y Horario</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="citasTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--gray); padding: 2rem;">
+                  Cargando citas del sistema...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="js/citas.js"></script>
+</body>
+</html>
