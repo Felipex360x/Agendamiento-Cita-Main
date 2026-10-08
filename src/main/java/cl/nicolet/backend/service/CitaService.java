@@ -27,7 +27,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
+@Transactional
 public class CitaService {
 
     private static final Logger log = LoggerFactory.getLogger(CitaService.class);
@@ -110,9 +113,9 @@ public class CitaService {
             throw new IllegalArgumentException("El servicio seleccionado no está activo actualmente");
         }
 
-        // 4. Validar Fecha futura
+        // 4. Validar Fecha futura (con 2 min de tolerancia para el llenado del formulario)
         LocalDateTime inicio = dto.getFechaHoraInicio();
-        if (inicio.isBefore(LocalDateTime.now())) {
+        if (inicio.isBefore(LocalDateTime.now().minusMinutes(2))) {
             throw new IllegalArgumentException("La fecha y hora de agendamiento debe ser posterior al momento actual");
         }
 

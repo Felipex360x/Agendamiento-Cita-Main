@@ -17,7 +17,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
+@Transactional
 public class ClienteService {
 
     private static final Logger log = LoggerFactory.getLogger(ClienteService.class);
