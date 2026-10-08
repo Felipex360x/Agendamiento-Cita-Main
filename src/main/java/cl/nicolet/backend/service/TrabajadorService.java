@@ -17,7 +17,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import cl.nicolet.backend.model.HorarioDisponibilidad;
+import cl.nicolet.backend.repository.HorarioDisponibilidadRepository;
+
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,9 +44,47 @@ public class TrabajadorService {
     @Autowired
     private ServicioRepository servicioRepository;
 
+    @Autowired(required = false)
+    private HorarioDisponibilidadRepository horarioDisponibilidadRepository;
+
     public List<TrabajadorDTO> findAll() {
         log.info("Consultando todos los trabajadores activos");
+        sincronizarUsuariosTrabajadores();
         return trabajadorRepository.findByActivoTrue().stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    private void sincronizarUsuariosTrabajadores() {
+        if (usuarioRepository == null || trabajadorRepository == null) return;
+        List<Usuario> usuarios = usuarioRepository.findAll();
+        for (Usuario u : usuarios) {
+            if (u.getTipoUsuario() != null && "PROFESIONAL".equalsIgnoreCase(u.getTipoUsuario().getNombre())) {
+                if (!trabajadorRepository.existsByUsuarioId(u.getId())) {
+                    Trabajador t = new Trabajador();
+                    t.setUsuario(u);
+                    t.setCargoEspecialidad("Especialista General");
+                    t.setActivo(true);
+                    t.setComisionPorcentaje(BigDecimal.ZERO);
+                    if (servicioRepository != null) {
+                        t.setServicios(new HashSet<>(servicioRepository.findByActivoTrue()));
+                    }
+                    Trabajador guardado = trabajadorRepository.save(t);
+
+                    if (horarioDisponibilidadRepository != null) {
+                        for (int dia = 1; dia <= 5; dia++) {
+                            HorarioDisponibilidad h = new HorarioDisponibilidad();
+                            h.setTrabajador(guardado);
+                            h.setDiaSemana(dia);
+                            h.setHoraInicio(LocalTime.of(9, 0));
+                            h.setHoraFin(LocalTime.of(18, 0));
+                            h.setHoraInicioDescanso(LocalTime.of(13, 0));
+                            h.setHoraFinDescanso(LocalTime.of(14, 0));
+                            h.setActivo(true);
+                            horarioDisponibilidadRepository.save(h);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public TrabajadorDTO findById(Long id) {

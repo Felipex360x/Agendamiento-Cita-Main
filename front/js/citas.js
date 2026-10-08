@@ -291,3 +291,104 @@ async function cambiarEstadoCita(id, nuevoEstado) {
     mostrarAlerta(`❌ Error de red: ${error.message}`, true);
   }
 }
+
+// Modales de creación rápida de Cliente y Trabajador
+function abrirModalCliente() {
+  document.getElementById('modalCliente').style.display = 'flex';
+}
+
+function cerrarModalCliente() {
+  document.getElementById('modalCliente').style.display = 'none';
+  document.getElementById('formNuevoCliente').reset();
+}
+
+async function guardarNuevoCliente(e) {
+  e.preventDefault();
+  const nombre = document.getElementById('nuevoClienteNombre').value.trim();
+  const apellidoP = document.getElementById('nuevoClienteApellido').value.trim();
+  const correo = document.getElementById('nuevoClienteCorreo').value.trim();
+  const telefono = document.getElementById('nuevoClienteTelefono').value.trim();
+
+  try {
+    // Crear el usuario con rol CLIENTE (id: 2)
+    const resUser = await fetch(`${API_BASE}/usuarios`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre,
+        apellidoP,
+        correo,
+        password: 'cliente_password_123',
+        tipoUsuarioId: 2
+      })
+    });
+
+    if (!resUser.ok) {
+      const err = await resUser.json();
+      mostrarAlerta(`❌ Error creando cliente: ${err.error || 'Correo ya existe o datos inválidos'}`, true);
+      return;
+    }
+
+    cerrarModalCliente();
+    mostrarAlerta(`✅ Cliente ${nombre} ${apellidoP} registrado exitosamente`);
+    await cargarDatosFormulario();
+
+    // Seleccionar el nuevo cliente creado
+    const clienteCreado = clientesDisponibles.find(c => c.usuario.correo.toLowerCase() === correo.toLowerCase());
+    if (clienteCreado) {
+      clienteSelect.value = clienteCreado.id;
+    }
+  } catch (error) {
+    mostrarAlerta(`❌ Error de conexión: ${error.message}`, true);
+  }
+}
+
+function abrirModalTrabajador() {
+  document.getElementById('modalTrabajador').style.display = 'flex';
+}
+
+function cerrarModalTrabajador() {
+  document.getElementById('modalTrabajador').style.display = 'none';
+  document.getElementById('formNuevoTrabajador').reset();
+}
+
+async function guardarNuevoTrabajador(e) {
+  e.preventDefault();
+  const nombre = document.getElementById('nuevoTrabajadorNombre').value.trim();
+  const apellidoP = document.getElementById('nuevoTrabajadorApellido').value.trim();
+  const correo = document.getElementById('nuevoTrabajadorCorreo').value.trim();
+  const cargo = document.getElementById('nuevoTrabajadorCargo').value.trim();
+
+  try {
+    // Crear el usuario con rol PROFESIONAL (id: 3)
+    const resUser = await fetch(`${API_BASE}/usuarios`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre,
+        apellidoP,
+        correo,
+        password: 'pro_password_123',
+        tipoUsuarioId: 3
+      })
+    });
+
+    if (!resUser.ok) {
+      const err = await resUser.json();
+      mostrarAlerta(`❌ Error creando profesional: ${err.error || 'Correo ya existe o datos inválidos'}`, true);
+      return;
+    }
+
+    cerrarModalTrabajador();
+    mostrarAlerta(`✅ Profesional ${nombre} ${apellidoP} registrado exitosamente`);
+    await cargarDatosFormulario();
+
+    // Seleccionar el nuevo trabajador creado
+    const trabajadorCreado = trabajadoresDisponibles.find(t => t.usuario.correo.toLowerCase() === correo.toLowerCase());
+    if (trabajadorCreado) {
+      trabajadorSelect.value = trabajadorCreado.id;
+    }
+  } catch (error) {
+    mostrarAlerta(`❌ Error de conexión: ${error.message}`, true);
+  }
+}

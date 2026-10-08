@@ -33,7 +33,23 @@ public class ClienteService {
 
     public List<ClienteDTO> findAll() {
         log.info("Consultando todos los clientes");
+        sincronizarUsuariosClientes();
         return clienteRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    private void sincronizarUsuariosClientes() {
+        if (usuarioRepository == null || clienteRepository == null) return;
+        List<Usuario> usuarios = usuarioRepository.findAll();
+        for (Usuario u : usuarios) {
+            if (u.getTipoUsuario() != null && "CLIENTE".equalsIgnoreCase(u.getTipoUsuario().getNombre())) {
+                if (!clienteRepository.existsByUsuarioId(u.getId())) {
+                    Cliente c = new Cliente();
+                    c.setUsuario(u);
+                    c.setActivo(true);
+                    clienteRepository.save(c);
+                }
+            }
+        }
     }
 
     public ClienteDTO findById(Long id) {
