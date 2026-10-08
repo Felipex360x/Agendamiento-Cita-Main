@@ -4,7 +4,7 @@ Sistema integral de gestión y agendamiento de citas para **Nicolet Estudio**, d
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```text
 Agendamiento-Cita-Main/
@@ -44,7 +44,7 @@ Agendamiento-Cita-Main/
 
 ---
 
-## 🛠️ Requisitos Previos y Dependencias
+## Requisitos Previos y Dependencias
 
 Para ejecutar este proyecto en cualquier computadora, se necesitan los siguientes componentes:
 
@@ -75,7 +75,7 @@ Elige una de las siguientes alternativas:
 
 ---
 
-## 🚀 Guía Paso a Paso para Ejecutar el Proyecto
+## Guía Paso a Paso para Ejecutar el Proyecto
 
 ### Paso 1: Clonar el Repositorio
 ```bash
@@ -134,11 +134,11 @@ Ve a la carpeta [`front/`](front/) y abre en tu navegador:
 
 ---
 
-## 📖 Documentación Interactiva de la API (Swagger UI)
+## Documentación Interactiva de la API (Swagger UI)
 
 Con el backend iniciado, puedes probar y consultar todos los endpoints REST directamente desde el explorador:
 
-👉 **[http://localhost:8080/doc/swagger-ui.html](http://localhost:8080/doc/swagger-ui.html)**
+**[http://localhost:8080/doc/swagger-ui.html](http://localhost:8080/doc/swagger-ui.html)**
 
 ### Endpoints Principales:
 
@@ -178,7 +178,7 @@ Con el backend iniciado, puedes probar y consultar todos los endpoints REST dire
 
 ---
 
-## 🧪 Ejecución de Pruebas Automatizadas
+## Ejecución de Pruebas Automatizadas
 
 El proyecto cuenta con una suite completa de **61 pruebas unitarias y de integración** (Modelos, Repositorios, Servicios y Controladores MockMvc):
 
@@ -197,7 +197,7 @@ Resultado esperado:
 
 ---
 
-## 🔀 Flujo de Trabajo con Git y GitHub
+## Flujo de Trabajo con Git y GitHub
 
 1. **Sincronizar cambios:** `git pull origin main`
 2. **Crear ramas de trabajo:** `git checkout -b feature/nombre-tarea`
