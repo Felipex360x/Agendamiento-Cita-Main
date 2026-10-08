@@ -155,14 +155,20 @@
 
         <form id="citaForm">
           <div class="form-group">
-            <label for="clienteId">Cliente</label>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+              <label for="clienteId" style="margin:0;">Cliente</label>
+              <button type="button" class="btn btn-sm btn-secondary" onclick="abrirModalCliente()" style="font-size:0.75rem; padding:0.2rem 0.5rem;">+ Nuevo Cliente</button>
+            </div>
             <select id="clienteId" required>
               <option value="" disabled selected>Cargando clientes...</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label for="trabajadorId">Profesional / Especialista</label>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+              <label for="trabajadorId" style="margin:0;">Profesional / Especialista</label>
+              <button type="button" class="btn btn-sm btn-secondary" onclick="abrirModalTrabajador()" style="font-size:0.75rem; padding:0.2rem 0.5rem;">+ Nuevo Profesional</button>
+            </div>
             <select id="trabajadorId" required>
               <option value="" disabled selected>Cargando profesionales...</option>
             </select>
@@ -226,6 +232,64 @@
 
     </div>
   </main>
+
+  <!-- Modal Rápido: Nuevo Cliente -->
+  <div id="modalCliente" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
+    <div style="background:#fff; border-radius:12px; width:90%; max-width:440px; padding:1.5rem; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+      <h3 style="margin-bottom:1rem; font-size:1.15rem;">➕ Registrar Nuevo Cliente</h3>
+      <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)">
+        <div class="form-group" style="margin-bottom:0.75rem;">
+          <label>Nombre</label>
+          <input type="text" id="nuevoClienteNombre" placeholder="Ej: Andrea" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom:0.75rem;">
+          <label>Apellido Paterno</label>
+          <input type="text" id="nuevoClienteApellido" placeholder="Ej: Morales" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom:0.75rem;">
+          <label>Correo Electrónico</label>
+          <input type="email" id="nuevoClienteCorreo" placeholder="andrea.morales@gmail.com" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom:0.75rem;">
+          <label>Teléfono (Opcional)</label>
+          <input type="text" id="nuevoClienteTelefono" placeholder="+56912345678" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
+          <button type="button" class="btn btn-secondary" onclick="cerrarModalCliente()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Rápido: Nuevo Profesional -->
+  <div id="modalTrabajador" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
+    <div style="background:#fff; border-radius:12px; width:90%; max-width:440px; padding:1.5rem; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+      <h3 style="margin-bottom:1rem; font-size:1.15rem;">➕ Registrar Nuevo Profesional</h3>
+      <form id="formNuevoTrabajador" onsubmit="guardarNuevoTrabajador(event)">
+        <div class="form-group" style="margin-bottom:0.75rem;">
+          <label>Nombre</label>
+          <input type="text" id="nuevoTrabajadorNombre" placeholder="Ej: Ignacio" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom:0.75rem;">
+          <label>Apellido Paterno</label>
+          <input type="text" id="nuevoTrabajadorApellido" placeholder="Ej: Rios" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom:0.75rem;">
+          <label>Correo Electrónico</label>
+          <input type="email" id="nuevoTrabajadorCorreo" placeholder="ignacio.rios@estudio.cl" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom:0.75rem;">
+          <label>Especialidad / Cargo</label>
+          <input type="text" id="nuevoTrabajadorCargo" placeholder="Ej: Terapeuta Facial y Corporal" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
+          <button type="button" class="btn btn-secondary" onclick="cerrarModalTrabajador()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Profesional</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="js/citas.js"></script>
 </body>
