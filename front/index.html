@@ -18,8 +18,8 @@
       </div>
     </div>
     <div style="display: flex; gap: 1rem; align-items: center;">
-      <a href="index.html" style="text-decoration:none; color: var(--primary); font-weight:700; background: var(--primary-light); padding: 0.4rem 0.8rem; border-radius: 8px;">👥 Usuarios</a>
-      <a href="citas.html" style="text-decoration:none; color: var(--gray-dark); font-weight:600; padding: 0.4rem 0.8rem; border-radius: 8px;">📅 Agendar Citas</a>
+      <a href="index.html" style="text-decoration:none; color: var(--primary); font-weight:700; background: var(--primary-light); padding: 0.4rem 0.8rem; border-radius: 8px;">Usuarios</a>
+      <a href="citas.html" style="text-decoration:none; color: var(--gray-dark); font-weight:600; padding: 0.4rem 0.8rem; border-radius: 8px;">Agendar Citas</a>
       <div id="statusBadge" class="status-badge">
         <span class="status-dot"></span>
         <span id="statusText">Verificando conexión...</span>
@@ -63,8 +63,8 @@
 
         <!-- Banner de modo edición -->
         <div id="editAlert" class="edit-indicator" style="display: none;">
-          <span>✏️ Editando Usuario <strong id="editTargetId">#0</strong></span>
-          <button type="button" class="btn btn-sm btn-secondary" onclick="cancelarEdicion()">✕ Cancelar</button>
+          <span>Editando Usuario <strong id="editTargetId">#0</strong></span>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="cancelarEdicion()">Cancelar</button>
         </div>
 
         <form id="userForm">
@@ -96,7 +96,7 @@
             + Guardar Usuario (POST)
           </button>
           <button type="button" id="btnCancelEdit" class="btn btn-secondary" style="display: none; margin-top: 0.5rem;" onclick="cancelarEdicion()">
-            ✕ Cancelar Edición
+            Cancelar Edición
           </button>
         </form>
       </section>
@@ -110,7 +110,7 @@
           <div class="search-container">
             <input type="number" id="searchIdInput" placeholder="ID (ej: 1)" min="1">
             <button id="btnSearchId" class="btn btn-sm btn-primary" type="button">
-              🔍 Buscar ID (GET)
+              Buscar ID (GET)
             </button>
             <button id="btnResetSearch" class="btn btn-sm btn-secondary" type="button" style="display: none;">
               Ver Todos
@@ -123,7 +123,7 @@
 
         <!-- Notificación de filtro activo -->
         <div id="searchNotice" style="display: none; padding: 0.5rem 0.85rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; justify-content: space-between; align-items: center;">
-          <span>🔍 Resultado para ID: <strong id="searchNoticeId">#0</strong></span>
+          <span>Resultado para ID: <strong id="searchNoticeId">#0</strong></span>
           <button type="button" class="btn btn-sm btn-secondary" onclick="restablecerBusqueda()">Ver Todos los Usuarios</button>
         </div>
 
@@ -153,6 +153,7 @@
   <!-- Notificaciones Toast -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <script src="js/auth.js"></script>
   <script src="js/index.js"></script>
 </body>
 </html>

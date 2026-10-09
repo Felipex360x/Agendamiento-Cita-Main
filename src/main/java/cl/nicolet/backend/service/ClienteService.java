@@ -118,7 +118,6 @@ public class ClienteService {
                 u.getNombre(),
                 u.getApellidoP(),
                 u.getCorreo(),
-                u.getPassword(),
                 tipoDTO
         );
 

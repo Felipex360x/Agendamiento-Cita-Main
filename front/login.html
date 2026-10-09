@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - Nicolet Estudio</title>
+  <link rel="stylesheet" href="css/index.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      padding: 1.5rem;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2.25rem 2rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .brand-logo {
+      width: 52px;
+      height: 52px;
+      background: var(--primary);
+      color: white;
+      font-size: 1.6rem;
+      font-weight: 800;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+    }
+
+    .brand-header h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--gray-dark);
+      letter-spacing: -0.5px;
+    }
+
+    .brand-header p {
+      font-size: 0.88rem;
+      color: var(--gray);
+      margin-top: 0.25rem;
+    }
+
+    .alert-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-left: 4px solid #ef4444;
+      color: #991b1b;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+
+    .quick-logins {
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--gray-light);
+    }
+
+    .quick-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gray);
+      margin-bottom: 0.65rem;
+      text-align: center;
+    }
+
+    .quick-btn-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+
+    .btn-quick {
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.4rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-dark);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .btn-quick:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: #c7d2fe;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #94a3b8;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="brand-header">
+        <div class="brand-logo">N</div>
+        <h1>Nicolet Estudio</h1>
+        <p>Sistema de Agendamiento y Gestión de Citas</p>
+      </div>
+
+      <!-- Alerta de Error -->
+      <div id="errorAlert" class="alert-error">
+        <span id="errorMessage">Credenciales incorrectas.</span>
+      </div>
+
+      <!-- Formulario de Login -->
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="correo">Correo Electrónico</label>
+          <input type="email" id="correo" placeholder="ejemplo@estudio.cl" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" id="btnSubmit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem; padding: 0.75rem;">
+          Iniciar Sesión
+        </button>
+      </form>
+
+      <!-- Botones de Acceso Rápido para Pruebas -->
+      <div class="quick-logins">
+        <div class="quick-title">Entorno de Pruebas &bull; Acceso Rápido</div>
+
+        <!-- Acceso directo garantizado para Admin de Test -->
+        <button type="button" class="btn-quick" 
+                style="width: 100%; margin-bottom: 0.6rem; background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; font-weight: 700; padding: 0.55rem; font-size: 0.8rem;"
+                onclick="llenarCredenciales('admin.test@nicolet.cl', 'AdminTest123!')">
+          Admin de Test (Acceso Garantizado)
+        </button>
+
+        <div class="quick-btn-grid">
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('admin@nicolet.cl', 'Admin123!')">
+            Admin
+          </button>
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('camila.silva@estudio.cl', 'pro2026')">
+            Especialista
+          </button>
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('martina.contreras@gmail.com', '123412')">
+            Cliente
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Nicolet Estudio &copy; 2026 • Autenticación segura con Spring Security & JWT
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    // Si ya tiene sesión activa, redirigir directo a citas
+    if (isAuthenticated()) {
+      window.location.href = 'citas.html';
+    }
+
+    const loginForm = document.getElementById('loginForm');
+    const correoInput = document.getElementById('correo');
+    const passwordInput = document.getElementById('password');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+
+    function llenarCredenciales(correo, pass) {
+      correoInput.value = correo;
+      passwordInput.value = pass;
+      errorAlert.style.display = 'none';
+      passwordInput.focus();
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.style.display = 'none';
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = 'Verificando...';
+
+      try {
+        const correo = correoInput.value.trim();
+        const password = passwordInput.value;
+
+        const data = await login(correo, password);
+
+        btnSubmit.innerText = 'Acceso Correcto';
+        btnSubmit.style.background = '#10b981';
+
+        // Redirigir a citas o usuarios según perfil
+        setTimeout(() => {
+          window.location.href = 'citas.html';
+        }, 500);
+
+      } catch (err) {
+        errorMessage.innerText = err.message || 'No se pudo conectar con el servidor.';
+        errorAlert.style.display = 'block';
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = 'Iniciar Sesión';
+      }
+    });
+  </script>
+</body>
+</html>

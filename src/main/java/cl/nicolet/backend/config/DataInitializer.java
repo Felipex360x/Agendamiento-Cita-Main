@@ -2,6 +2,7 @@ package cl.nicolet.backend.config;
 
 import cl.nicolet.backend.model.*;
 import cl.nicolet.backend.repository.*;
+import cl.nicolet.backend.security.LoginAttemptService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private CitaRepository citaRepository;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Override
     public void run(String... args) {
         log.info("Verificando datos iniciales del sistema...");
@@ -54,6 +58,8 @@ public class DataInitializer implements CommandLineRunner {
 
         // 2. Usuarios base
         Usuario admin = obtenerOCrearUsuario("Maximo", "Rojas", "maximo.rojas@estudio.cl", "password_seguro_123", tipoAdmin);
+        Usuario adminTest = obtenerOCrearUsuario("Admin", "Test", "admin.test@nicolet.cl", "AdminTest123!", tipoAdmin);
+        Usuario adminNicolet = obtenerOCrearUsuario("Administrador", "Nicolet", "admin@nicolet.cl", "Admin123!", tipoAdmin);
         Usuario userMartina = obtenerOCrearUsuario("Martina", "Contreras", "martina.contreras@gmail.com", "123412", tipoCliente);
         Usuario userCamila = obtenerOCrearUsuario("Camila", "Silva", "camila.silva@estudio.cl", "pro2026", tipoPro);
 
@@ -139,15 +145,31 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private Usuario obtenerOCrearUsuario(String nombre, String apellido, String correo, String pass, TipoUsuario tipo) {
-        return usuarioRepository.findAll().stream()
-                .filter(u -> u.getCorreo().equalsIgnoreCase(correo))
-                .findFirst()
+        String encodedPass = (passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$"))
+                ? passwordEncoder.encode(pass)
+                : pass;
+
+        return usuarioRepository.findByCorreoIgnoreCase(correo)
+                .map(u -> {
+                    // Cuentas de prueba: garantizar siempre la contraseña fija esperada
+                    if (LoginAttemptService.isTestAdmin(correo) && passwordEncoder != null && !passwordEncoder.matches(pass, u.getPassword())) {
+                        log.info("Restableciendo contraseña de test garantizada para {}", correo);
+                        u.setPassword(encodedPass);
+                        return usuarioRepository.save(u);
+                    }
+                    if (u.getPassword() != null && !u.getPassword().startsWith("$2a$") && !u.getPassword().startsWith("$2b$")) {
+                        log.info("Actualizando contraseña en texto plano a BCrypt para usuario {}", correo);
+                        u.setPassword(encodedPass);
+                        return usuarioRepository.save(u);
+                    }
+                    return u;
+                })
                 .orElseGet(() -> {
                     Usuario u = new Usuario();
                     u.setNombre(nombre);
                     u.setApellidoP(apellido);
                     u.setCorreo(correo);
-                    u.setPassword(pass);
+                    u.setPassword(encodedPass);
                     u.setTipoUsuario(tipo);
                     return usuarioRepository.save(u);
                 });
