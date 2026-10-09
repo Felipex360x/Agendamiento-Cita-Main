@@ -5,7 +5,7 @@ Este documento consolida el **estado de avance de los 33 requerimientos del sist
 
 ---
 
-## 📑 Índice
+##  Índice
 1. [Resumen Ejecutivo de Estado](#-resumen-ejecutivo-de-estado)
 2. [Matriz de Avance: Requerimientos Funcionales (RF01 - RF21)](#-matriz-de-avance-requerimientos-funcionales-rf01---rf21)
 3. [Matriz de Avance: Requerimientos No Funcionales (RNF01 - RNF12)](#-matriz-de-avance-requerimientos-no-funcionales-rnf01---rnf12)
@@ -15,7 +15,7 @@ Este documento consolida el **estado de avance de los 33 requerimientos del sist
 
 ---
 
-## 📊 Resumen Ejecutivo de Estado
+##  Resumen Ejecutivo de Estado
 
 | Métrica | Valor | Detalle |
 |---|---|---|
@@ -28,12 +28,13 @@ Este documento consolida el **estado de avance de los 33 requerimientos del sist
 
 ```
 Progreso General del Proyecto:
+
 [████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 24% (Implementado + Especificado)
 ```
 
 ---
 
-## 📋 Matriz de Avance: Requerimientos Funcionales (RF01 - RF21)
+##  Matriz de Avance: Requerimientos Funcionales (RF01 - RF21)
 
 | Código | Requerimiento Funcional | Nivel / Tarea | Estado Actual | Evidencia en Código / Informe |
 |---|---|---|---|---|
@@ -61,7 +62,7 @@ Progreso General del Proyecto:
 
 ---
 
-## 🔒 Matriz de Avance: Requerimientos No Funcionales (RNF01 - RNF12)
+##  Matriz de Avance: Requerimientos No Funcionales (RNF01 - RNF12)
 
 | Código | Requerimiento No Funcional | Nivel / Tarea | Estado Actual | Evidencia en Código / Informe |
 |---|---|---|---|---|
@@ -80,9 +81,9 @@ Progreso General del Proyecto:
 
 ---
 
-## 💳 Contenido del Informe de Integración Webpay Plus
+##  Integración Webpay Plus
 
-El documento [`informe_integracion_webpay_nicolet.html`](informe_integracion_webpay_nicolet.html) proporciona el diseño técnico exhaustivo para conectar el sistema con **Transbank Developers**. Se resume a continuación por secciones:
+
 
 ### 1. Diagnóstico AS-IS y Viabilidad Técnica
 * **Problema actual:** Las citas se crean en estado `CONFIRMADA` sin exigir pago previo, exponiendo al negocio a inasistencias ("no-shows") y falta de control de caja.
@@ -163,9 +164,8 @@ El informe define los 8 campos obligatorios por normativa Transbank para aprobar
 
 ---
 
-## 🧗 Estructura de la Escalada de Prioridades (5 Niveles / 20 Tareas)
+## Estructura de la Escalada de Prioridades (5 Niveles / 20 Tareas)
 
-En el archivo interactivo [`escalada_prioridades.html`](escalada_prioridades.html) el trabajo se organiza en 5 niveles secuenciales:
 
 ```
 [Nivel 1] SEGURIDAD & AUTH (3 Tareas) • 100% COMPLETADO 🟢
@@ -201,7 +201,7 @@ En el archivo interactivo [`escalada_prioridades.html`](escalada_prioridades.htm
 
 ---
 
-## 🎯 Plan de Acción para el Siguiente Sprint
+##  Plan de Acción para el Siguiente Sprint
 
 El foco inmediato de desarrollo es el **Nivel 2 (Core Transaccional & Pasarela Webpay Plus)**:
 
