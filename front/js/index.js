@@ -27,6 +27,7 @@ const btnRefresh = document.getElementById('btnRefresh');
 
 // Iniciar aplicación
 document.addEventListener('DOMContentLoaded', () => {
+  if (typeof requireAuth === 'function') requireAuth();
   cargarTiposUsuario();
   cargarUsuarios();
 
@@ -74,7 +75,7 @@ function setStatus(online) {
 // ==========================================
 async function cargarTiposUsuario() {
   try {
-    const response = await fetch(TIPOS_API_URL);
+    const response = await (window.authenticatedFetch || fetch)(TIPOS_API_URL);
     if (!response.ok) return;
 
     const tipos = await response.json();
@@ -103,7 +104,7 @@ async function cargarUsuarios() {
   try {
     userTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--gray);">Cargando usuarios...</td></tr>`;
     
-    const response = await fetch(API_URL);
+    const response = await (window.authenticatedFetch || fetch)(API_URL);
     if (!response.ok) throw new Error('Error al conectar con la API');
 
     const usuarios = await response.json();
@@ -150,10 +151,10 @@ function renderizarUsuarios(usuarios) {
       <td>
         <div class="action-buttons">
           <button class="btn btn-sm btn-edit" title="Editar este usuario (PUT)" onclick="prepararEdicion(${u.id})">
-            ✏️ Editar
+            Editar
           </button>
           <button class="btn btn-sm btn-danger" title="Eliminar usuario (DELETE)" onclick="handleEliminarUsuario(${u.id})">
-            🗑️ Eliminar
+            Eliminar
           </button>
         </div>
       </td>
@@ -176,7 +177,7 @@ async function handleBuscarPorId() {
   try {
     userTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--gray);">Buscando usuario #${id}...</td></tr>`;
     
-    const response = await fetch(`${API_URL}/${id}`);
+    const response = await (window.authenticatedFetch || fetch)(`${API_URL}/${id}`);
     
     if (response.status === 200) {
       const usuario = await response.json();
@@ -216,7 +217,7 @@ function restablecerBusqueda() {
 async function prepararEdicion(id) {
   try {
     // Obtener los datos más recientes del usuario desde la API (GET /id)
-    const response = await fetch(`${API_URL}/${id}`);
+    const response = await (window.authenticatedFetch || fetch)(`${API_URL}/${id}`);
     if (!response.ok) {
       showToast(`No se pudo obtener el usuario #${id} para editar`, 'error');
       return;
@@ -239,7 +240,7 @@ async function prepararEdicion(id) {
     formTitle.innerText = `Editar Usuario #${usuario.id}`;
     formMethodBadge.innerText = 'PUT';
     formMethodBadge.className = 'badge-role administrador';
-    btnSubmit.innerText = '💾 Actualizar Usuario (PUT)';
+    btnSubmit.innerText = 'Actualizar Usuario (PUT)';
     btnSubmit.className = 'btn btn-primary';
     btnCancelEdit.style.display = 'block';
     
@@ -306,7 +307,7 @@ async function handleGuardarUsuario(e) {
     const url = esModoEdicion ? `${API_URL}/${idParaEditar}` : API_URL;
     const metodo = esModoEdicion ? 'PUT' : 'POST';
 
-    const response = await fetch(url, {
+    const response = await (window.authenticatedFetch || fetch)(url, {
       method: metodo,
       headers: {
         'Content-Type': 'application/json'
@@ -343,7 +344,7 @@ async function handleEliminarUsuario(id) {
   }
 
   try {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await (window.authenticatedFetch || fetch)(`${API_URL}/${id}`, {
       method: 'DELETE'
     });
 

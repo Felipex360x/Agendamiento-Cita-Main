@@ -167,7 +167,6 @@ public class TrabajadorService {
                 u.getNombre(),
                 u.getApellidoP(),
                 u.getCorreo(),
-                u.getPassword(),
                 tipoDTO
         );
 

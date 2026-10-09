@@ -28,6 +28,9 @@ class UsuarioServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    @Mock
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UsuarioService usuarioService;
 
@@ -121,6 +124,20 @@ class UsuarioServiceTest {
         assertEquals("Martina", resultado.getNombre());
         assertEquals("Mar.con@gmail.com", resultado.getCorreo());
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
+    }
+
+    @Test
+    @DisplayName("crear - debe cifrar la contraseña antes de persistir")
+    void debeCifrarPasswordAlCrear() {
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("Ana", "Perez", "ana@gmail.com", "plaintxt123");
+        when(passwordEncoder.encode("plaintxt123")).thenReturn("$2a$10$encodedpasswordhash");
+        Usuario guardado = new Usuario(5L, "Ana", "Perez", "ana@gmail.com", "$2a$10$encodedpasswordhash");
+        when(usuarioRepository.save(any(Usuario.class))).thenReturn(guardado);
+
+        UsuarioDTO resultado = usuarioService.crear(dto);
+
+        assertNotNull(resultado);
+        verify(passwordEncoder, times(1)).encode("plaintxt123");
     }
 
     // ── eliminar ───────────────────────────────────────────────────────────────

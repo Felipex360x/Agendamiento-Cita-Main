@@ -13,15 +13,13 @@ public class UsuarioDTO {
     private String nombre;
     private String apellidoP;
     private String correo;
-    private String password;
     private TipoUsuarioDTO tipoUsuario;
 
-    public UsuarioDTO(Long id, String nombre, String apellidoP, String correo, String password) {
+    public UsuarioDTO(Long id, String nombre, String apellidoP, String correo) {
         this.id = id;
         this.nombre = nombre;
         this.apellidoP = apellidoP;
         this.correo = correo;
-        this.password = password;
         this.tipoUsuario = null;
     }
 

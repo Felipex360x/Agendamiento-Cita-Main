@@ -3,6 +3,7 @@
 // ========================================================
 
 const API_BASE = 'http://localhost:8080/api/v2/nicolet';
+const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));
 
 // Estado local en memoria
 let serviciosDisponibles = [];
@@ -28,6 +29,7 @@ const citaForm = document.getElementById('citaForm');
 
 // Iniciar al cargar
 document.addEventListener('DOMContentLoaded', () => {
+  if (typeof requireAuth === 'function') requireAuth();
   establecerFechaMinima();
   verificarConexion();
   cargarDatosFormulario();
@@ -38,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sId = Number(servicioSelect.value);
     const servicio = serviciosDisponibles.find(s => s.id === sId);
     if (servicio) {
-      servicioInfoEl.textContent = `⏱️ Duración: ${servicio.duracionMinutos} min | 💰 Precio: $${Number(servicio.precio).toLocaleString('es-CL')}`;
+      servicioInfoEl.textContent = `Duración: ${servicio.duracionMinutos} min | Precio: $${Number(servicio.precio).toLocaleString('es-CL')}`;
     } else {
       servicioInfoEl.textContent = '';
     }
@@ -67,7 +69,7 @@ function mostrarAlerta(mensaje, esError = false) {
 // Verificar conexión con el backend
 async function verificarConexion() {
   try {
-    const res = await fetch(`${API_BASE}/servicios`, { method: 'GET' });
+    const res = await apiFetch(`${API_BASE}/servicios`, { method: 'GET' });
     if (res.ok) {
       statusBadge.className = 'status-badge connected';
       statusText.textContent = 'API Conectada (8080)';
@@ -88,7 +90,7 @@ function marcarDesconectado() {
 async function cargarDatosFormulario() {
   try {
     // 1. Cargar Servicios
-    const resServicios = await fetch(`${API_BASE}/servicios`);
+    const resServicios = await apiFetch(`${API_BASE}/servicios`);
     if (resServicios.ok) {
       serviciosDisponibles = await resServicios.json();
       totalServiciosEl.textContent = serviciosDisponibles.length;
@@ -101,7 +103,7 @@ async function cargarDatosFormulario() {
     }
 
     // 2. Cargar Clientes
-    const resClientes = await fetch(`${API_BASE}/clientes`);
+    const resClientes = await apiFetch(`${API_BASE}/clientes`);
     if (resClientes.ok) {
       clientesDisponibles = await resClientes.json();
       clienteSelect.innerHTML = '<option value="" disabled selected>Seleccione un cliente...</option>' +
@@ -113,7 +115,7 @@ async function cargarDatosFormulario() {
     }
 
     // 3. Cargar Trabajadores
-    const resTrabajadores = await fetch(`${API_BASE}/trabajadores`);
+    const resTrabajadores = await apiFetch(`${API_BASE}/trabajadores`);
     if (resTrabajadores.ok) {
       trabajadoresDisponibles = await resTrabajadores.json();
       trabajadorSelect.innerHTML = '<option value="" disabled selected>Seleccione un profesional...</option>' +
@@ -139,7 +141,7 @@ async function cargarCitas() {
       </tr>
     `;
 
-    const res = await fetch(`${API_BASE}/citas`);
+    const res = await apiFetch(`${API_BASE}/citas`);
     if (!res.ok) throw new Error('Error al obtener citas');
 
     const citas = await res.json();
@@ -187,7 +189,7 @@ async function cargarCitas() {
             <span style="font-size:0.8rem; color: var(--gray);">$${precioFormat}</span>
           </td>
           <td>
-            📅 ${fechaInicio}<br>
+            ${fechaInicio}<br>
             <span style="font-size:0.8rem; color: var(--gray);">Hasta ${fechaFin}</span>
           </td>
           <td>
@@ -197,12 +199,12 @@ async function cargarCitas() {
             <div class="btn-action-group">
               ${puedeCompletar ? `
                 <button class="btn btn-sm btn-secondary" onclick="cambiarEstadoCita(${cita.id}, 'COMPLETADA')" title="Marcar como atendida">
-                  ✓ Finalizar
+                  Finalizar
                 </button>
               ` : ''}
               ${puedeCancelar ? `
                 <button class="btn btn-sm btn-danger" onclick="cambiarEstadoCita(${cita.id}, 'CANCELADA')" title="Cancelar cita">
-                  ✕ Cancelar
+                  Cancelar
                 </button>
               ` : ''}
               ${!puedeCompletar && !puedeCancelar ? `
@@ -238,7 +240,7 @@ async function manejarAgendamiento(e) {
   };
 
   try {
-    const res = await fetch(`${API_BASE}/citas`, {
+    const res = await apiFetch(`${API_BASE}/citas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -248,16 +250,16 @@ async function manejarAgendamiento(e) {
 
     if (!res.ok) {
       const errorMsg = data.error || (data.errores ? Object.values(data.errores).join(', ') : 'No se pudo agendar la cita');
-      mostrarAlerta(`❌ Error: ${errorMsg}`, true);
+      mostrarAlerta(`Error: ${errorMsg}`, true);
       return;
     }
 
-    mostrarAlerta(`✅ Cita agendada con éxito: Código ${data.codigoReserva}`);
+    mostrarAlerta(`Cita agendada con éxito: Código ${data.codigoReserva}`);
     citaForm.reset();
     servicioInfoEl.textContent = '';
     cargarCitas();
   } catch (error) {
-    mostrarAlerta(`❌ Error de red: ${error.message}`, true);
+    mostrarAlerta(`Error de red: ${error.message}`, true);
   }
 }
 
@@ -269,7 +271,7 @@ async function cambiarEstadoCita(id, nuevoEstado) {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/citas/${id}/estado`, {
+    const res = await apiFetch(`${API_BASE}/citas/${id}/estado`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -281,14 +283,14 @@ async function cambiarEstadoCita(id, nuevoEstado) {
     const data = await res.json();
 
     if (!res.ok) {
-      mostrarAlerta(`❌ Error: ${data.error || 'No se pudo actualizar el estado'}`, true);
+      mostrarAlerta(`Error: ${data.error || 'No se pudo actualizar el estado'}`, true);
       return;
     }
 
-    mostrarAlerta(`✅ Estado de la cita actualizado a ${nuevoEstado}`);
+    mostrarAlerta(`Estado de la cita actualizado a ${nuevoEstado}`);
     cargarCitas();
   } catch (error) {
-    mostrarAlerta(`❌ Error de red: ${error.message}`, true);
+    mostrarAlerta(`Error de red: ${error.message}`, true);
   }
 }
 
@@ -311,7 +313,7 @@ async function guardarNuevoCliente(e) {
 
   try {
     // Crear el usuario con rol CLIENTE (id: 2)
-    const resUser = await fetch(`${API_BASE}/usuarios`, {
+    const resUser = await apiFetch(`${API_BASE}/usuarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -325,12 +327,12 @@ async function guardarNuevoCliente(e) {
 
     if (!resUser.ok) {
       const err = await resUser.json();
-      mostrarAlerta(`❌ Error creando cliente: ${err.error || 'Correo ya existe o datos inválidos'}`, true);
+      mostrarAlerta(`Error creando cliente: ${err.error || 'Correo ya existe o datos inválidos'}`, true);
       return;
     }
 
     cerrarModalCliente();
-    mostrarAlerta(`✅ Cliente ${nombre} ${apellidoP} registrado exitosamente`);
+    mostrarAlerta(`Cliente ${nombre} ${apellidoP} registrado exitosamente`);
     await cargarDatosFormulario();
 
     // Seleccionar el nuevo cliente creado
@@ -339,7 +341,7 @@ async function guardarNuevoCliente(e) {
       clienteSelect.value = clienteCreado.id;
     }
   } catch (error) {
-    mostrarAlerta(`❌ Error de conexión: ${error.message}`, true);
+    mostrarAlerta(`Error de conexión: ${error.message}`, true);
   }
 }
 
@@ -361,7 +363,7 @@ async function guardarNuevoTrabajador(e) {
 
   try {
     // Crear el usuario con rol PROFESIONAL (id: 3)
-    const resUser = await fetch(`${API_BASE}/usuarios`, {
+    const resUser = await apiFetch(`${API_BASE}/usuarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -375,12 +377,12 @@ async function guardarNuevoTrabajador(e) {
 
     if (!resUser.ok) {
       const err = await resUser.json();
-      mostrarAlerta(`❌ Error creando profesional: ${err.error || 'Correo ya existe o datos inválidos'}`, true);
+      mostrarAlerta(`Error creando profesional: ${err.error || 'Correo ya existe o datos inválidos'}`, true);
       return;
     }
 
     cerrarModalTrabajador();
-    mostrarAlerta(`✅ Profesional ${nombre} ${apellidoP} registrado exitosamente`);
+    mostrarAlerta(`Profesional ${nombre} ${apellidoP} registrado exitosamente`);
     await cargarDatosFormulario();
 
     // Seleccionar el nuevo trabajador creado
@@ -389,6 +391,6 @@ async function guardarNuevoTrabajador(e) {
       trabajadorSelect.value = trabajadorCreado.id;
     }
   } catch (error) {
-    mostrarAlerta(`❌ Error de conexión: ${error.message}`, true);
+    mostrarAlerta(`Error de conexión: ${error.message}`, true);
   }
 }

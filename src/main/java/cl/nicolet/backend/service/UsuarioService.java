@@ -57,6 +57,9 @@ public class UsuarioService {
     @Autowired(required = false)
     private HorarioDisponibilidadRepository horarioDisponibilidadRepository;
 
+    @Autowired(required = false)
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     public List<UsuarioDTO> findAll(){
         Log.info("Consultando a todos los usuarios");
         return usuarioRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
@@ -75,7 +78,12 @@ public class UsuarioService {
         u.setNombre(dto.getNombre());
         u.setApellidoP(dto.getApellidoP());
         u.setCorreo(dto.getCorreo());
-        u.setPassword(dto.getPassword());
+
+        String pass = dto.getPassword();
+        if (pass != null && passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$")) {
+            pass = passwordEncoder.encode(pass);
+        }
+        u.setPassword(pass);
 
         if (dto.getTipoUsuarioId() != null && tipoUsuarioRepository != null) {
             TipoUsuario tipo = tipoUsuarioRepository.findById(dto.getTipoUsuarioId())
@@ -97,7 +105,14 @@ public class UsuarioService {
         u.setNombre(dto.getNombre());
         u.setApellidoP(dto.getApellidoP());
         u.setCorreo(dto.getCorreo());
-        u.setPassword(dto.getPassword());
+
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            String pass = dto.getPassword();
+            if (passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$")) {
+                pass = passwordEncoder.encode(pass);
+            }
+            u.setPassword(pass);
+        }
 
         if (dto.getTipoUsuarioId() != null && tipoUsuarioRepository != null) {
             TipoUsuario tipo = tipoUsuarioRepository.findById(dto.getTipoUsuarioId())
@@ -178,7 +193,6 @@ public class UsuarioService {
             u.getNombre(),
             u.getApellidoP(),
             u.getCorreo(),
-            u.getPassword(),
             tipoDTO
         );
     }

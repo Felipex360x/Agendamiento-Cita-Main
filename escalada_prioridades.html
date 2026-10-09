@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escalada de Prioridades de Desarrollo - Nicolet Estudio</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #e0e7ff;
+      --lvl1-color: #dc2626;
+      --lvl1-bg: #fef2f2;
+      --lvl1-border: #fca5a5;
+      --lvl2-color: #ea580c;
+      --lvl2-bg: #fff7ed;
+      --lvl2-border: #fdba74;
+      --lvl3-color: #2563eb;
+      --lvl3-bg: #eff6ff;
+      --lvl3-border: #93c5fd;
+      --lvl4-color: #0d9488;
+      --lvl4-bg: #f0fdfa;
+      --lvl4-border: #99f6e4;
+      --lvl5-color: #64748b;
+      --lvl5-bg: #f8fafc;
+      --lvl5-border: #cbd5e1;
+      --success: #16a34a;
+      --success-bg: #dcfce7;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: var(--gray-800);
+      line-height: 1.55;
+      padding-bottom: 4rem;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      color: white;
+      padding: 2.75rem 2rem 3.5rem 2rem;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .header-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .header-title h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+
+    .header-title p {
+      color: #cbd5e1;
+      font-size: 1.05rem;
+      max-width: 850px;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: -2rem auto 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .tracker-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .tracker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .tracker-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tracker-stats {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 14px;
+      background: var(--gray-200);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f46e5 0%, #10b981 100%);
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .kpi-box {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+      border-top: 5px solid var(--gray-400);
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .kpi-box:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .kpi-box.n1 { border-top-color: var(--lvl1-color); }
+    .kpi-box.n2 { border-top-color: var(--lvl2-color); }
+    .kpi-box.n3 { border-top-color: var(--lvl3-color); }
+    .kpi-box.n4 { border-top-color: var(--lvl4-color); }
+    .kpi-box.n5 { border-top-color: var(--lvl5-color); }
+
+    .kpi-level {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.35rem;
+    }
+
+    .kpi-box.n1 .kpi-level { color: var(--lvl1-color); }
+    .kpi-box.n2 .kpi-level { color: var(--lvl2-color); }
+    .kpi-box.n3 .kpi-level { color: var(--lvl3-color); }
+    .kpi-box.n4 .kpi-level { color: var(--lvl4-color); }
+    .kpi-box.n5 .kpi-level { color: var(--lvl5-color); }
+
+    .kpi-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.4rem;
+    }
+
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--gray-600);
+    }
+
+    .callout-sprint {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .callout-sprint h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .callout-sprint p {
+      color: #c7d2fe;
+      font-size: 0.95rem;
+      max-width: 800px;
+    }
+
+    .btn-action-primary {
+      background: #4f46e5;
+      color: white;
+      padding: 0.75rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .btn-action-primary:hover {
+      background: #4338ca;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    }
+
+    .controls-bar {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1rem 1.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 2.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      position: sticky;
+      top: 1rem;
+      z-index: 50;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-filter {
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid var(--gray-300);
+      background: white;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-filter:hover {
+      background: var(--gray-100);
+    }
+
+    .btn-filter.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .search-box {
+      position: relative;
+      flex-grow: 1;
+      max-width: 340px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.55rem 1rem 0.55rem 2.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--gray-300);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      font-size: 0.9rem;
+    }
+
+    .ladder-section {
+      margin-bottom: 3.5rem;
+    }
+
+    .ladder-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--gray-300);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .ladder-title-area {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .ladder-badge {
+      padding: 0.35rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: white;
+    }
+
+    .ladder-section.n1 .ladder-badge { background: var(--lvl1-color); }
+    .ladder-section.n2 .ladder-badge { background: var(--lvl2-color); }
+    .ladder-section.n3 .ladder-badge { background: var(--lvl3-color); }
+    .ladder-section.n4 .ladder-badge { background: var(--lvl4-color); }
+    .ladder-section.n5 .ladder-badge { background: var(--lvl5-color); }
+
+    .ladder-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--gray-900);
+    }
+
+    .ladder-desc {
+      color: var(--gray-600);
+      font-size: 0.92rem;
+      width: 100%;
+      margin-top: 0.25rem;
+    }
+
+    .task-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .task-card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .task-card.completed {
+      background: #f8fafc;
+      border-color: #86efac;
+    }
+
+    .task-card.completed .task-title {
+      text-decoration: line-through;
+      color: var(--gray-600);
+    }
+
+    .task-header {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .task-check-wrap {
+      padding-top: 0.2rem;
+    }
+
+    .task-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--success);
+    }
+
+    .task-main {
+      flex-grow: 1;
+    }
+
+    .task-meta-top {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.35rem;
+    }
+
+    .task-id {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: var(--gray-800);
+      color: white;
+    }
+
+    .req-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1px solid #c7d2fe;
+    }
+
+    .impact-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .impact-tag.critico { background: var(--lvl1-bg); color: var(--lvl1-color); border: 1px solid var(--lvl1-border); }
+    .impact-tag.alto { background: var(--lvl2-bg); color: var(--lvl2-color); border: 1px solid var(--lvl2-border); }
+    .impact-tag.medio { background: var(--lvl3-bg); color: var(--lvl3-color); border: 1px solid var(--lvl3-border); }
+    .impact-tag.bajo { background: var(--lvl5-bg); color: var(--lvl5-color); border: 1px solid var(--lvl5-border); }
+
+    .task-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      line-height: 1.35;
+    }
+
+    .task-summary {
+      font-size: 0.9rem;
+      color: var(--gray-600);
+      margin-top: 0.25rem;
+    }
+
+    .task-toggle-btn {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .task-card.expanded .task-toggle-btn {
+      transform: rotate(180deg);
+    }
+
+    .task-details {
+      display: none;
+      padding: 1.25rem 1.5rem 1.5rem 1.5rem;
+      border-top: 1px solid var(--gray-200);
+      background: #fafafa;
+    }
+
+    .task-card.expanded .task-details {
+      display: block;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .detail-box {
+      background: white;
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+    }
+
+    .detail-box h4 {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gray-700);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .detail-box ul {
+      margin-left: 1.25rem;
+      font-size: 0.86rem;
+      color: var(--gray-700);
+    }
+
+    .detail-box ul li {
+      margin-bottom: 0.35rem;
+    }
+
+    .code-snippet {
+      font-family: 'Consolas', monospace;
+      font-size: 0.82rem;
+      background: var(--gray-100);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      color: #b91c1c;
+    }
+
+    .checklist-box {
+      background: white;
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+    }
+
+    .checklist-box h4 {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--success);
+      margin-bottom: 0.5rem;
+    }
+
+    .sub-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.87rem;
+      color: var(--gray-700);
+      margin-bottom: 0.4rem;
+    }
+
+    .sub-item input {
+      accent-color: var(--success);
+    }
+
+    footer {
+      max-width: 1280px;
+      margin: 3rem auto 0 auto;
+      text-align: center;
+      padding-top: 2rem;
+      border-top: 1px solid var(--gray-300);
+      color: var(--gray-600);
+      font-size: 0.88rem;
+    }
+
+    @media print {
+      body { background: white; }
+      header { background: #0f172a; color: white; }
+      .controls-bar { display: none; }
+      .task-details { display: block !important; }
+      .task-card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <div class="header-top">
+        <div class="header-title">
+          <h1>🧗 Escalada de Prioridades de Desarrollo</h1>
+          <p>Hoja de ruta secuencial estructurada para solventar todas las brechas del proyecto <strong>Nicolet Estudio</strong> frente al informe de requerimientos.</p>
+        </div>
+        <div class="header-badges">
+          <div class="pill">📋 33 Requerimientos (21 RF + 12 RNF)</div>
+          <div class="pill">🎯 5 Niveles de Prioridad</div>
+          <div class="pill">💳 Integración Transbank Webpay Plus</div>
+          <div class="pill">⏱️ Estimación: 5 Sprints</div>
+          <div class="pill">💾 Guardado Automático de Avance</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section class="tracker-card" id="tracker">
+      <div class="tracker-header">
+        <div class="tracker-title">
+          <span>📊 Estado General de Ejecución</span>
+        </div>
+        <div class="tracker-stats">
+          <span>Tareas Completadas: <strong id="completedCount">0</strong> / <strong id="totalCount">20</strong></span>
+          <span>Avance Total: <strong id="percentCount" style="color: var(--primary);">0%</strong></span>
+          <button class="btn-filter" onclick="reiniciarProgreso()" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">↺ Reset</button>
+        </div>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+    </section>
+
+    <div class="callout-sprint">
+      <div>
+        <h3>⚡ Punto de Partida Recomendado: Sprint 1 (Semana 1)</h3>
+        <p>Comienza inmediatamente por el <strong>Nivel 1 (Seguridad y Autenticación)</strong>. El sistema tiene contraseñas en texto plano y carece de autenticación, lo que impide cualquier prueba segura de reservas o despliegue.</p>
+      </div>
+      <a href="#nivel-1" class="btn-action-primary" onclick="filtrarNivel('n1')">
+        Ir a Nivel 1 (Inmediato) ↓
+      </a>
+    </div>
+
+    <section class="kpi-row">
+      <div class="kpi-box n1" onclick="filtrarNivel('n1')">
+        <div class="kpi-level">Nivel 1 • Bloqueante</div>
+        <div class="kpi-name">Seguridad & Auth</div>
+        <div class="kpi-sub">3 Tareas Críticas (BCrypt, JWT, RBAC)</div>
+      </div>
+      <div class="kpi-box n2" onclick="filtrarNivel('n2')">
+        <div class="kpi-level">Nivel 2 • Alta Prioridad</div>
+        <div class="kpi-name">Core Transaccional & Webpay</div>
+        <div class="kpi-sub">7 Tareas (Disponibilidad, Webpay 5 Fases, RUT)</div>
+      </div>
+      <div class="kpi-box n3" onclick="filtrarNivel('n3')">
+        <div class="kpi-level">Nivel 3 • Media-Alta</div>
+        <div class="kpi-name">Agenda & Stock</div>
+        <div class="kpi-sub">4 Tareas (Insumos, Deducción, Mi Agenda)</div>
+      </div>
+      <div class="kpi-box n4" onclick="filtrarNivel('n4')">
+        <div class="kpi-level">Nivel 4 • Media</div>
+        <div class="kpi-name">Ficha & Alertas</div>
+        <div class="kpi-sub">3 Tareas (Ficha Técnica, Observaciones, Emails)</div>
+      </div>
+      <div class="kpi-box n5" onclick="filtrarNivel('n5')">
+        <div class="kpi-level">Nivel 5 • Media-Baja</div>
+        <div class="kpi-name">Gestión & Calidad</div>
+        <div class="kpi-sub">3 Tareas (Dashboard, Auditoría, Backups)</div>
+      </div>
+    </section>
+
+    <div class="controls-bar">
+      <div class="filter-group">
+        <button class="btn-filter active" onclick="filtrarNivel('todos')">Todos los Niveles</button>
+        <button class="btn-filter" onclick="filtrarNivel('n1')">🔴 Nivel 1 (Crítico)</button>
+        <button class="btn-filter" onclick="filtrarNivel('n2')">🟠 Nivel 2 (Alta)</button>
+        <button class="btn-filter" onclick="filtrarNivel('n3')">🔵 Nivel 3 (Media-Alta)</button>
+        <button class="btn-filter" onclick="filtrarNivel('n4')">🟢 Nivel 4 (Media)</button>
+        <button class="btn-filter" onclick="filtrarNivel('n5')">⚪ Nivel 5 (Media-Baja)</button>
+      </div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar tarea, RF o archivo..." onkeyup="buscarTareas()">
+      </div>
+    </div>
+
+    <!-- NIVEL 1 -->
+    <section class="ladder-section n1" id="nivel-1" data-nivel="n1">
+      <div class="ladder-header">
+        <div class="ladder-title-area">
+          <span class="ladder-badge">Nivel 1 • Bloqueante Inmediato</span>
+          <h2 class="ladder-title">Seguridad, Autenticación y Control de Acceso</h2>
+        </div>
+        <p class="ladder-desc">
+          <strong>Justificación técnica:</strong> Sin autenticación ni cifrado de claves, cualquier usuario anónimo en internet puede leer datos de clientes, alterar reservas o borrar registros. Las claves se almacenan y exponen en texto plano. Debe resolverse antes de cualquier otra funcionalidad.
+        </p>
+      </div>
+
+      <!-- TAREA 1.1 -->
+      <article class="task-card" data-task-id="t1_1">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T1.1</span>
+              <span class="req-tag">RNF02</span>
+              <span class="req-tag">RNF03</span>
+              <span class="impact-tag critico">Impacto Crítico</span>
+            </div>
+            <h3 class="task-title">Cifrado de Contraseñas (BCrypt) y Sanitización de DTOs</h3>
+            <p class="task-summary">Integrar BCryptPasswordEncoder en backend para nunca guardar claves en texto plano y remover la contraseña de <code>UsuarioDTO</code>.</p>
+          </div>
+          <button class="task-toggle-btn" aria-label="Expandir detalles">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🛠️ Acciones Backend</h4>
+              <ul>
+                <li>Instanciar <code>BCryptPasswordEncoder</code> en una clase de configuración.</li>
+                <li>Modificar <code>UsuarioService.crear()</code> y <code>actualizar()</code> para codificar la contraseña antes de <code>usuarioRepository.save()</code>.</li>
+                <li>Eliminar el campo <code>password</code> del constructor y getters de <code>UsuarioDTO</code>.</li>
+                <li>Crear script de migración en MySQL para actualizar las contraseñas semilla existentes con hashes válidos de BCrypt.</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos a Modificar</h4>
+              <ul>
+                <li><span class="code-snippet">UsuarioService.java</span> (hashear contraseña y limpiar retorno)</li>
+                <li><span class="code-snippet">UsuarioDTO.java</span> (remover campo password)</li>
+                <li><span class="code-snippet">SecurityConfig.java</span> (nuevo bean PasswordEncoder)</li>
+                <li><span class="code-snippet">db/init.sql</span> (actualizar hashes semilla)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Al consultar <code>GET /api/v2/nicolet/usuarios</code> no figura el campo contraseña en ninguna respuesta JSON.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> Al guardar un usuario, el valor en la columna <code>password</code> de MySQL comienza con el prefijo <code>$2a$10$...</code>.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 1.2 -->
+      <article class="task-card" data-task-id="t1_2">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T1.2</span>
+              <span class="req-tag">RF02</span>
+              <span class="req-tag">RNF01</span>
+              <span class="impact-tag critico">Impacto Crítico</span>
+            </div>
+            <h3 class="task-title">Módulo de Autenticación con Tokens JWT y Spring Security</h3>
+            <p class="task-summary">Implementar endpoint de Login (<code>/api/v2/nicolet/auth/login</code>), generación de JWT y validación mediante filtro de seguridad.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🛠️ Acciones Backend</h4>
+              <ul>
+                <li>Añadir <code>spring-boot-starter-security</code> y <code>jjwt-api</code> en <code>pom.xml</code>.</li>
+                <li>Crear <code>JwtUtils</code> (generar y validar token con clave secreta y expiración de 24h).</li>
+                <li>Crear <code>JwtAuthenticationFilter</code> para interceptar peticiones con cabecera <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+                <li>Crear <code>AuthController</code> con endpoint <code>POST /auth/login</code> que valide correo y password y retorne el token y rol.</li>
+                <li><strong>Compatibilidad Webpay:</strong> En <code>SecurityConfig.java</code>, habilitar excepción pública para el callback de retorno de Transbank (<code>/api/v2/nicolet/pagos/webpay/retorno</code>), evitando bloqueos 401 por falta de cabecera Bearer en la redirección bancaria.</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos a Modificar / Crear</h4>
+              <ul>
+                <li><span class="code-snippet">pom.xml</span> (dependencias Spring Security y JWT)</li>
+                <li><span class="code-snippet">security/JwtUtils.java</span> y <span class="code-snippet">JwtAuthFilter.java</span></li>
+                <li><span class="code-snippet">controller/AuthController.java</span></li>
+                <li><span class="code-snippet">security/SecurityConfig.java</span> (rutas públicas y whitelist)</li>
+                <li><span class="code-snippet">dto/LoginRequestDTO.java</span> y <span class="code-snippet">AuthResponseDTO.java</span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Petición con credenciales erróneas devuelve <code>401 Unauthorized</code>.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> Petición con credenciales válidas retorna token JWT y datos de identidad con rol.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> La ruta de retorno de Webpay permite ser invocada públicamente por Transbank sin token Bearer.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 1.3 -->
+      <article class="task-card" data-task-id="t1_3">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T1.3</span>
+              <span class="req-tag">RF02</span>
+              <span class="req-tag">RF03</span>
+              <span class="impact-tag alto">Impacto Alto</span>
+            </div>
+            <h3 class="task-title">Pantalla de Login y Gestión de Sesión en Frontend</h3>
+            <p class="task-summary">Diseñar <code>login.html</code> con control de sesión, almacenamiento de token en localStorage y redirección según perfil.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🌐 Acciones Frontend</h4>
+              <ul>
+                <li>Crear pantalla <code>front/login.html</code> moderna y responsiva.</li>
+                <li>Implementar <code>front/js/auth.js</code>: enviar credenciales, guardar token y rol en <code>localStorage</code>.</li>
+                <li>Agregar lógica de protección de rutas en <code>index.html</code> y <code>citas.html</code> (si no hay token, redirigir a login).</li>
+                <li>Añadir botón de "Cerrar Sesión" en la barra de navegación superior.</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos a Modificar / Crear</h4>
+              <ul>
+                <li><span class="code-snippet">front/login.html</span> (nueva vista de acceso)</li>
+                <li><span class="code-snippet">front/js/auth.js</span> (manejador de autenticación y tokens)</li>
+                <li><span class="code-snippet">front/index.html</span> y <span class="code-snippet">citas.html</span> (adjuntar token en Fetch API)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Un usuario anónimo que entra a <code>citas.html</code> es redirigido automáticamente a <code>login.html</code>.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> Al pulsar "Cerrar Sesión" se destruye el token y se vuelve al login.
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- NIVEL 2 -->
+    <section class="ladder-section n2" id="nivel-2" data-nivel="n2">
+      <div class="ladder-header">
+        <div class="ladder-title-area">
+          <span class="ladder-badge">Nivel 2 • Alta Prioridad</span>
+          <h2 class="ladder-title">Núcleo Transaccional de Reservas y Pasarela Webpay Plus</h2>
+        </div>
+        <p class="ladder-desc">
+          <strong>Justificación técnica:</strong> El modelo de negocio de Nicolet Estudio exige reserva con abono obligatorio de al menos $5.000 CLP vía Webpay Plus REST. Actualmente las citas se confirman sin dinero y los usuarios no pueden ver qué bloques de horas están libres ni pagar con tarjetas bancarias (débito/crédito).
+        </p>
+      </div>
+
+      <div class="callout info" style="margin-bottom: 1.5rem; border-left: 4px solid var(--lvl2-color); background: var(--lvl2-bg);">
+        <div class="callout-title" style="color: var(--lvl2-color); font-weight: 800;">💳 Especificación de Integración Transbank Webpay Plus</div>
+        <p style="font-size: 0.9rem; color: var(--gray-700);">
+          La arquitectura técnica completa, diagramas de secuencia, especificación REST v1.2 y snippets oficiales están detallados en: 
+          <a href="informe_integracion_webpay_nicolet.html" target="_blank" style="color: var(--primary); font-weight: 700; text-decoration: underline;">informe_integracion_webpay_nicolet.html</a>. Comprende las 5 fases de ingeniería estructuradas desde T2.3 hasta T2.7.
+        </p>
+      </div>
+
+      <!-- TAREA 2.1 -->
+      <article class="task-card" data-task-id="t2_1">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T2.1</span>
+              <span class="req-tag">RF04</span>
+              <span class="req-tag">RF05</span>
+              <span class="impact-tag critico">Impacto Crítico</span>
+            </div>
+            <h3 class="task-title">Endpoint y Selector de Bloques Horarios Disponibles</h3>
+            <p class="task-summary">Permitir consultar dinámicamente qué franjas horarias están libres para una fecha, trabajador y servicio antes de iniciar el agendamiento y pago.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🛠️ Acciones Backend</h4>
+              <ul>
+                <li>Crear endpoint <code>GET /api/v2/nicolet/citas/disponibilidad</code> con parámetros <code>trabajadorId</code>, <code>fecha</code> y <code>servicioId</code>.</li>
+                <li>Lógica en <code>CitaService</code>: calcular jornada laboral del día, restar pausas de descanso y restar citas reservadas o retenidas temporalmente en estado <code>PENDIENTE</code>.</li>
+                <li>Retornar lista de bloques disponibles (ej: <code>["09:00", "10:30", "12:00", "15:00"]</code>).</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>🌐 Acciones Frontend</h4>
+              <ul>
+                <li>En <code>citas.html</code>, al elegir trabajador, servicio y fecha, consultar automáticamente el endpoint de disponibilidad.</li>
+                <li>Renderizar botones interactivos tipo "chips" con las horas libres para que el usuario solo haga clic en una hora válida garantizada.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> El usuario ya no puede escribir manualmente horas arbitrarias ni solapadas en el formulario.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> Solo se muestran bloques que calzan exactamente con la duración del servicio seleccionado.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 2.2 -->
+      <article class="task-card" data-task-id="t2_2">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T2.2</span>
+              <span class="req-tag">RF01</span>
+              <span class="impact-tag medio">Impacto Medio</span>
+            </div>
+            <h3 class="task-title">Portal de Auto-Registro de Clientes y Validación de RUT</h3>
+            <p class="task-summary">Crear formulario público de auto-registro para nuevos clientes con validación estricta de RUT chileno (módulo 11) antes del pago.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🛠️ Acciones Backend &amp; Frontend</h4>
+              <ul>
+                <li>Crear anotación de validación personalizada <code>@ValidRut</code> con algoritmo de dígito verificador (módulo 11).</li>
+                <li>Endpoint público <code>POST /api/v2/nicolet/auth/registro-cliente</code>.</li>
+                <li>Vista <code>registro.html</code> con validación en vivo de formato RUT (ej: 12.345.678-K), teléfono chileno y correo.</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos a Modificar / Crear</h4>
+              <ul>
+                <li><span class="code-snippet">validation/RutValidator.java</span> y <span class="code-snippet">ValidRut.java</span></li>
+                <li><span class="code-snippet">controller/AuthController.java</span> (endpoint público de registro)</li>
+                <li><span class="code-snippet">front/registro.html</span> (formulario de registro)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Un RUT con dígito verificador incorrecto (ej: 11.111.111-2) es rechazado en backend y frontend.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> El cliente registrado queda habilitado para agendar citas y pagar con Webpay.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 2.3 -->
+      <article class="task-card" data-task-id="t2_3">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T2.3</span>
+              <span class="req-tag">RF06</span>
+              <span class="req-tag">RNF07</span>
+              <span class="impact-tag critico">Impacto Crítico</span>
+            </div>
+            <h3 class="task-title">Webpay Plus (Fase 1) • SDK Oficial, Esquema DDL MySQL y Entidad JPA de Pago</h3>
+            <p class="task-summary">Incorporar <code>transbank-sdk-java:6.2.1</code> en Maven, modelar tabla <code>pago</code> con trazabilidad TBK y validar abono mínimo de $5.000 CLP.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🗄️ Persistencia &amp; Dependencias</h4>
+              <ul>
+                <li>Añadir dependencia oficial <code>com.github.transbankdevelopers:transbank-sdk-java:6.2.1</code> en <code>pom.xml</code>.</li>
+                <li>Crear tabla <code>pago</code> en <code>db/init.sql</code>: campos <code>buy_order</code> UNIQUE, <code>session_id</code>, <code>token_ws</code> UNIQUE, <code>monto</code>, <code>estado</code>, <code>codigo_autorizacion</code>, <code>ultimos_cuatro_digitos</code>, <code>tipo_pago</code> (VD/VN/VC), <code>codigo_respuesta</code>, <code>vci</code> y FK <code>cita_id</code>.</li>
+                <li>Crear entidad JPA <code>Pago.java</code> y enum <code>EstadoPago</code> (INICIADO, APROBADO, RECHAZADO, ABORTADO).</li>
+                <li>Crear <code>PagoRepository.java</code> con métodos <code>findByTokenWs()</code> y <code>findByBuyOrder()</code>.</li>
+                <li>Validar regla de negocio de monto mínimo en <code>PagoService</code>: si <code>monto &lt; 5000</code> CLP lanzar <code>MontoMinimoInvalidoException</code> (400 Bad Request).</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos a Modificar / Crear</h4>
+              <ul>
+                <li><span class="code-snippet">pom.xml</span> (dependencia Transbank SDK Java)</li>
+                <li><span class="code-snippet">db/init.sql</span> (DDL tabla pago y restricciones)</li>
+                <li><span class="code-snippet">model/Pago.java</span> y <span class="code-snippet">model/EstadoPago.java</span></li>
+                <li><span class="code-snippet">repository/PagoRepository.java</span></li>
+                <li><span class="code-snippet">service/PagoService.java</span> (validación monto mínimo)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Al inicializar MySQL se crea la tabla <code>pago</code> con índices únicos sobre <code>buy_order</code> y <code>token_ws</code>.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> Un intento de pago por un monto menor a $5.000 CLP es rechazado con <code>400 Bad Request</code>.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 2.4 -->
+      <article class="task-card" data-task-id="t2_4">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T2.4</span>
+              <span class="req-tag">RF06</span>
+              <span class="req-tag">RNF01</span>
+              <span class="impact-tag critico">Impacto Crítico</span>
+            </div>
+            <h3 class="task-title">Webpay Plus (Fase 2) • Servicio Backend (WebpayService), Endpoints REST y Rutas Públicas</h3>
+            <p class="task-summary">Implementar <code>WebpayService</code> (tx.create, tx.commit), endpoints <code>/iniciar</code> y <code>/retorno</code>, gestión de aborto voluntario y excepción en SecurityConfig.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🛠️ Lógica Transbank REST</h4>
+              <ul>
+                <li>Crear <code>WebpayService.java</code> configurando <code>WebpayPlus.Transaction.buildForIntegration()</code> con códigos y llaves de prueba TBK.</li>
+                <li>Método <code>iniciarPago(Long citaId, String returnUrl)</code>: genera orden <code>OC-&lt;citaId&gt;-&lt;timestamp&gt;</code>, sessionId, calcula monto, llama <code>tx.create()</code> y guarda registro en <code>Pago</code> (estado INICIADO).</li>
+                <li>Método <code>confirmarPago(String tokenWs)</code>: llama <code>tx.commit(tokenWs)</code>. Si <code>response_code == 0</code> y status AUTHORIZED, actualiza <code>Pago</code> a APROBADO y confirma la cita. Si falla, marca RECHAZADO y cancela cita.</li>
+                <li><strong>Manejo de Aborto Voluntario:</strong> Detectar parámetros <code>TBK_TOKEN</code> y <code>TBK_ORDEN_COMPRA</code> cuando el usuario cancela en Webpay; marcar pago como ABORTADO y liberar la cita inmediatamente.</li>
+                <li>Crear <code>PagoController.java</code> con endpoints <code>POST /api/v2/nicolet/pagos/webpay/iniciar</code> y <code>POST/GET /api/v2/nicolet/pagos/webpay/retorno</code>.</li>
+                <li>Asegurar que <code>/api/v2/nicolet/pagos/webpay/retorno</code> esté en la whitelist de <code>SecurityConfig.java</code>.</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos Involucrados</h4>
+              <ul>
+                <li><span class="code-snippet">service/WebpayService.java</span> (orquestador Transbank)</li>
+                <li><span class="code-snippet">controller/PagoController.java</span> (endpoints REST)</li>
+                <li><span class="code-snippet">dto/WebpayInitRequestDTO.java</span> y <span class="code-snippet">VoucherDTO.java</span></li>
+                <li><span class="code-snippet">security/SecurityConfig.java</span> (whitelist return_url)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> El endpoint <code>/iniciar</code> retorna <code>{ url, token }</code> válidos generados por Transbank.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> El callback de retorno ejecuta el commit y valida respuesta exitosa (código 0).
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> Si el usuario presiona "Anular compra", se procesa <code>TBK_TOKEN</code> y la cita no queda retenida.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 2.5 -->
+      <article class="task-card" data-task-id="t2_5">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T2.5</span>
+              <span class="req-tag">RF07</span>
+              <span class="req-tag">RNF04</span>
+              <span class="impact-tag alto">Impacto Alto</span>
+            </div>
+            <h3 class="task-title">Webpay Plus (Fase 3) • Orquestación de Cita PENDIENTE y Liberación TTL de Cupos (@Scheduled)</h3>
+            <p class="task-summary">Ajustar <code>CitaService.agendar()</code> para crear citas en estado PENDIENTE y programar un Cron Job en Spring que cancele y libere reservas tras 15 minutos sin pago.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>⏰ Orquestación &amp; Cron Job</h4>
+              <ul>
+                <li>Modificar <code>CitaService.agendar()</code>: la cita se guarda con estado <code>EstadoCita.PENDIENTE</code>, bloqueando temporalmente el cupo en agenda.</li>
+                <li>Programar <code>CitaService.confirmarConPago(Long citaId, Long pagoId)</code>: pasa la cita a <code>CONFIRMADA</code> únicamente con pago aprobado.</li>
+                <li>Crear componente <code>ExpiracionCitasJob.java</code> con <code>@Scheduled(cron = "0 */5 * * * *")</code> (ejecución cada 5 minutos).</li>
+                <li>El job busca citas en estado <code>PENDIENTE</code> con más de 15 minutos de antigüedad, cambia su estado a <code>CANCELADA</code> con motivo "Expiró el tiempo límite para efectuar el pago en Webpay" y libera el horario.</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos Involucrados</h4>
+              <ul>
+                <li><span class="code-snippet">service/CitaService.java</span> (flujo de estados atómicos)</li>
+                <li><span class="code-snippet">config/ExpiracionCitasJob.java</span> (tarea cron programada)</li>
+                <li><span class="code-snippet">repository/CitaRepository.java</span> (método findByEstadoAndCreatedAtBefore)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Ninguna cita nueva puede quedar como <code>CONFIRMADA</code> sin una transacción bancaria exitosa.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> Tras 15 minutos de inactividad sin pagar, el cupo queda liberado automáticamente para nuevos clientes.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 2.6 -->
+      <article class="task-card" data-task-id="t2_6">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T2.6</span>
+              <span class="req-tag">RF06</span>
+              <span class="req-tag">RF07</span>
+              <span class="req-tag">RNF08</span>
+              <span class="impact-tag alto">Impacto Alto</span>
+            </div>
+            <h3 class="task-title">Webpay Plus (Fase 4) • Redirección Frontend (Auto-Submit) y Comprobante Oficial (Voucher Normativo)</h3>
+            <p class="task-summary">Orquestar en JavaScript el envío automático (form POST) a Transbank, recepción del callback y despliegue del Voucher oficial con campos regulatorios.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🖥️ Experiencia Frontend &amp; Voucher TBK</h4>
+              <ul>
+                <li>En <code>front/js/citas.js</code>: Al confirmar la reserva, llamar a <code>/pagos/webpay/iniciar</code>, recibir <code>{ url, token }</code> y crear formulario dinámico oculto para enviar POST inmediato hacia Webpay.</li>
+                <li>Crear vista de retorno <code>front/pago-resultado.html</code> (o modal de resultado en <code>citas.html</code>) para desplegar el resultado de la transacción.</li>
+                <li>Construir el **Comprobante de Pago Electrónico (Voucher Oficial)** exigido por la normativa Transbank:
+                  <ul>
+                    <li>Comercio: <strong>Nicolet Estudio</strong></li>
+                    <li>Código de Reserva y Orden de Compra (<code>OC-...</code>)</li>
+                    <li>Código de Autorización bancario (ej: 1213)</li>
+                    <li>Tipo de Transacción (VD: Débito, VN: Crédito sin cuotas, VC: Con cuotas)</li>
+                    <li>Tarjeta enmascarada (<code>**** **** **** 6623</code>)</li>
+                    <li>Fecha, hora exacta y Monto Total en CLP</li>
+                    <li>Badge: <code>TRANSACCIÓN APROBADA</code> y botón de descarga/impresión</li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos Involucrados</h4>
+              <ul>
+                <li><span class="code-snippet">front/citas.html</span> y <span class="code-snippet">front/js/citas.js</span></li>
+                <li><span class="code-snippet">front/pago-resultado.html</span> (vista de voucher oficial)</li>
+                <li><span class="code-snippet">front/css/citas.css</span> (estilos visuales del voucher)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> El cliente es redirigido transparentemente al portal seguro de Transbank tras completar el formulario.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> El voucher desplegado contiene el 100% de los datos regulatorios obligatorios exigidos por Transbank.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 2.7 -->
+      <article class="task-card" data-task-id="t2_7">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T2.7</span>
+              <span class="req-tag">RNF07</span>
+              <span class="req-tag">RNF08</span>
+              <span class="impact-tag critico">Impacto Crítico</span>
+            </div>
+            <h3 class="task-title">Webpay Plus (Fase 5) • Matriz de Pruebas (5 Tarjetas Test) y Homologación Transbank</h3>
+            <p class="task-summary">Ejecutar y documentar los 5 casos de prueba oficiales con tarjetas de test en ambiente de integración, validar PCI-DSS y tramitar código de producción.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🧪 QA &amp; Certificación TBK</h4>
+              <ul>
+                <li>Ejecutar matriz oficial de pruebas en ambiente de integración (<code>webpay3gint.transbank.cl</code>):
+                  <ol>
+                    <li>Débito Redcompra (<code>6623 0000 0000 0001</code> &bull; Aprobada, tipo VD, código 0).</li>
+                    <li>Crédito Sin Cuotas (<code>6623 0000 0000 0002</code> &bull; Aprobada, tipo VN, código 0).</li>
+                    <li>Crédito En Cuotas (<code>6623 0000 0000 0003</code> &bull; Aprobada, tipo VC, cuotas calculadas).</li>
+                    <li>Rechazo por fondos insuficientes (<code>6623 0000 0000 0004</code> &bull; Respuesta != 0, reversa y cita cancelada).</li>
+                    <li>Cancelación voluntaria por usuario (Abort &bull; Retorno con TBK_TOKEN y liberación de cupo).</li>
+                  </ol>
+                </li>
+                <li>Verificar cumplimiento estricto PCI-DSS: certificar que el comercio jamás almacena números de tarjeta completos ni códigos CVV.</li>
+                <li>Completar Formulario de Homologación con capturas de evidencia y solicitar a Transbank Developers el código de comercio de producción y llave secreta definitiva.</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos Involucrados</h4>
+              <ul>
+                <li><span class="code-snippet">src/test/.../WebpayServiceTest.java</span> (pruebas unitarias)</li>
+                <li><span class="code-snippet">src/test/.../PagoControllerTest.java</span> (pruebas de integración)</li>
+                <li><span class="code-snippet">informe_integracion_webpay_nicolet.html</span> (referencia normativa)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Los 5 casos de prueba oficiales se ejecutan con éxito y quedan documentados con capturas.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> El sistema supera los requisitos de seguridad PCI-DSS y queda listo para el paso a producción.
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- NIVEL 3 -->
+    <section class="ladder-section n3" id="nivel-3" data-nivel="n3">
+      <div class="ladder-header">
+        <div class="ladder-title-area">
+          <span class="ladder-badge">Nivel 3 • Prioridad Media-Alta</span>
+          <h2 class="ladder-title">Operación Diaria del Salón, Agenda y Control de Insumos</h2>
+        </div>
+        <p class="ladder-desc">
+          <strong>Justificación técnica:</strong> En las atenciones de estética se consumen insumos críticos (tintes, esmaltes, geles). El personal necesita ver su propia agenda del día y el sistema debe descontar automáticamente el inventario al terminar un servicio.
+        </p>
+      </div>
+
+      <!-- TAREA 3.1 -->
+      <article class="task-card" data-task-id="t3_1">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T3.1</span>
+              <span class="req-tag">RF13</span>
+              <span class="req-tag">RF16</span>
+              <span class="impact-tag alto">Impacto Alto</span>
+            </div>
+            <h3 class="task-title">Módulo de Gestión de Productos e Insumos (CRUD)</h3>
+            <p class="task-summary">Crear tablas, controladores y vistas para administrar el catálogo físico de insumos, unidades de medida y stock mínimo.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🗄️ Base de Datos & Backend</h4>
+              <ul>
+                <li>Crear tabla <code>producto_insumo</code> (id, nombre, categoria, stock_actual, stock_minimo, unidad_medida, activo).</li>
+                <li>Crear tabla <code>movimiento_stock</code> (id, producto_id, tipo_movimiento [ENTRADA/SALIDA/MERMA], cantidad, motivo, fecha).</li>
+                <li>Crear <code>ProductoService</code> y <code>ProductoController</code> con CRUD completo y bajas lógicas.</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>🌐 Frontend</h4>
+              <ul>
+                <li>Nueva pantalla <code>front/inventario.html</code> con tabla de productos, filtros por stock y modal de ingreso de stock.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> El administrador puede crear, editar, listar y desactivar productos e insumos desde la web.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 3.2 -->
+      <article class="task-card" data-task-id="t3_2">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T3.2</span>
+              <span class="req-tag">RF14</span>
+              <span class="impact-tag alto">Impacto Alto</span>
+            </div>
+            <h3 class="task-title">Asociación Servicio-Insumos y Deducción Automática de Stock</h3>
+            <p class="task-summary">Relacionar cada servicio con los insumos que consume y descontar automáticamente del inventario al completar la cita.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🛠️ Lógica Transaccional</h4>
+              <ul>
+                <li>Crear tabla intermedia <code>servicio_insumo</code> (servicio_id, producto_id, cantidad_consumo).</li>
+                <li>En <code>CitaService.actualizarEstado()</code>: cuando el nuevo estado sea <code>COMPLETADA</code>, iterar los insumos del servicio y restar la cantidad requerida en <code>producto_insumo</code>.</li>
+                <li>Registrar cada salida en la tabla <code>movimiento_stock</code> vinculada a la cita.</li>
+              </ul>
+            </div>
+            <div class="detail-box">
+              <h4>📁 Archivos Involucrados</h4>
+              <ul>
+                <li><span class="code-snippet">db/init.sql</span> (tabla servicio_insumo)</li>
+                <li><span class="code-snippet">model/ServicioInsumo.java</span></li>
+                <li><span class="code-snippet">service/CitaService.java</span> (hook al completar cita)</li>
+                <li><span class="code-snippet">service/StockService.java</span> (método descontarStock)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Al presionar "Finalizar Atención" en una manicura, el stock de esmalte base disminuye automáticamente en 1 unidad.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 3.3 -->
+      <article class="task-card" data-task-id="t3_3">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T3.3</span>
+              <span class="req-tag">RF15</span>
+              <span class="impact-tag medio">Impacto Medio</span>
+            </div>
+            <h3 class="task-title">Sistema de Alertas de Stock Crítico</h3>
+            <p class="task-summary">Generar alertas y reportes inmediatos cuando la existencia de un insumo caiga por debajo de su umbral mínimo.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🛠️ Backend & Frontend</h4>
+              <ul>
+                <li>Crear consulta en <code>ProductoRepository</code>: <code>SELECT p FROM ProductoInsumo p WHERE p.stockActual &lt;= p.stockMinimo AND p.activo = true</code>.</li>
+                <li>Endpoint <code>GET /api/v2/nicolet/productos/alertas-stock</code>.</li>
+                <li>Componente de alerta visual en el panel superior (campana con contador rojo de insumos por agotar).</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> El administrador visualiza una tarjeta destacada con los insumos críticos en el dashboard.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 3.4 -->
+      <article class="task-card" data-task-id="t3_4">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T3.4</span>
+              <span class="req-tag">RF08</span>
+              <span class="req-tag">RF09</span>
+              <span class="impact-tag alto">Impacto Alto</span>
+            </div>
+            <h3 class="task-title">Vista "Mi Agenda" por Profesional y Gestión Completa de Estados</h3>
+            <p class="task-summary">Permitir a cada profesional ver solo sus citas del día/semana y gestionar todos los estados (EN_ATENCION, COMPLETADA, CANCELADA, NO_ASISTIO).</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🌐 Interfaz de Atención</h4>
+              <ul>
+                <li>Pantalla o vista filtrada <code>agenda.html</code>: detecta el ID del trabajador logueado y muestra su calendario diario/semanal.</li>
+                <li>Modal de cambio de estado en <code>citas.js</code> con menú desplegable para todos los estados posibles de <code>EstadoCita</code>.</li>
+                <li>Campo obligatorio para "Motivo de cancelación" cuando se elija CANCELADA.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Un profesional solo ve las citas que le fueron asignadas a él.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> Se puede marcar una cita en estado <code>EN_ATENCION</code> o <code>NO_ASISTIO</code> sin errores.
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- NIVEL 4 -->
+    <section class="ladder-section n4" id="nivel-4" data-nivel="n4">
+      <div class="ladder-header">
+        <div class="ladder-title-area">
+          <span class="ladder-badge">Nivel 4 • Prioridad Media</span>
+          <h2 class="ladder-title">Ficha Técnica del Cliente, Historial y Notificaciones</h2>
+        </div>
+        <p class="ladder-desc">
+          <strong>Justificación técnica:</strong> Garantiza la calidad y personalización de las atenciones (alergias, tipo de piel/uñas, preferencias) y mantiene al cliente informado en tiempo real por correo sobre su reserva.
+        </p>
+      </div>
+
+      <!-- TAREA 4.1 -->
+      <article class="task-card" data-task-id="t4_1">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T4.1</span>
+              <span class="req-tag">RF10</span>
+              <span class="impact-tag alto">Impacto Alto</span>
+            </div>
+            <h3 class="task-title">Ficha Técnica Única del Cliente (Expediente Estético)</h3>
+            <p class="task-summary">Formalizar la ficha clínica/técnica del cliente con código de expediente único, antecedentes, alergias y contraindicaciones.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🗄️ Modelo de Datos</h4>
+              <ul>
+                <li>Crear tabla <code>ficha_cliente</code> (id, cliente_id, codigo_ficha UNIQUE, alergias, tipo_piel_unas, contraindicaciones, fecha_creacion).</li>
+                <li>Generación automática de ficha al reservar la primera cita en <code>CitaService</code> si el cliente no posee expediente.</li>
+                <li>Control para impedir duplicados de fichas para un mismo cliente.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Cada cliente cuenta con un código de ficha único (ej: <code>FCH-2026-0042</code>).
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 4.2 -->
+      <article class="task-card" data-task-id="t4_2">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T4.2</span>
+              <span class="req-tag">RF11</span>
+              <span class="req-tag">RF12</span>
+              <span class="req-tag">RF19</span>
+              <span class="impact-tag medio">Impacto Medio</span>
+            </div>
+            <h3 class="task-title">Registro de Observaciones Técnicas e Historial 360°</h3>
+            <p class="task-summary">Modal obligatorio para ingresar notas de la atención al finalizar la cita y pantalla para consultar el historial completo del cliente.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🛠️ Backend & Frontend</h4>
+              <ul>
+                <li>Endpoint <code>PATCH /api/v2/nicolet/citas/{id}/observaciones</code> para actualizar notas técnicas de atención.</li>
+                <li>Al marcar "Finalizar Cita", abrir modal en frontend que solicite: "¿Qué tono o técnica se utilizó? ¿Hubo alguna reacción?".</li>
+                <li>Pantalla / modal de Historial 360°: lista cronológica de atenciones, servicios realizados, profesional que atendió y observaciones registradas.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> El profesional puede consultar qué servicio y tono se le aplicó a la clienta en su visita anterior.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 4.3 -->
+      <article class="task-card" data-task-id="t4_3">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T4.3</span>
+              <span class="req-tag">RF20</span>
+              <span class="impact-tag medio">Impacto Medio</span>
+            </div>
+            <h3 class="task-title">Servicio de Notificaciones Automáticas por Correo</h3>
+            <p class="task-summary">Integrar Spring Mail para enviar confirmaciones, cambios de horario o cancelaciones directamente al correo del cliente.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>📧 Integración de Email</h4>
+              <ul>
+                <li>Añadir <code>spring-boot-starter-mail</code> en <code>pom.xml</code> y configurar credenciales SMTP en <code>application.properties</code>.</li>
+                <li>Crear <code>EmailService</code> con plantillas HTML limpias para: Confirmación de Cita (incluyendo desglose y voucher Webpay: código de autorización, orden de compra y monto abonado), Reprogramación y Cancelación.</li>
+                <li>Disparar el envío de forma asíncrona (<code>@Async</code>) para no bloquear la respuesta HTTP.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Al confirmarse una reserva se envía automáticamente un correo con los detalles de la hora.
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- NIVEL 5 -->
+    <section class="ladder-section n5" id="nivel-5" data-nivel="n5">
+      <div class="ladder-header">
+        <div class="ladder-title-area">
+          <span class="ladder-badge">Nivel 5 • Prioridad Media-Baja</span>
+          <h2 class="ladder-title">Analítica, Fidelización, Auditoría y Resiliencia</h2>
+        </div>
+        <p class="ladder-desc">
+          <strong>Justificación técnica:</strong> Componentes de gestión gerencial y soporte a largo plazo. Son de gran valor comercial, pero dependen de que los módulos de reservas, stock y pagos ya se encuentren generando datos en producción.
+        </p>
+      </div>
+
+      <!-- TAREA 5.1 -->
+      <article class="task-card" data-task-id="t5_1">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T5.1</span>
+              <span class="req-tag">RF18</span>
+              <span class="req-tag">RF17</span>
+              <span class="impact-tag medio">Impacto Medio</span>
+            </div>
+            <h3 class="task-title">Dashboard Gerencial y Reporte de Clientes por Profesional</h3>
+            <p class="task-summary">Construir panel administrativo con indicadores estadísticos (ingresos reales, tasa de cancelación, servicios más vendidos) y reportería de clientes atendidos.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>📊 Analytics & Reportería</h4>
+              <ul>
+                <li>Endpoint <code>GET /api/v2/nicolet/dashboard/kpis?fechaInicio=...&fechaFin=...</code> con agregaciones SQL (SUM de montos de pagos Webpay con estado <code>APROBADO</code>, COUNT de citas por estado).</li>
+                <li>Endpoint <code>GET /api/v2/nicolet/reportes/clientes-por-trabajador/{id}</code> para ver clientes únicos atendidos en un rango de fechas.</li>
+                <li>Módulo de conciliación financiera: tabla comparativa para auditar órdenes de compra Webpay frente a citas atendidas.</li>
+                <li>Integrar gráficos interactivos en frontend usando Chart.js (gráficos de barras de ingresos reales y dona de estados de citas).</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> El dashboard muestra ingresos reales calculados directamente desde transacciones Webpay aprobadas y gráfico de distribución mensual.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 5.2 -->
+      <article class="task-card" data-task-id="t5_2">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T5.2</span>
+              <span class="req-tag">RF21</span>
+              <span class="impact-tag medio">Impacto Medio</span>
+            </div>
+            <h3 class="task-title">Motor de Fidelización de Clientes Inactivos (@Scheduled)</h3>
+            <p class="task-summary">Identificar clientes que hayan cumplido más de 30 o 45 días sin agendar y generar alertas para campañas de reactivación.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>⏰ Automatización</h4>
+              <ul>
+                <li>Consulta JPA que busque clientes cuya última cita completada tenga fecha anterior a <code>LocalDate.now().minusDays(N)</code>.</li>
+                <li>Tarea programada de Spring (<code>@Scheduled(cron = "0 0 9 * * ?")</code>) que actualice la bandeja de clientes por reactivar.</li>
+                <li>Bandeja en frontend con botones de contacto rápido ("Enviar recordatorio de mantención").</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> El administrador visualiza la lista de clientas inactivas con más de 30 días para fidelización.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- TAREA 5.3 -->
+      <article class="task-card" data-task-id="t5_3">
+        <div class="task-header" onclick="toggleTask(this)">
+          <div class="task-check-wrap">
+            <input type="checkbox" class="task-checkbox" onchange="actualizarProgreso()" onclick="event.stopPropagation()">
+          </div>
+          <div class="task-main">
+            <div class="task-meta-top">
+              <span class="task-id">T5.3</span>
+              <span class="req-tag">RNF09</span>
+              <span class="req-tag">RNF12</span>
+              <span class="impact-tag bajo">Impacto Soporte</span>
+            </div>
+            <h3 class="task-title">Auditoría de Operaciones y Backups Automáticos</h3>
+            <p class="task-summary">Registrar en base de datos quién modificó citas o stock, y configurar scripts programados de respaldo de MySQL.</p>
+          </div>
+          <button class="task-toggle-btn">▼</button>
+        </div>
+        <div class="task-details">
+          <div class="details-grid">
+            <div class="detail-box">
+              <h4>🛡️ Auditoría & Respaldo</h4>
+              <ul>
+                <li>Crear tabla <code>auditoria_operacion</code> (id, usuario_id, accion, entidad, valor_anterior, valor_nuevo, fecha, ip).</li>
+                <li>Interceptor Spring AOP para registrar cambios de estado de citas y ajustes manuales de stock.</li>
+                <li>Crear script <code>backup-db.ps1</code> que ejecute <code>mysqldump</code> con compresión y rotación de 14 días.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="checklist-box">
+            <h4>Criterios de Aceptación (DoD)</h4>
+            <div class="sub-item">
+              <input type="checkbox"> Ante cualquier cancelación de cita queda registrado qué usuario ejecutó la acción y a qué hora.
+            </div>
+            <div class="sub-item">
+              <input type="checkbox"> El script de respaldo genera un archivo <code>.sql.gz</code> ejecutable sin errores.
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Documento de Planificación Técnica para <strong>Nicolet Estudio</strong> • Basado en el Informe de Requerimientos • Octubre 2026</p>
+  </footer>
+
+  <script>
+    const STORAGE_KEY = 'nicolet_escalada_progreso';
+
+    function init() {
+      cargarProgreso();
+      actualizarProgreso();
+    }
+
+    function toggleTask(headerElement) {
+      const card = headerElement.closest('.task-card');
+      card.classList.toggle('expanded');
+    }
+
+    function filtrarNivel(nivel) {
+      document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const sections = document.querySelectorAll('.ladder-section');
+      sections.forEach(sec => {
+        if (nivel === 'todos' || sec.getAttribute('data-nivel') === nivel) {
+          sec.style.display = 'block';
+        } else {
+          sec.style.display = 'none';
+        }
+      });
+    }
+
+    function buscarTareas() {
+      const term = document.getElementById('searchInput').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.task-card');
+      const sections = document.querySelectorAll('.ladder-section');
+
+      cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        if (text.includes(term)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      sections.forEach(sec => {
+        const visibleCards = sec.querySelectorAll('.task-card[style="display: block;"], .task-card:not([style*="display: none"])');
+        if (visibleCards.length === 0 && term !== '') {
+          sec.style.display = 'none';
+        } else {
+          sec.style.display = 'block';
+        }
+      });
+    }
+
+    function actualizarProgreso() {
+      const checkboxes = document.querySelectorAll('.task-header .task-checkbox');
+      const total = checkboxes.length;
+      let completadas = 0;
+      const estado = {};
+
+      checkboxes.forEach(cb => {
+        const card = cb.closest('.task-card');
+        const taskId = card.getAttribute('data-task-id');
+        if (cb.checked) {
+          completadas++;
+          card.classList.add('completed');
+          estado[taskId] = true;
+        } else {
+          card.classList.remove('completed');
+          estado[taskId] = false;
+        }
+      });
+
+      const percent = total > 0 ? Math.round((completadas / total) * 100) : 0;
+      document.getElementById('completedCount').innerText = completadas;
+      document.getElementById('totalCount').innerText = total;
+      document.getElementById('percentCount').innerText = percent + '%';
+      document.getElementById('progressBar').style.width = percent + '%';
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
+    }
+
+    function cargarProgreso() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (!data) return;
+      try {
+        const estado = JSON.parse(data);
+        document.querySelectorAll('.task-card').forEach(card => {
+          const taskId = card.getAttribute('data-task-id');
+          if (estado[taskId]) {
+            const cb = card.querySelector('.task-header .task-checkbox');
+            if (cb) cb.checked = true;
+          }
+        });
+      } catch (e) {
+        console.error('Error al cargar progreso', e);
+      }
+    }
+
+    function reiniciarProgreso() {
+      if (confirm('¿Deseas reiniciar todas las marcas de avance a cero?')) {
+        localStorage.removeItem(STORAGE_KEY);
+        document.querySelectorAll('.task-header .task-checkbox').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.task-card').forEach(card => card.classList.remove('completed'));
+        actualizarProgreso();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
