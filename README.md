@@ -45,21 +45,22 @@ Agendamiento-Cita-Main/
 │   │   └── BackendApplication.java
 │   └── main/resources/
 │       ├── application.properties      # Configuracion de base de datos MySQL y secreto JWT
-│       └── application-dev.properties  # Perfil de desarrollo alternativo
+│       ├── application-dev.properties  # Perfil de desarrollo alternativo
+│       └── static/                     # Frontend Unificado servido por Spring Boot
+│           ├── admin/                  # Panel de Administracion (JWT, Citas y Usuarios)
+│           │   ├── css/admin.css       # Estilos del panel de gestion
+│           │   ├── js/                 # Modulos JS (auth.js, citas.js, index.js)
+│           │   ├── login.html          # Pantalla de inicio de sesion y autenticacion
+│           │   ├── citas.html          # Pantalla interactiva de gestion de citas
+│           │   └── usuarios.html       # Pantalla de administracion de usuarios y roles
+│           ├── css/styles.css          # Estilos de la web publica del salon
+│           ├── img/                    # Imagenes del salon
+│           ├── js/app.js               # Logica de navegacion publica
+│           ├── index.html              # Portal publico del salon (inicio)
+│           └── reservar.html           # Flujo de reserva para clientas
 ├── db/                           # Base de Datos
 │   ├── init.sql                 # Script de creacion de 8 tablas y datos semilla
 │   └── README.md                # Documentacion detallada de la base de datos
-├── front/                        # Frontend Web (HTML / CSS / JS)
-│   ├── login.html               # Pantalla de inicio de sesion y autenticacion
-│   ├── index.html               # Pantalla de gestion de usuarios y roles
-│   ├── citas.html               # Pantalla interactiva de agendamiento de citas
-│   ├── css/
-│   │   └── index.css            # Estilos visuales compartidos
-│   ├── js/
-│   │   ├── auth.js              # Modulo de sesion JWT, proteccion de rutas y fetch autenticado
-│   │   ├── index.js             # Logica e integracion REST de usuarios
-│   │   └── citas.js             # Logica e integracion REST de citas y modales rapidos
-│   └── README.md                # Guia de uso del frontend
 ├── docker-compose.yml            # Orquestacion de MySQL 8.0 y phpMyAdmin
 ├── Dockerfile                    # Empaquetado del microservicio Backend
 ├── start.ps1                     # Script de inicio seguro en PowerShell (libera puerto 8080)
@@ -139,9 +140,10 @@ El servidor estara disponible en `http://localhost:8080`.
 
 ### Paso 3: Abrir el Frontend
 
-Abre en tu navegador:
-1. `front/login.html`: Pantalla de inicio de sesion (permite ingreso con credenciales o mediante el boton de acceso rapido de prueba).
-2. Tras iniciar sesion, el sistema redirige automaticamente a `front/citas.html` manteniendo el token de sesion.
+Con el backend en ejecucion, ingresa directamente desde tu navegador:
+1. **Portal Publico de Clientas:** `http://localhost:8080/` (Catalogo de servicios, equipo y reservas).
+2. **Panel de Administracion:** `http://localhost:8080/admin/login.html` (o haz clic en "Acceso profesionales" en la barra superior del portal publico).
+3. Tras iniciar sesion con JWT, el sistema redirige automaticamente a `http://localhost:8080/admin/citas.html` manteniendo el token de sesion para gestionar citas y usuarios.
 
 ---
 

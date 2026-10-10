@@ -3,7 +3,7 @@
 // Nicolet Estudio - Sistema de Agendamiento
 // ========================================================
 
-const AUTH_API_URL = 'http://localhost:8080/api/v2/nicolet/auth';
+const AUTH_API_URL = '/api/v2/nicolet/auth';
 const TOKEN_KEY = 'nicolet_jwt_token';
 const USER_KEY = 'nicolet_jwt_user';
 
