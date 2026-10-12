@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Disponibilidad | Nicolett Studio Fantasy</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <!-- Encabezado Principal de Marca (Solo conexión admin) -->
+  <header class="site-header">
+    <div class="container">
+      <a href="citas.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY &bull; ADMIN</small></a>
+      <div class="row">
+        <div id="navUserBadgeSlot"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra de Navegación Exclusiva del Módulo Admin -->
+  <div class="staffnav">
+    <div class="container row between">
+      <div class="row" style="gap:18px">
+        <a href="citas.html" class="nav-link">Gestión de Citas</a>
+        <a href="reserva-cliente.html" class="nav-link">Agendar Cita (Cliente)</a>
+        <a href="servicios.html" class="nav-link">Servicios</a>
+        <a href="disponibilidad.html" class="nav-link active" style="color:var(--primary); font-weight:700;">Simulador Disponibilidad</a>
+        <a href="panel-trabajador.html" class="nav-link">Portal Trabajador</a>
+        <a href="historial.html" class="nav-link">Historial Tratamientos</a>
+        <a href="usuarios.html" class="nav-link">Usuarios y Roles</a>
+      </div>
+      <div class="row" style="gap:10px">
+        <div id="statusBadge" class="status">
+          <span id="statusText">Verificando API...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor Principal -->
+  <main class="container" style="padding-bottom: 60px;">
+
+    <!-- Título de Página -->
+    <section class="page-top">
+      <p class="eyebrow">Motor de Horarios y Turnos</p>
+      <h1 class="page-title">Simulador de Disponibilidad en Tiempo Real</h1>
+    </section>
+
+    <!-- Banner de Alertas -->
+    <div id="alertMessage" class="alert-banner"></div>
+
+    <!-- Panel de Consulta y Conexión con Trabajadores -->
+    <section class="panel" style="margin-bottom: 28px;">
+      <div class="row between" style="margin-bottom: 18px;">
+        <div>
+          <span class="eyebrow">Diagnóstico de Agenda</span>
+          <h2 style="font-size: 26px; margin-top: 2px;">Consulta de Disponibilidad por Profesional</h2>
+          <p class="small">Conectado a la base de datos de trabajadores y sus horarios laborales configurados</p>
+        </div>
+        <span class="status online">GET /api/v2/nicolet/disponibilidad</span>
+      </div>
+
+      <form id="formSimulador" class="grid g3" style="align-items: end;">
+        <div>
+          <label class="lbl" for="selectTrabajador">Especialista / Profesional (Trabajador)</label>
+          <select id="selectTrabajador" class="field" required>
+            <option value="" disabled selected>Cargando especialistas...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="lbl" for="inputFecha">Fecha de Atención</label>
+          <input type="date" id="inputFecha" class="field" required>
+        </div>
+
+        <div>
+          <label class="lbl" for="selectServicio">Servicio / Tratamiento (Define Duración)</label>
+          <select id="selectServicio" class="field">
+            <option value="">Cargando servicios...</option>
+          </select>
+        </div>
+
+        <div style="grid-column: 1 / -1; margin-top: 4px;">
+          <button type="submit" id="btnCalcular" class="btn" style="width: 100%;">
+            Calcular Grilla de Disponibilidad
+          </button>
+        </div>
+      </form>
+
+      <!-- Ficha del Especialista Seleccionado -->
+      <div id="perfilEspecialistaCard" style="display: none; margin-top: 20px; padding: 16px; background: var(--secondary); border: 1px solid var(--border); border-radius: var(--radius);">
+        <div class="row between">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div id="espAvatar" class="avatar" style="width: 44px; height: 44px; font-size: 16px;">E</div>
+            <div>
+              <div id="espNombre" style="font-weight: 700; font-size: 15px; color: var(--fg);">-</div>
+              <div id="espCargo" style="font-size: 12px; color: var(--primary); font-weight: 600;">-</div>
+              <div id="espBio" style="font-size: 11px; color: var(--muted); margin-top: 2px;">-</div>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <span class="badge-role profesional" id="espEstado">Activo</span>
+            <div id="espHornarioLabel" style="font-size: 11px; color: var(--muted); margin-top: 4px;">Lunes a Viernes &bull; 09:00 - 18:00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de Grilla de Horarios -->
+      <div style="margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border);">
+        <div class="row between">
+          <strong style="font-size: 15px;">Bloques Horarios Calculados</strong>
+          <span id="conteoSlots" class="small" style="font-weight: 600; color: var(--primary);">Realiza una consulta para ver resultados</span>
+        </div>
+        <div style="margin: 6px 0 12px; font-family: monospace; font-size: 11px; color: var(--muted);" id="endpointEjecutado">
+          GET /api/v2/nicolet/disponibilidad
+        </div>
+
+        <!-- Leyenda de Estados -->
+        <div class="row" style="gap: 16px; margin-bottom: 14px; font-size: 11px;">
+          <div class="row" style="gap: 6px;">
+            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:var(--success-bg); border:1px solid #c8e3d2;"></span>
+            <span>Disponible</span>
+          </div>
+          <div class="row" style="gap: 6px;">
+            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:var(--warning-bg); border:1px solid #f3dac2;"></span>
+            <span>Descanso / Almuerzo</span>
+          </div>
+          <div class="row" style="gap: 6px;">
+            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:var(--secondary); border:1px solid var(--border);"></span>
+            <span>Ocupado / Cita Existente</span>
+          </div>
+        </div>
+
+        <div id="resultadoSlots" class="slot-grid">
+          <div style="grid-column: 1 / -1; padding: 28px; text-align: center; color: var(--muted); background: var(--secondary); border-radius: 6px;">
+            Selecciona un especialista y haz clic en "Calcular Grilla de Disponibilidad" para simular la jornada.
+          </div>
+        </div>
+
+        <!-- Acción Rápida con Bloque Seleccionado -->
+        <div id="bannerSlotSeleccionado" style="display:none; margin-top:16px; padding:14px 18px; background:#f0fdf4; border:1px solid #86efac; border-radius:6px;" class="row between">
+          <div>
+            <strong style="color:var(--success);">Bloque Seleccionado: <span id="slotHoraTexto">-</span></strong>
+            <div style="font-size:11px; color:var(--muted); margin-top:2px;">Puedes proceder a agendar directamente este horario</div>
+          </div>
+          <div class="row" style="gap:8px;">
+            <a id="btnAgendarGestion" href="#" class="btn sm">Agendar en Gestión Citas &rarr;</a>
+            <a id="btnAgendarCliente" href="#" class="btn sm outline">Agendar como Cliente &rarr;</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visor de Respuesta JSON Cruda -->
+      <div style="margin-top: 24px;">
+        <details>
+          <summary style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); cursor: pointer; margin-bottom: 8px;">
+            Ver Respuesta JSON Completa del Endpoint (Disponibilidad)
+          </summary>
+          <div id="rawJsonViewer" class="json-box">// Respuesta JSON del microservicio aparecerá aquí...</div>
+        </details>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container row between">
+      <span class="display" style="font-size:22px;">nicolett.</span>
+      <span>Nicolett Studio Fantasy &copy; 2026 &bull; Simulador de Disponibilidad y Turnos</span>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+  <script src="js/disponibilidad.js"></script>
+</body>
+</html>

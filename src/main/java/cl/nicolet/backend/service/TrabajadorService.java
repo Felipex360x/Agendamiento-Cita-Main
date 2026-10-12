@@ -57,7 +57,10 @@ public class TrabajadorService {
         if (usuarioRepository == null || trabajadorRepository == null) return;
         List<Usuario> usuarios = usuarioRepository.findAll();
         for (Usuario u : usuarios) {
-            if (u.getTipoUsuario() != null && "PROFESIONAL".equalsIgnoreCase(u.getTipoUsuario().getNombre())) {
+            if (u.getTipoUsuario() != null && u.getTipoUsuario().getNombre() != null &&
+               (u.getTipoUsuario().getNombre().toUpperCase().contains("PROFESIONAL") ||
+                u.getTipoUsuario().getNombre().toUpperCase().contains("TRABAJADOR") ||
+                u.getTipoUsuario().getNombre().toUpperCase().contains("ESPECIALISTA"))) {
                 if (!trabajadorRepository.existsByUsuarioId(u.getId())) {
                     Trabajador t = new Trabajador();
                     t.setUsuario(u);

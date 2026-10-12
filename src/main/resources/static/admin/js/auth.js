@@ -3,7 +3,18 @@
 // Nicolet Estudio - Sistema de Agendamiento
 // ========================================================
 
-const AUTH_API_URL = '/api/v2/nicolet/auth';
+// Detección automática del host del backend (resiliente a Live Server port 5500, puertos alternativos o file://)
+function getApiBaseUrl() {
+  if (typeof window !== 'undefined') {
+    if (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8080')) {
+      return 'http://localhost:8080/api/v2/nicolet';
+    }
+  }
+  return '/api/v2/nicolet';
+}
+
+window.API_BASE = getApiBaseUrl();
+window.AUTH_API_URL = `${window.API_BASE}/auth`;
 const TOKEN_KEY = 'nicolet_jwt_token';
 const USER_KEY = 'nicolet_jwt_user';
 
@@ -53,21 +64,36 @@ function isAuthenticated() {
 // Proteger vista: Si no está autenticado, redirigir a login.html
 function requireAuth() {
   if (!isAuthenticated()) {
-    window.location.href = 'login.html';
+    const currentPage = window.location.pathname.split('/').pop() || 'citas.html';
+    window.location.href = `login.html?redirect=${encodeURIComponent(currentPage)}`;
+    return false;
   }
+  return true;
 }
 
 // Iniciar sesión llamando a la API
 async function login(correo, password) {
-  const response = await fetch(`${AUTH_API_URL}/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ correo, password })
-  });
+  const authUrl = window.AUTH_API_URL || `${getApiBaseUrl()}/auth`;
+  let response;
+  try {
+    response = await fetch(`${authUrl}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ correo, password })
+    });
+  } catch (netErr) {
+    throw new Error('No se pudo conectar con el servidor backend (http://localhost:8080). Asegúrese de que el backend Spring Boot esté ejecutándose.');
+  }
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (jsonErr) {
+    throw new Error(`Respuesta inválida del servidor (HTTP ${response.status}).`);
+  }
+
   if (!response.ok) {
     if (data.intentosRestantes !== undefined && data.intentosRestantes > 0) {
       throw new Error(`${data.mensaje} (Intentos restantes antes de bloqueo temporal: ${data.intentosRestantes})`);
@@ -79,7 +105,38 @@ async function login(correo, password) {
   return data;
 }
 
-// Wrapper para llamadas fetch con token JWT automático
+// Registrar nuevo usuario/cliente para primer acceso
+async function register(nombre, apellidoP, correo, password, telefono = '') {
+  const authUrl = window.AUTH_API_URL || `${getApiBaseUrl()}/auth`;
+  let response;
+  try {
+    response = await fetch(`${authUrl}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ nombre, apellidoP, correo, password, telefono })
+    });
+  } catch (netErr) {
+    throw new Error('No se pudo conectar con el servidor backend (http://localhost:8080). Asegúrese de que el backend Spring Boot esté ejecutándose.');
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch (jsonErr) {
+    throw new Error(`Respuesta inválida del servidor (HTTP ${response.status}).`);
+  }
+
+  if (!response.ok) {
+    throw new Error(data.mensaje || 'Error al registrar la cuenta');
+  }
+
+  setAuthSession(data);
+  return data;
+}
+
+// Wrapper para llamadas fetch con token JWT automático y resolución dinámica de URL
 async function authenticatedFetch(url, options = {}) {
   const token = getAuthToken();
   const headers = Object.assign({}, options.headers || {});
@@ -90,7 +147,16 @@ async function authenticatedFetch(url, options = {}) {
 
   options.headers = headers;
 
-  const response = await fetch(url, options);
+  let finalUrl = url;
+  if (window.API_BASE && window.API_BASE.startsWith('http')) {
+    if (url.startsWith('/api/v2/nicolet')) {
+      finalUrl = url.replace('/api/v2/nicolet', window.API_BASE);
+    } else if (url.startsWith('/')) {
+      finalUrl = `http://localhost:8080${url}`;
+    }
+  }
+
+  const response = await fetch(finalUrl, options);
 
   // Si el token expiró o no es válido (401), redirigir al login
   if (response.status === 401) {
@@ -105,20 +171,27 @@ async function authenticatedFetch(url, options = {}) {
 // Renderizar badge de usuario y botón de cerrar sesión en el navbar
 function renderNavUserBadge() {
   const user = getAuthUser();
-  if (!user) return;
-
-  const navbar = document.querySelector('.navbar');
-  if (!navbar) return;
+  if (!user) {
+    const slot = document.getElementById('navUserBadgeSlot');
+    if (slot && !document.getElementById('navLoginBtn')) {
+      slot.innerHTML = `<a id="navLoginBtn" href="login.html" class="btn sm outline" style="font-size: 10px; height: 30px; padding: 0 12px;">Iniciar Sesión</a>`;
+    }
+    return;
+  }
 
   // Evitar duplicados
   if (document.getElementById('navUserContainer')) return;
 
+  const slot = document.getElementById('navUserBadgeSlot');
+  const navbar = document.querySelector('.navbar');
+  const targetParent = slot || navbar;
+  if (!targetParent) return;
+
   const container = document.createElement('div');
   container.id = 'navUserContainer';
-  container.style.display = 'flex';
+  container.style.display = 'inline-flex';
   container.style.alignItems = 'center';
-  container.style.gap = '0.75rem';
-  container.style.marginLeft = 'auto';
+  container.style.gap = '10px';
 
   const userBadge = document.createElement('div');
   userBadge.style.display = 'flex';
@@ -127,15 +200,16 @@ function renderNavUserBadge() {
   userBadge.style.lineHeight = '1.2';
 
   const nameSpan = document.createElement('span');
-  nameSpan.style.fontWeight = '700';
-  nameSpan.style.fontSize = '0.85rem';
-  nameSpan.style.color = '#1f2937';
+  nameSpan.style.fontWeight = '600';
+  nameSpan.style.fontSize = '12px';
+  nameSpan.style.color = 'var(--fg, #4a3f35)';
   nameSpan.innerText = `${user.nombre} ${user.apellidoP || ''}`.trim();
 
   const roleSpan = document.createElement('span');
-  roleSpan.style.fontSize = '0.72rem';
-  roleSpan.style.color = '#4f46e5';
+  roleSpan.style.fontSize = '9px';
+  roleSpan.style.color = 'var(--primary, #a88752)';
   roleSpan.style.fontWeight = '700';
+  roleSpan.style.letterSpacing = '1px';
   roleSpan.style.textTransform = 'uppercase';
   roleSpan.innerText = user.rol || 'USUARIO';
 
@@ -145,20 +219,16 @@ function renderNavUserBadge() {
   const btnLogout = document.createElement('button');
   btnLogout.innerText = 'Cerrar Sesión';
   btnLogout.title = 'Cerrar sesión';
-  btnLogout.style.background = '#fee2e2';
-  btnLogout.style.color = '#b91c1c';
-  btnLogout.style.border = '1px solid #fca5a5';
-  btnLogout.style.padding = '0.35rem 0.65rem';
-  btnLogout.style.borderRadius = '6px';
-  btnLogout.style.fontWeight = '600';
-  btnLogout.style.fontSize = '0.8rem';
-  btnLogout.style.cursor = 'pointer';
+  btnLogout.className = 'btn sm outline';
+  btnLogout.style.fontSize = '9px';
+  btnLogout.style.height = '28px';
+  btnLogout.style.padding = '0 8px';
   btnLogout.onclick = logout;
 
   container.appendChild(userBadge);
   container.appendChild(btnLogout);
 
-  navbar.appendChild(container);
+  targetParent.appendChild(container);
 }
 
 // Auto-inicializar renderizado de usuario si la página ya cargó

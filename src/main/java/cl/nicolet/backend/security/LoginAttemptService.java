@@ -29,6 +29,12 @@ public class LoginAttemptService {
         return TEST_ADMIN_EMAILS.contains(email.toLowerCase().trim());
     }
 
+    public static boolean isLoopbackAddress(String ip) {
+        if (ip == null) return false;
+        String trimmed = ip.trim();
+        return "127.0.0.1".equals(trimmed) || "0:0:0:0:0:0:0:1".equals(trimmed) || "::1".equals(trimmed) || "localhost".equalsIgnoreCase(trimmed);
+    }
+
     private static class AttemptInfo {
         final int attempts;
         final long lastAttemptTime;
@@ -51,8 +57,8 @@ public class LoginAttemptService {
         if (key == null || key.isBlank()) return;
         String normalizedKey = key.toLowerCase().trim();
 
-        // Las cuentas de test admin no acumulan fallos
-        if (isTestAdmin(normalizedKey)) {
+        // Las cuentas de test admin y la dirección IP loopback local no acumulan fallos
+        if (isTestAdmin(normalizedKey) || isLoopbackAddress(normalizedKey)) {
             return;
         }
 
@@ -70,8 +76,8 @@ public class LoginAttemptService {
         if (key == null || key.isBlank()) return false;
         String normalizedKey = key.toLowerCase().trim();
 
-        // El administrador de prueba nunca queda bloqueado
-        if (isTestAdmin(normalizedKey)) {
+        // El administrador de prueba y la IP local de desarrollo nunca quedan bloqueados
+        if (isTestAdmin(normalizedKey) || isLoopbackAddress(normalizedKey)) {
             return false;
         }
 

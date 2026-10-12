@@ -138,7 +138,7 @@ public class CitaService {
         cita.setServicio(servicio);
         cita.setFechaHoraInicio(inicio);
         cita.setFechaHoraFin(fin);
-        cita.setEstado(EstadoCita.CONFIRMADA);
+        cita.setEstado(dto.getEstado() != null ? dto.getEstado() : EstadoCita.CONFIRMADA);
         cita.setPrecioFinal(servicio.getPrecio());
         cita.setNotasCliente(dto.getNotasCliente());
 

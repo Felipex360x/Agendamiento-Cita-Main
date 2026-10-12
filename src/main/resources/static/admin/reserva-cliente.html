@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agendar Cita (Cliente) | Nicolett Studio Fantasy</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <!-- Encabezado Principal de Marca (Solo conexión admin) -->
+  <header class="site-header">
+    <div class="container">
+      <a href="citas.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY &bull; ADMIN</small></a>
+      <div class="row">
+        <div id="navUserBadgeSlot"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra de Navegación Exclusiva del Módulo Admin -->
+  <div class="staffnav">
+    <div class="container row between">
+      <div class="row" style="gap:18px">
+        <a href="citas.html" class="nav-link">Gestión de Citas</a>
+        <a href="reserva-cliente.html" class="nav-link active" style="color:var(--primary); font-weight:700;">Agendar Cita (Cliente)</a>
+        <a href="servicios.html" class="nav-link">Servicios</a>
+        <a href="disponibilidad.html" class="nav-link">Simulador Disponibilidad</a>
+        <a href="panel-trabajador.html" class="nav-link">Portal Trabajador</a>
+        <a href="historial.html" class="nav-link">Historial Tratamientos</a>
+        <a href="usuarios.html" class="nav-link">Usuarios y Roles</a>
+      </div>
+      <div class="row" style="gap:10px">
+        <div id="statusBadge" class="status">
+          <span id="statusText">Verificando API...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor Principal -->
+  <main class="container" style="padding-bottom: 60px;">
+
+    <!-- Título de Página -->
+    <section class="page-top">
+      <p class="eyebrow">Experiencia del Cliente</p>
+      <h1 class="page-title">Agendamiento de Citas para Clientes</h1>
+      <p class="small" style="margin-top: 4px;">Selecciona tu tratamiento, profesional de preferencia y bloque horario en tiempo real</p>
+    </section>
+
+    <!-- Banner de Alertas -->
+    <div id="alertMessage" class="alert-banner"></div>
+
+    <!-- Indicador de Pasos del Flujo -->
+    <div class="step-container">
+      <div class="step-item active" id="stepIndicator1">
+        <span class="step-number">1</span>
+        <span>Tratamiento</span>
+      </div>
+      <div class="step-item" id="stepIndicator2">
+        <span class="step-number">2</span>
+        <span>Especialista</span>
+      </div>
+      <div class="step-item" id="stepIndicator3">
+        <span class="step-number">3</span>
+        <span>Fecha y Hora</span>
+      </div>
+      <div class="step-item" id="stepIndicator4">
+        <span class="step-number">4</span>
+        <span>Datos y Confirmación</span>
+      </div>
+    </div>
+
+    <!-- SECCIÓN DE CONFIRMACIÓN FINAL (Oculta hasta éxito) -->
+    <div id="pantallaConfirmacion" style="display: none;" class="panel">
+      <div style="text-align: center; padding: 24px 0 16px;">
+        <span class="badge-role cliente" style="font-size: 13px; padding: 6px 16px;">✓ ¡Cita Agendada con Éxito!</span>
+        <h2 style="font-size: 32px; margin-top: 12px;">Comprobante de Reserva</h2>
+        <p class="small" style="color: var(--muted); margin-top: 4px;">Tu cita ha sido registrada y está lista para ser confirmada por el especialista.</p>
+      </div>
+
+      <div class="booking-summary-box" style="max-width: 540px; margin: 0 auto 24px;">
+        <div class="booking-summary-row">
+          <span style="color: var(--muted);">Código de Reserva</span>
+          <strong style="color: var(--primary); font-size: 15px;" id="confCodigo">-</strong>
+        </div>
+        <div class="booking-summary-row">
+          <span style="color: var(--muted);">Tratamiento / Servicio</span>
+          <strong id="confServicio">-</strong>
+        </div>
+        <div class="booking-summary-row">
+          <span style="color: var(--muted);">Especialista</span>
+          <strong id="confTrabajador">-</strong>
+        </div>
+        <div class="booking-summary-row">
+          <span style="color: var(--muted);">Fecha y Horario</span>
+          <strong id="confHorario">-</strong>
+        </div>
+        <div class="booking-summary-row">
+          <span style="color: var(--muted);">Estado Actual</span>
+          <span class="badge-estado PENDIENTE" id="confEstado">PENDIENTE</span>
+        </div>
+        <div class="booking-summary-row">
+          <span>Total a Pagar en Salón</span>
+          <span class="card-price" id="confPrecio">$0</span>
+        </div>
+      </div>
+
+      <div style="text-align: center; display: flex; justify-content: center; gap: 12px;">
+        <button type="button" class="btn" onclick="reiniciarFlujoReserva()">Agendar Otra Cita</button>
+        <a href="citas.html" class="btn outline">Ir al Panel de Citas</a>
+      </div>
+    </div>
+
+    <!-- FORMULARIO EN PASOS DE RESERVA -->
+    <div id="contenedorFlujoReserva" class="grid" style="grid-template-columns: 1fr 340px; gap: 28px; align-items: start;">
+
+      <!-- Columna Principal: Pasos de Selección -->
+      <div>
+
+        <!-- PASO 1: Elegir Tratamiento (Servicio) -->
+        <section class="panel" id="panelPaso1" style="margin-bottom: 24px;">
+          <div class="row between" style="margin-bottom: 12px;">
+            <div>
+              <span class="eyebrow">Paso 1</span>
+              <h2 style="font-size: 24px; margin-top: 2px;">Elige tu Tratamiento o Servicio</h2>
+            </div>
+            <a href="servicios.html" class="btn sm outline" style="text-decoration:none;">Ver Catálogo Completo</a>
+          </div>
+          <p class="small" style="color: var(--muted); margin-bottom: 14px;">Haz clic en el tratamiento que deseas realizarte para ver profesionales disponibles:</p>
+          
+          <div id="gridServicios" class="card-selector-grid">
+            <div style="padding: 20px; color: var(--muted); text-align: center;">Cargando catálogo de servicios...</div>
+          </div>
+        </section>
+
+        <!-- PASO 2: Elegir Especialista (Trabajador) -->
+        <section class="panel" id="panelPaso2" style="margin-bottom: 24px; opacity: 0.6; pointer-events: none;">
+          <div class="row between" style="margin-bottom: 12px;">
+            <div>
+              <span class="eyebrow">Paso 2</span>
+              <h2 style="font-size: 24px; margin-top: 2px;">Elige al Especialista / Trabajador</h2>
+            </div>
+            <span class="status" id="badgeServicioSeleccionado">Pendiente de Servicio</span>
+          </div>
+          <p class="small" style="color: var(--muted); margin-bottom: 14px;">Selecciona el profesional que atenderá tu sesión:</p>
+
+          <div id="gridTrabajadores" class="card-selector-grid">
+            <div style="padding: 20px; color: var(--muted); text-align: center;">Selecciona un tratamiento primero...</div>
+          </div>
+        </section>
+
+        <!-- PASO 3: Elegir Fecha y Horario Disponible -->
+        <section class="panel" id="panelPaso3" style="margin-bottom: 24px; opacity: 0.6; pointer-events: none;">
+          <div class="row between" style="margin-bottom: 12px;">
+            <div>
+              <span class="eyebrow">Paso 3</span>
+              <h2 style="font-size: 24px; margin-top: 2px;">Elige la Fecha y Bloque Horario</h2>
+            </div>
+            <span class="status online" id="badgeDisponibilidadEstado">GET /disponibilidad</span>
+          </div>
+          <p class="small" style="color: var(--muted); margin-bottom: 14px;">Solo se muestran bloques en que el especialista está disponible para atender:</p>
+
+          <div class="form-group" style="max-width: 260px;">
+            <label class="lbl" for="reservaFechaInput">Fecha de la Cita</label>
+            <input type="date" id="reservaFechaInput" class="field" onchange="cargarHorariosDisponibles()">
+          </div>
+
+          <div style="margin-top: 14px;">
+            <label class="lbl">Horarios Libres Disponibles</label>
+            <div id="gridHorariosDisponibles" class="slot-grid">
+              <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--muted); background: var(--secondary); border-radius: 6px;">
+                Selecciona especialista y fecha para calcular horarios.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PASO 4: Identificación del Cliente (Login / Registro / Sesión Activa) -->
+        <section class="panel" id="panelPaso4" style="opacity: 0.6; pointer-events: none;">
+          <div class="row between" style="margin-bottom: 12px;">
+            <div>
+              <span class="eyebrow">Paso 4</span>
+              <h2 style="font-size: 24px; margin-top: 2px;">Datos de la Clienta y Confirmación</h2>
+            </div>
+            <span class="badge-role cliente" id="badgeSesionCliente">Identificación</span>
+          </div>
+
+          <!-- Si el cliente YA ESTÁ REGISTRADO y logueado -->
+          <div id="bloqueClienteAutenticado" style="display: none; padding: 18px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; margin-bottom: 16px;">
+            <div class="row between">
+              <div>
+                <strong style="color: var(--success); font-size: 14px;">¡Sesión Activa Reconocida!</strong>
+                <div style="font-size: 12px; margin-top: 4px;" id="datosClienteLogueado">Nombre Clienta &bull; correo@ejemplo.com</div>
+              </div>
+              <button type="button" class="btn sm outline" onclick="logout()" style="height: 28px; font-size: 10px;">Cambiar Usuario</button>
+            </div>
+          </div>
+
+          <!-- Si el cliente NO ESTÁ REGISTRADO: Formulario de Registro Inline (Requisito 20) -->
+          <form id="formRegistroClienteInline" style="margin-bottom: 16px;">
+            <div class="alert-banner info" style="display: block; margin-bottom: 14px;">
+              No has iniciado sesión. Completa tus datos a continuación para registrarte automáticamente y agendar tu cita en un solo paso:
+            </div>
+
+            <div class="grid g2" style="gap: 12px;">
+              <div class="form-group">
+                <label class="lbl" for="inNombre">Nombre</label>
+                <input type="text" id="inNombre" class="field" placeholder="Ej: Valentina" required>
+              </div>
+              <div class="form-group">
+                <label class="lbl" for="inApellido">Apellido Paterno</label>
+                <input type="text" id="inApellido" class="field" placeholder="Ej: Pérez" required>
+              </div>
+            </div>
+
+            <div class="grid g2" style="gap: 12px;">
+              <div class="form-group">
+                <label class="lbl" for="inCorreo">Correo Electrónico</label>
+                <input type="email" id="inCorreo" class="field" placeholder="valentina@gmail.com" required>
+              </div>
+              <div class="form-group">
+                <label class="lbl" for="inPassword">Contraseña para tu Cuenta</label>
+                <input type="password" id="inPassword" class="field" placeholder="Mínimo 6 caracteres" minlength="6" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="lbl" for="inTelefono">Teléfono de Contacto</label>
+              <input type="text" id="inTelefono" class="field" placeholder="+56912345678" required>
+            </div>
+          </form>
+
+          <!-- Notas adicionales para la cita (Común a ambos casos) -->
+          <div class="form-group">
+            <label class="lbl" for="inNotasCliente">Notas o Preferencias Especiales para el Tratamiento</label>
+            <textarea id="inNotasCliente" class="field" rows="2" placeholder="Ej: Traigo esmaltado previo para retiro, tono nude favorito, etc."></textarea>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <button type="button" id="btnFinalizarReserva" class="btn" style="width: 100%; height: 46px; font-size: 13px;" onclick="ejecutarReservaFinal()">
+              Confirmar y Agendar Cita
+            </button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Columna Lateral: Resumen en Vivo del Agendamiento -->
+      <div>
+        <div class="panel" style="position: sticky; top: 20px;">
+          <h3 style="font-size: 20px; margin-bottom: 14px;">Resumen de tu Reserva</h3>
+
+          <div class="booking-summary-box" style="margin-top: 0;">
+            <div class="booking-summary-row">
+              <span style="color: var(--muted);">Tratamiento</span>
+              <strong id="resumenServicioTexto">Sin seleccionar</strong>
+            </div>
+            <div class="booking-summary-row">
+              <span style="color: var(--muted);">Especialista</span>
+              <strong id="resumenTrabajadorTexto">Sin seleccionar</strong>
+            </div>
+            <div class="booking-summary-row">
+              <span style="color: var(--muted);">Fecha</span>
+              <strong id="resumenFechaTexto">-</strong>
+            </div>
+            <div class="booking-summary-row">
+              <span style="color: var(--muted);">Horario</span>
+              <strong id="resumenHoraTexto">-</strong>
+            </div>
+            <div class="booking-summary-row">
+              <span>Total Estimado</span>
+              <span class="card-price" id="resumenPrecioTexto">$0</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; font-size: 11px; color: var(--muted); line-height: 1.5;">
+            &bull; Cancelación gratuita hasta 24 horas antes.<br>
+            &bull; El especialista confirmará tu solicitud a la brevedad.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container row between">
+      <span class="display" style="font-size:22px;">nicolett.</span>
+      <span>Nicolett Studio Fantasy &copy; 2026 &bull; Agendamiento Online de Clientes</span>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+  <script src="js/reserva-cliente.js"></script>
+</body>
+</html>

@@ -22,9 +22,9 @@ const store={
 function renderShell(){
  const page=document.body.dataset.page;
  const l=(h,t,p)=>`<a href="${h}" class="nav-link ${page===p?'active':''}">${t}</a>`;
- $('#header').outerHTML=`<header class="site-header"><div class="container"><a href="index.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY</small></a><nav class="main">${l('index.html','Inicio','home')}${l('servicios.html','Servicios','servicios')}${l('equipo.html','Nuestro equipo','equipo')}</nav><div class="row"><a href="/admin/login.html" class="nav-link hide-m">Acceso profesionales</a><a href="reservar.html" class="btn sm">Reservar hora</a></div></div></header>`;
+ $('#header').outerHTML=`<header class="site-header"><div class="container"><a href="index.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY</small></a><nav class="main">${l('index.html','Inicio','home')}${l('servicios.html','Servicios','servicios')}${l('equipo.html','Nuestro equipo','equipo')}</nav><div class="row"><a href="admin/login.html" class="nav-link hide-m">Acceso profesionales</a><a href="reservar.html" class="btn sm">Reservar hora</a></div></div></header>`;
  $('#footer').outerHTML=`<footer class="footer"><div class="container row between"><span class="display" style="font-size:24px;color:var(--fg)">nicolett.</span><span>Un espacio para ti. Un cuidado que se siente.</span><span>© 2026 Nicolett Studio Fantasy · Buin, Chile</span></div></footer>`;
- const s=$('#staffnav'); if(s) s.outerHTML=`<div class="staffnav"><div class="container row between"><div class="row" style="gap:24px">${l('agenda.html','Agenda semanal','agenda')}${l('clientas.html','Historial de clientas','clientas')}${l('dashboard.html','Perfil demostrativo','dashboard')}<a href="/admin/login.html" class="nav-link" style="color:var(--primary);font-weight:700">Panel Real API &rarr;</a></div><span class="small">Espacio profesionales · Datos de muestra</span></div></div>`;
+ const s=$('#staffnav'); if(s) s.outerHTML=`<div class="staffnav"><div class="container row between"><div class="row" style="gap:24px">${l('agenda.html','Agenda semanal','agenda')}${l('clientas.html','Historial de clientas','clientas')}${l('dashboard.html','Perfil demostrativo','dashboard')}<a href="admin/login.html" class="nav-link" style="color:var(--primary);font-weight:700">Panel Real API &rarr;</a></div><span class="small">Espacio profesionales · Datos de muestra</span></div></div>`;
 }
 const serviceCard=s=>`<article class="card"><img src="${s.image}" alt="${s.name}" loading="lazy"><div class="body"><span class="eyebrow">${s.category}</span><h3>${s.name}</h3><p class="small">${s.description}</p><div class="row between" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)"><span>Desde <strong>${money(s.price)}</strong> · <span class="small">${s.duration} min</span></span><a class="btn sm outline" href="reservar.html?servicio=${s.id}">Reservar</a></div></div></article>`;
 
@@ -48,7 +48,28 @@ const pages={
    if(s===1)h=`<div class="grid g2">${SERVICES.map(x=>`<button class="choice ${st.service===x.id?'selected':''}" data-k="service" data-v="${x.id}"><span><strong>${x.name}</strong><br><span class="small">${x.duration} min</span></span><strong>${money(x.price)}</strong></button>`).join('')}</div>`;
    if(s===2)h=`<div class="grid g3">${SPECIALISTS.map(x=>`<button class="choice ${st.specialist===x.id?'selected':''}" data-k="specialist" data-v="${x.id}"><span class="row"><span class="avatar">${x.initials}</span><span><strong>${x.name}</strong><br><span class="small">${x.specialty}</span></span></span></button>`).join('')}</div>`;
    if(s===3)h=`<div class="grid g4">${days.map(d=>`<button class="choice ${st.date===iso(d)?'selected':''}" data-k="date" data-v="${iso(d)}"><span>${d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'short'})}</span></button>`).join('')}</div>`;
-   if(s===4){const t=taken();h=`<div class="grid g4">${hours.map(x=>`<button class="choice ${st.time===x?'selected':''}" data-k="time" data-v="${x}" ${t.includes(x)?'disabled style="opacity:.4"':''}>${x}${t.includes(x)?' · ocupada':''}</button>`).join('')}</div>`}
+   if(s===4){
+    const workerId = isNaN(st.specialist) ? 1 : st.specialist;
+    const sId = isNaN(st.service) ? 1 : st.service;
+    fetch(`/api/v2/nicolet/disponibilidad?trabajadorId=${workerId}&fecha=${st.date}&servicioId=${sId}`)
+     .then(r => r.ok ? r.json() : Promise.reject())
+     .then(bloques => {
+       if(!bloques || bloques.length===0){
+         $('#content').innerHTML='<div class="panel" style="text-align:center"><p class="small">No hay horarios disponibles para la fecha seleccionada. Por favor selecciona otro día.</p></div>';
+         return;
+       }
+       $('#content').innerHTML=`<div class="grid g4">${bloques.map(b=>{
+         const hh=b.horaInicio.slice(0,5);
+         return `<button class="choice ${st.time===hh?'selected':''}" data-k="time" data-v="${hh}" ${!b.disponible?'disabled style="opacity:.4"':''}>${hh}${!b.disponible?` · ${b.motivoNoDisponible.toLowerCase()}`:''}</button>`;
+       }).join('')}</div>`;
+       $('#content').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{st[b.dataset.k]=b.dataset.v;draw()});
+     })
+     .catch(()=>{
+       const t=taken();
+       $('#content').innerHTML=`<div class="grid g4">${hours.map(x=>`<button class="choice ${st.time===x?'selected':''}" data-k="time" data-v="${x}" ${t.includes(x)?'disabled style="opacity:.4"':''}>${x}${t.includes(x)?' · ocupada':''}</button>`).join('')}</div>`;
+       $('#content').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{st[b.dataset.k]=b.dataset.v;draw()});
+     });
+   }
    if(s===5)h=`<div class="panel"><p><strong>${svc().name}</strong> con ${sp().name}</p><p class="small">${st.date} · ${st.time} · ${svc().duration} min</p><label class="lbl">Nombre completo</label><input class="field" id="f-name" value="${st.name}"><label class="lbl">Correo</label><input class="field" id="f-email" type="email" value="${st.email}"><label class="lbl">Teléfono</label><input class="field" id="f-phone" value="${st.phone}"><p class="small" style="margin-top:14px">Al reservar se crea tu ficha de clienta para registrar observaciones de la atención.</p></div>`;
    if(s===6)h=`<div class="panel"><p class="eyebrow">Abono obligatorio</p><h3 style="font-size:34px;margin:8px 0">${money(DEPOSIT)} CLP</h3><p class="small">Sin abono no hay reserva. Se descuenta del total (${money(svc().price)}).</p><label class="lbl">Número de tarjeta (simulado)</label><input class="field" placeholder="4242 4242 4242 4242"><div class="grid g2"><div><label class="lbl">Vencimiento</label><input class="field" placeholder="MM/AA"></div><div><label class="lbl">CVV</label><input class="field" placeholder="123"></div></div><label class="row small" style="margin-top:16px"><input type="checkbox" id="f-pay" ${st.paid?'checked':''}> Acepto pagar el abono de ${money(DEPOSIT)} para confirmar mi hora</label></div>`;
    if(s===7)h=`<div class="panel" style="text-align:center"><p class="eyebrow">Código ${st.code}</p><h3 style="font-size:34px;margin:10px 0">Te esperamos, ${st.name.split(' ')[0]}</h3><p class="small">${svc().name} con ${sp().name} · ${st.date} a las ${st.time}<br>Abono pagado: ${money(DEPOSIT)} · Saldo en el salón: ${money(svc().price-DEPOSIT)}</p><a href="index.html" class="btn" style="margin-top:20px">Volver al inicio</a></div>`;

@@ -171,21 +171,29 @@ ON DUPLICATE KEY UPDATE
     nombre = VALUES(nombre), 
     descripcion = VALUES(descripcion);
 
--- Usuarios de prueba iniciales
+-- Usuarios de prueba iniciales (Contraseñas encriptadas con BCrypt garantizadas)
 INSERT INTO usuario (id, nombre, apellidop, correo, password, tipo_usuario_id) VALUES
-(1, 'Maximo', 'Rojas', 'maximo.rojas@estudio.cl', 'password_seguro_123', 1),
-(2, 'Martina', 'Contreras', 'martina.contreras@gmail.com', '123412', 2),
-(3, 'Nicolet', 'Estudio', 'contacto@nicollet.cl', 'admin2026', 1),
-(4, 'Camila', 'Silva', 'camila.silva@estudio.cl', 'pro2026', 3)
+(1, 'Maximo', 'Rojas', 'maximo.rojas@estudio.cl', '$2a$10$LLC9MYDORke3rHMe0Kgtw.N5SWYIvxJ6sTcLdOe07QqaBF7JY4I.O', 1),
+(2, 'Martina', 'Contreras', 'martina.contreras@gmail.com', '$2a$10$ESfiyf6jPxhbBftsI7L30eB.b4OQ4lGu..T/uUkEgcFSb/5FPvc6i', 2),
+(3, 'Nicolet', 'Estudio', 'contacto@nicollet.cl', '$2a$10$zbOC5t69a3Tyqq6EitBxeeJGmJs7EBmKrMpdjuAQ3Ls5UeSK8SbQy', 1),
+(4, 'Camila', 'Silva', 'camila.silva@estudio.cl', '$2a$10$v5QuFdt0FTdUeIqz.DBrAeW7lKkyRC9bIX9soDwDoJqj7tnt8XNKC', 3),
+(5, 'Admin', 'Test', 'admin.test@nicolet.cl', '$2a$10$qY.A5xw1WqcwYfHMDSTske5/yminGDG6UIvqKFi.bObGEie8YUo96', 1),
+(6, 'Administrador', 'Nicolet', 'admin@nicolet.cl', '$2a$10$1GXa.ej0wxNhjxBxvS03SeQf8IuJ4fMC4EWSRZVbtL4XFZJFtrciK', 1),
+(7, 'Martina', 'Soto', 'marit@gmail.com', '$2a$10$3bdkwpatN8B8vOnDRIkZ2u0StAe4ZGK3stZ.ow.OBUvOIkGIMUc7G', 2),
+(8, 'Felipe', 'Galle', 'gale@gmail.com', '$2a$10$3bdkwpatN8B8vOnDRIkZ2u0StAe4ZGK3stZ.ow.OBUvOIkGIMUc7G', 2),
+(9, 'Prueba', 'Admin', 'prueba1235@gmail.com', '$2a$10$3bdkwpatN8B8vOnDRIkZ2u0StAe4ZGK3stZ.ow.OBUvOIkGIMUc7G', 1)
 ON DUPLICATE KEY UPDATE 
     nombre = VALUES(nombre),
     apellidop = VALUES(apellidop),
+    correo = VALUES(correo),
     password = VALUES(password),
     tipo_usuario_id = VALUES(tipo_usuario_id);
 
--- Perfil de Cliente de prueba (asociado a usuario 2: Martina)
+-- Perfiles de Clientes de prueba (asociados a usuarios 2: Martina, 7: Martina Soto, 8: Felipe Galle)
 INSERT INTO cliente (id, usuario_id, telefono, rut_dni, fecha_nacimiento, notas_preferencias, activo) VALUES
-(1, 2, '+56912345678', '19876543-2', '1998-05-14', 'Prefiere tonos neutros para manicura', TRUE)
+(1, 2, '+56912345678', '19876543-2', '1998-05-14', 'Prefiere tonos neutros para manicura', TRUE),
+(2, 7, '+56977778888', '20123456-7', '2000-03-20', 'Alérgica a productos con alcohol', TRUE),
+(3, 8, '+56966665555', '18555444-3', '1995-11-12', 'Cliente frecuente de corte de cabello', TRUE)
 ON DUPLICATE KEY UPDATE
     telefono = VALUES(telefono),
     notas_preferencias = VALUES(notas_preferencias);
@@ -210,7 +218,8 @@ ON DUPLICATE KEY UPDATE
 -- Asignación de servicios que ofrece Camila (Trabajador 1)
 INSERT IGNORE INTO trabajador_servicio (trabajador_id, servicio_id) VALUES
 (1, 1),
-(1, 2);
+(1, 2),
+(1, 3);
 
 -- Horario de disponibilidad de Camila (Lunes a Viernes: 09:00 a 18:00 con colación 13:00 - 14:00)
 INSERT INTO horario_disponibilidad (trabajador_id, dia_semana, hora_inicio, hora_fin, hora_inicio_descanso, hora_fin_descanso, activo) VALUES
@@ -220,8 +229,16 @@ INSERT INTO horario_disponibilidad (trabajador_id, dia_semana, hora_inicio, hora
 (1, 4, '09:00:00', '18:00:00', '13:00:00', '14:00:00', TRUE),
 (1, 5, '09:00:00', '18:00:00', '13:00:00', '14:00:00', TRUE);
 
--- Cita de prueba (Martina se atiende con Camila para Manicura Rusa)
+-- Citas de prueba del sistema
+-- 1. Cita confirmada (Martina con Camila para Manicura Rusa)
+-- 2. Cita pendiente para validación en panel de trabajadores (Martina Soto con Camila para Corte)
+-- 3. Cita completada para consulta en historial de tratamientos (Martina con Camila para Facial)
 INSERT INTO cita (id, codigo_reserva, cliente_id, trabajador_id, servicio_id, fecha_hora_inicio, fecha_hora_fin, estado, precio_final, notas_cliente, notas_trabajador) VALUES
-(1, 'RES-2026-0001', 1, 1, 2, '2026-10-15 10:00:00', '2026-10-15 11:00:00', 'CONFIRMADA', 22000.00, 'Primera sesión', 'Revisar estado de cutículas previas')
+(1, 'RES-2026-0001', 1, 1, 2, '2026-10-15 10:00:00', '2026-10-15 11:00:00', 'CONFIRMADA', 22000.00, 'Primera sesión', 'Revisar estado de cutículas previas'),
+(2, 'RES-2026-0002', 2, 1, 1, '2026-10-18 11:30:00', '2026-10-18 12:15:00', 'PENDIENTE', 18000.00, 'Cita reservada desde portal cliente - Requiere confirmación', NULL),
+(3, 'RES-2026-0003', 1, 1, 3, '2026-10-08 15:00:00', '2026-10-08 16:00:00', 'COMPLETADA', 28000.00, 'Tratamiento facial hidratante realizado', 'Piel sensible, se aplicó emulsión calmante post tratamiento')
 ON DUPLICATE KEY UPDATE
-    estado = VALUES(estado);
+    estado = VALUES(estado),
+    precio_final = VALUES(precio_final),
+    notas_cliente = VALUES(notas_cliente),
+    notas_trabajador = VALUES(notas_trabajador);

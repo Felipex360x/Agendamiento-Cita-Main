@@ -1,8 +1,11 @@
 // ========================================================
-// Nicolet Estudio - Frontend Agendamiento de Citas
+// Nicolett Studio Fantasy - Frontend Agendamiento de Citas
 // ========================================================
 
-const API_BASE = '/api/v2/nicolet';
+var API_BASE = window.API_BASE || '/api/v2/nicolet';
+function getApiBase() {
+  return window.API_BASE || API_BASE || '/api/v2/nicolet';
+}
 const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));
 
 // Estado local en memoria
@@ -16,7 +19,8 @@ const statusText = document.getElementById('statusText');
 const alertMessage = document.getElementById('alertMessage');
 const totalCitasEl = document.getElementById('totalCitas');
 const citasConfirmadasEl = document.getElementById('citasConfirmadas');
-const totalServiciosEl = document.getElementById('totalServicios');
+const totalTrabajadoresKPI = document.getElementById('totalTrabajadoresKPI');
+const totalClientesKPI = document.getElementById('totalClientesKPI');
 const citasTableBody = document.getElementById('citasTableBody');
 
 const clienteSelect = document.getElementById('clienteId');
@@ -27,27 +31,41 @@ const fechaHoraInicioInput = document.getElementById('fechaHoraInicio');
 const notasClienteInput = document.getElementById('notasCliente');
 const citaForm = document.getElementById('citaForm');
 
+const spanCountTrabajadores = document.getElementById('spanCountTrabajadores');
+const spanCountClientes = document.getElementById('spanCountClientes');
+const listaTrabajadoresRender = document.getElementById('listaTrabajadoresRender');
+const listaClientesRender = document.getElementById('listaClientesRender');
+
 // Iniciar al cargar
-document.addEventListener('DOMContentLoaded', () => {
-  if (typeof requireAuth === 'function') requireAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof requireAuth === 'function' && !requireAuth()) return;
   establecerFechaMinima();
   verificarConexion();
-  cargarDatosFormulario();
-  cargarCitas();
+  await cargarDatosFormulario();
+  await cargarCitas();
+
+  // Soporte para preselección de servicio desde URL (ej: citas.html?servicioId=2)
+  const params = new URLSearchParams(window.location.search);
+  const sIdParam = params.get('servicioId');
+  if (sIdParam && servicioSelect) {
+    servicioSelect.value = sIdParam;
+    actualizarInfoServicio();
+  }
 
   // Event listener en select de servicio para mostrar detalles
-  servicioSelect.addEventListener('change', () => {
-    const sId = Number(servicioSelect.value);
-    const servicio = serviciosDisponibles.find(s => s.id === sId);
-    if (servicio) {
-      servicioInfoEl.textContent = `Duración: ${servicio.duracionMinutos} min | Precio: $${Number(servicio.precio).toLocaleString('es-CL')}`;
-    } else {
-      servicioInfoEl.textContent = '';
-    }
-  });
-
+  servicioSelect.addEventListener('change', actualizarInfoServicio);
   citaForm.addEventListener('submit', manejarAgendamiento);
 });
+
+function actualizarInfoServicio() {
+  const sId = Number(servicioSelect.value);
+  const servicio = serviciosDisponibles.find(s => s.id === sId);
+  if (servicio) {
+    servicioInfoEl.textContent = `Duración: ${servicio.duracionMinutos} min | Tarifa: $${Number(servicio.precio).toLocaleString('es-CL')}`;
+  } else {
+    servicioInfoEl.textContent = '';
+  }
+}
 
 // Configurar fecha mínima como momento actual
 function establecerFechaMinima() {
@@ -68,10 +86,11 @@ function mostrarAlerta(mensaje, esError = false) {
 
 // Verificar conexión con el backend
 async function verificarConexion() {
+  const base = getApiBase();
   try {
-    const res = await apiFetch(`${API_BASE}/servicios`, { method: 'GET' });
+    const res = await apiFetch(`${base}/servicios`, { method: 'GET' });
     if (res.ok) {
-      statusBadge.className = 'status-badge connected';
+      statusBadge.className = 'status online';
       statusText.textContent = 'API Conectada (8080)';
     } else {
       marcarDesconectado();
@@ -82,52 +101,122 @@ async function verificarConexion() {
 }
 
 function marcarDesconectado() {
-  statusBadge.className = 'status-badge error';
-  statusText.textContent = 'Sin conexión a API';
+  statusBadge.className = 'status offline';
+  statusText.textContent = 'Sin conexión';
 }
 
-// Cargar Clientes, Trabajadores y Servicios para los Selects
+// Cargar Clientes, Trabajadores y Servicios para los Selects y Tableros
 async function cargarDatosFormulario() {
+  const base = getApiBase();
   try {
     // 1. Cargar Servicios
-    const resServicios = await apiFetch(`${API_BASE}/servicios`);
+    const resServicios = await apiFetch(`${base}/servicios`);
     if (resServicios.ok) {
       serviciosDisponibles = await resServicios.json();
-      totalServiciosEl.textContent = serviciosDisponibles.length;
       servicioSelect.innerHTML = '<option value="" disabled selected>Seleccione un servicio...</option>' +
         serviciosDisponibles.map(s => `
           <option value="${s.id}">
             ${s.nombre} ($${Number(s.precio).toLocaleString('es-CL')} - ${s.duracionMinutos} min)
           </option>
         `).join('');
+    } else {
+      servicioSelect.innerHTML = '<option value="" disabled>Error al cargar servicios</option>';
     }
 
-    // 2. Cargar Clientes
-    const resClientes = await apiFetch(`${API_BASE}/clientes`);
+    // 2. Cargar Clientes (Rol Cliente)
+    const resClientes = await apiFetch(`${base}/clientes`);
     if (resClientes.ok) {
       clientesDisponibles = await resClientes.json();
-      clienteSelect.innerHTML = '<option value="" disabled selected>Seleccione un cliente...</option>' +
-        clientesDisponibles.map(c => `
-          <option value="${c.id}">
-            ${c.usuario.nombre} ${c.usuario.apellidoP} (${c.usuario.correo})
-          </option>
-        `).join('');
+      if (totalClientesKPI) totalClientesKPI.textContent = clientesDisponibles.length;
+      if (spanCountClientes) spanCountClientes.textContent = clientesDisponibles.length;
+
+      clienteSelect.innerHTML = '<option value="" disabled selected>Seleccione una clienta...</option>' +
+        clientesDisponibles.map(c => {
+          const nom = c.usuario ? `${c.usuario.nombre || ''} ${c.usuario.apellidoP || ''}`.trim() : `Clienta #${c.id}`;
+          const correo = c.usuario && c.usuario.correo ? ` (${c.usuario.correo})` : '';
+          return `<option value="${c.id}">${nom}${correo}</option>`;
+        }).join('');
+
+      renderizarListaClientes(clientesDisponibles);
+    } else {
+      clienteSelect.innerHTML = '<option value="" disabled>Error al cargar clientas</option>';
     }
 
-    // 3. Cargar Trabajadores
-    const resTrabajadores = await apiFetch(`${API_BASE}/trabajadores`);
+    // 3. Cargar Especialistas (Rol Trabajador)
+    const resTrabajadores = await apiFetch(`${base}/trabajadores`);
     if (resTrabajadores.ok) {
       trabajadoresDisponibles = await resTrabajadores.json();
-      trabajadorSelect.innerHTML = '<option value="" disabled selected>Seleccione un profesional...</option>' +
-        trabajadoresDisponibles.map(t => `
-          <option value="${t.id}">
-            ${t.usuario.nombre} ${t.usuario.apellidoP} - ${t.cargoEspecialidad}
-          </option>
-        `).join('');
+      if (totalTrabajadoresKPI) totalTrabajadoresKPI.textContent = trabajadoresDisponibles.length;
+      if (spanCountTrabajadores) spanCountTrabajadores.textContent = trabajadoresDisponibles.length;
+
+      trabajadorSelect.innerHTML = '<option value="" disabled selected>Seleccione un especialista...</option>' +
+        trabajadoresDisponibles.map(t => {
+          const nom = t.usuario ? `${t.usuario.nombre || ''} ${t.usuario.apellidoP || ''}`.trim() : `Especialista #${t.id}`;
+          const cargo = t.cargoEspecialidad ? ` · ${t.cargoEspecialidad}` : '';
+          return `<option value="${t.id}">${nom}${cargo}</option>`;
+        }).join('');
+
+      renderizarListaTrabajadores(trabajadoresDisponibles);
+    } else {
+      trabajadorSelect.innerHTML = '<option value="" disabled>Error al cargar especialistas</option>';
     }
   } catch (error) {
     console.error('Error cargando catálogos:', error);
   }
+}
+
+// Renderizado de usuarios con rol Trabajador (Requisito 8)
+function renderizarListaTrabajadores(trabajadores) {
+  if (!listaTrabajadoresRender) return;
+  if (!trabajadores || trabajadores.length === 0) {
+    listaTrabajadoresRender.innerHTML = '<div style="color:var(--muted); font-size:11px; padding:12px; text-align:center;">No hay trabajadores registrados aún.</div>';
+    return;
+  }
+  listaTrabajadoresRender.innerHTML = trabajadores.map(t => {
+    const nom = t.usuario ? `${t.usuario.nombre} ${t.usuario.apellidoP || ''}`.trim() : `Trabajador #${t.id}`;
+    const correo = t.usuario?.correo || 'Sin correo';
+    const cargo = t.cargoEspecialidad || 'Especialista';
+    const initial = (nom.charAt(0) || 'T').toUpperCase();
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--secondary); border-radius:4px; border:1px solid var(--border);">
+        <div style="display:flex; align-items:center;">
+          <span class="avatar">${initial}</span>
+          <div>
+            <div style="font-weight:600; font-size:12px; color:var(--fg);">${nom}</div>
+            <div style="font-size:10px; color:var(--muted);">${correo} &bull; ${cargo}</div>
+          </div>
+        </div>
+        <span class="badge-role profesional" style="font-size:9px;">#${t.id}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// Renderizado de usuarios con rol Cliente (Requisito 8)
+function renderizarListaClientes(clientes) {
+  if (!listaClientesRender) return;
+  if (!clientes || clientes.length === 0) {
+    listaClientesRender.innerHTML = '<div style="color:var(--muted); font-size:11px; padding:12px; text-align:center;">No hay clientes registrados aún.</div>';
+    return;
+  }
+  listaClientesRender.innerHTML = clientes.map(c => {
+    const nom = c.usuario ? `${c.usuario.nombre} ${c.usuario.apellidoP || ''}`.trim() : `Cliente #${c.id}`;
+    const correo = c.usuario?.correo || 'Sin correo';
+    const tel = c.telefono ? ` &bull; ${c.telefono}` : '';
+    const initial = (nom.charAt(0) || 'C').toUpperCase();
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--secondary); border-radius:4px; border:1px solid var(--border);">
+        <div style="display:flex; align-items:center;">
+          <span class="avatar">${initial}</span>
+          <div>
+            <div style="font-weight:600; font-size:12px; color:var(--fg);">${nom}</div>
+            <div style="font-size:10px; color:var(--muted);">${correo}${tel}</div>
+          </div>
+        </div>
+        <span class="badge-role cliente" style="font-size:9px;">#${c.id}</span>
+      </div>
+    `;
+  }).join('');
 }
 
 // Cargar lista de citas
@@ -135,7 +224,7 @@ async function cargarCitas() {
   try {
     citasTableBody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; color: var(--gray); padding: 2rem;">
+        <td colspan="7" style="text-align: center; color: var(--muted); padding: 2rem;">
           Cargando citas...
         </td>
       </tr>
@@ -151,7 +240,7 @@ async function cargarCitas() {
     if (citas.length === 0) {
       citasTableBody.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align: center; color: var(--gray); padding: 2rem;">
+          <td colspan="7" style="text-align: center; color: var(--muted); padding: 2rem;">
             No hay citas agendadas actualmente. ¡Agende la primera desde el formulario!
           </td>
         </tr>
@@ -186,11 +275,11 @@ async function cargarCitas() {
           <td>${trabajadorNombre}</td>
           <td>
             <strong>${cita.servicio?.nombre || 'Servicio'}</strong><br>
-            <span style="font-size:0.8rem; color: var(--gray);">$${precioFormat}</span>
+            <span style="font-size:0.8rem; color: var(--muted);">$${precioFormat}</span>
           </td>
           <td>
             ${fechaInicio}<br>
-            <span style="font-size:0.8rem; color: var(--gray);">Hasta ${fechaFin}</span>
+            <span style="font-size:0.8rem; color: var(--muted);">Hasta ${fechaFin}</span>
           </td>
           <td>
             <span class="badge-estado ${cita.estado}">${cita.estado}</span>
@@ -208,7 +297,7 @@ async function cargarCitas() {
                 </button>
               ` : ''}
               ${!puedeCompletar && !puedeCancelar ? `
-                <span style="font-size: 0.8rem; color: var(--gray); font-style: italic;">Sin acciones</span>
+                <span style="font-size: 0.8rem; color: var(--muted); font-style: italic;">Sin acciones</span>
               ` : ''}
             </div>
           </td>
@@ -336,7 +425,7 @@ async function guardarNuevoCliente(e) {
     await cargarDatosFormulario();
 
     // Seleccionar el nuevo cliente creado
-    const clienteCreado = clientesDisponibles.find(c => c.usuario.correo.toLowerCase() === correo.toLowerCase());
+    const clienteCreado = clientesDisponibles.find(c => c.usuario?.correo?.toLowerCase() === correo.toLowerCase());
     if (clienteCreado) {
       clienteSelect.value = clienteCreado.id;
     }
@@ -386,7 +475,7 @@ async function guardarNuevoTrabajador(e) {
     await cargarDatosFormulario();
 
     // Seleccionar el nuevo trabajador creado
-    const trabajadorCreado = trabajadoresDisponibles.find(t => t.usuario.correo.toLowerCase() === correo.toLowerCase());
+    const trabajadorCreado = trabajadoresDisponibles.find(t => t.usuario?.correo?.toLowerCase() === correo.toLowerCase());
     if (trabajadorCreado) {
       trabajadorSelect.value = trabajadorCreado.id;
     }

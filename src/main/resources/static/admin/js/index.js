@@ -1,5 +1,5 @@
-const API_URL = '/api/v2/nicolet/usuarios';
-const TIPOS_API_URL = '/api/v2/nicolet/tipos-usuario';
+const API_URL = (window.API_BASE ? `${window.API_BASE}/usuarios` : '/api/v2/nicolet/usuarios');
+const TIPOS_API_URL = (window.API_BASE ? `${window.API_BASE}/tipos-usuario` : '/api/v2/nicolet/tipos-usuario');
 
 // Elementos DOM
 const userTableBody = document.getElementById('userTableBody');
@@ -27,7 +27,7 @@ const btnRefresh = document.getElementById('btnRefresh');
 
 // Iniciar aplicación
 document.addEventListener('DOMContentLoaded', () => {
-  if (typeof requireAuth === 'function') requireAuth();
+  if (typeof requireAuth === 'function' && !requireAuth()) return;
   cargarTiposUsuario();
   cargarUsuarios();
 
@@ -229,7 +229,14 @@ async function prepararEdicion(id) {
     document.getElementById('nombre').value = usuario.nombre || '';
     document.getElementById('apellidoP').value = usuario.apellidoP || '';
     document.getElementById('correo').value = usuario.correo || '';
-    document.getElementById('password').value = usuario.password || '';
+
+    // Contraseña opcional al editar
+    const passwordInput = document.getElementById('password');
+    passwordInput.value = '';
+    passwordInput.removeAttribute('required');
+    passwordInput.placeholder = '(Dejar en blanco para conservar actual)';
+    const helper = document.getElementById('passwordHelper');
+    if (helper) helper.style.display = 'block';
 
     // Asignar el tipo de usuario si lo tiene
     if (usuario.tipoUsuario && usuario.tipoUsuario.id) {
@@ -264,6 +271,12 @@ function cancelarEdicion() {
   editUserId.value = '';
   userForm.reset();
 
+  const passwordInput = document.getElementById('password');
+  passwordInput.setAttribute('required', 'true');
+  passwordInput.placeholder = '••••••••';
+  const helper = document.getElementById('passwordHelper');
+  if (helper) helper.style.display = 'none';
+
   formTitle.innerText = 'Registrar Usuario';
   formMethodBadge.innerText = 'POST';
   formMethodBadge.className = 'badge-role cliente';
@@ -286,11 +299,11 @@ async function handleGuardarUsuario(e) {
 
   const nombre = document.getElementById('nombre').value.trim();
   const apellidoP = document.getElementById('apellidoP').value.trim();
-  const correo = document.getElementById('correo').value.trim();
+  const correo = document.getElementById('correo').value.trim().toLowerCase();
   const password = document.getElementById('password').value.trim();
   const tipoUsuarioVal = tipoUsuarioSelect?.value;
 
-  if (!nombre || !apellidoP || !correo || !password) {
+  if (!nombre || !apellidoP || !correo || (!esModoEdicion && !password)) {
     showToast('Por favor completa todos los campos requeridos', 'error');
     return;
   }
@@ -299,9 +312,11 @@ async function handleGuardarUsuario(e) {
     nombre, 
     apellidoP, 
     correo, 
-    password,
     tipoUsuarioId: tipoUsuarioVal ? Number(tipoUsuarioVal) : null
   };
+  if (password) {
+    payload.password = password;
+  }
 
   try {
     const url = esModoEdicion ? `${API_URL}/${idParaEditar}` : API_URL;

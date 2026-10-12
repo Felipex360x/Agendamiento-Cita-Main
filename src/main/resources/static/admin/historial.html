@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial de Tratamientos | Nicolett Studio Fantasy</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <!-- Encabezado Principal de Marca (Solo conexión admin) -->
+  <header class="site-header">
+    <div class="container">
+      <a href="citas.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY &bull; ADMIN</small></a>
+      <div class="row">
+        <div id="navUserBadgeSlot"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra de Navegación Exclusiva del Módulo Admin -->
+  <div class="staffnav">
+    <div class="container row between">
+      <div class="row" style="gap:18px">
+        <a href="citas.html" class="nav-link">Gestión de Citas</a>
+        <a href="reserva-cliente.html" class="nav-link">Agendar Cita (Cliente)</a>
+        <a href="servicios.html" class="nav-link">Servicios</a>
+        <a href="disponibilidad.html" class="nav-link">Simulador Disponibilidad</a>
+        <a href="panel-trabajador.html" class="nav-link">Portal Trabajador</a>
+        <a href="historial.html" class="nav-link active" style="color:var(--primary); font-weight:700;">Historial Tratamientos</a>
+        <a href="usuarios.html" class="nav-link">Usuarios y Roles</a>
+      </div>
+      <div class="row" style="gap:10px">
+        <div id="statusBadge" class="status">
+          <span id="statusText">Verificando API...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor Principal -->
+  <main class="container" style="padding-bottom: 60px;">
+
+    <!-- Título de Página -->
+    <section class="page-top">
+      <p class="eyebrow">Registro Clínico y Atenciones</p>
+      <h1 class="page-title">Historial de Tratamientos por Trabajador</h1>
+      <p class="small" style="margin-top:4px;">Registro de clientas atendidas, tratamientos realizados y ficha de seguimiento profesional</p>
+    </section>
+
+    <!-- Banner de Alertas -->
+    <div id="alertMessage" class="alert-banner"></div>
+
+    <!-- Filtro Principal por Trabajador / Especialista (Requisito 25) -->
+    <section class="panel" style="margin-bottom: 24px;">
+      <div class="row between">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div id="avatarHistorialTrabajador" class="avatar" style="width:48px; height:48px; font-size:18px;">H</div>
+          <div>
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); font-weight:700;">Especialista Seleccionado</div>
+            <h2 style="font-size:22px; margin-top:2px;" id="nombreTrabajadorFiltro">Cargando...</h2>
+            <div style="font-size:12px; color:var(--primary); font-weight:600;" id="cargoTrabajadorFiltro">-</div>
+          </div>
+        </div>
+
+        <div style="min-width: 280px;">
+          <label class="lbl" for="selectHistorialTrabajador" style="margin:0 0 4px;">Cambiar Especialista</label>
+          <select id="selectHistorialTrabajador" class="field" onchange="cambiarTrabajadorHistorial()">
+            <option value="" disabled selected>Cargando especialistas...</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Indicadores Clave del Historial -->
+    <section class="grid g3" style="margin-bottom: 28px;">
+      <div class="panel">
+        <span class="eyebrow">Tratamientos Atendidos</span>
+        <div class="kpi" id="kpiTotalTratamientos">-</div>
+        <p class="small">Sesiones realizadas con este especialista</p>
+      </div>
+      <div class="panel">
+        <span class="eyebrow">Clientas Únicas</span>
+        <div class="kpi" id="kpiClientasUnicas">-</div>
+        <p class="small">Clientas distintas en su cartera</p>
+      </div>
+      <div class="panel">
+        <span class="eyebrow">Ventas Acumuladas</span>
+        <div class="kpi" id="kpiVentasTotales">-</div>
+        <p class="small">Ingresos generados por tratamientos</p>
+      </div>
+    </section>
+
+    <!-- Tabla de Tratamientos Realizados -->
+    <section class="panel" style="padding: 0; overflow: hidden;">
+      <div style="padding: 20px 24px; border-bottom: 1px solid var(--border);" class="row between">
+        <div>
+          <span class="eyebrow">Ficha de Atenciones</span>
+          <h2 style="font-size: 26px; margin-top: 2px;">Tratamientos Realizados a Clientas</h2>
+        </div>
+        <div class="search-bar-row">
+          <input type="text" id="inputBuscarHistorial" class="field" placeholder="Buscar clienta o tratamiento..." style="width: 220px; height: 34px; font-size: 11px;">
+          <button type="button" class="btn sm outline" onclick="cargarHistorialTratamientos()">↻ Actualizar</button>
+        </div>
+      </div>
+
+      <div class="table-container" style="border: none; border-radius: 0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Clienta</th>
+              <th>Contacto</th>
+              <th>Tratamiento Realizado</th>
+              <th>Precio</th>
+              <th>Estado</th>
+              <th style="min-width: 140px; text-align: right;">Ficha Técnica</th>
+            </tr>
+          </thead>
+          <tbody id="tablaHistorialBody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--muted); padding: 2rem;">
+                Cargando historial de atenciones...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: FICHA TÉCNICA E HISTORIAL COMPLETO DE LA CLIENTA -->
+  <div id="modalFichaClienta" class="modal">
+    <div class="panel" style="max-width: 600px;">
+      <div class="row between" style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+        <div>
+          <span class="eyebrow">Ficha de Seguimiento</span>
+          <h3 style="font-size: 26px; margin-top: 2px;" id="modalNombreClienta">Ficha de la Clienta</h3>
+        </div>
+        <button type="button" class="btn sm outline" onclick="cerrarModalFicha()">✕</button>
+      </div>
+
+      <!-- Datos de Contacto de la Clienta -->
+      <div style="padding: 12px 16px; background: var(--secondary); border-radius: var(--radius); margin-bottom: 18px;" class="row between">
+        <div style="font-size: 12px;">
+          ✉ Correo: <strong id="modalCorreoClienta">-</strong>
+        </div>
+        <div style="font-size: 12px;">
+          📞 Teléfono: <strong id="modalTelefonoClienta">-</strong>
+        </div>
+      </div>
+
+      <!-- Línea de Tiempo de Tratamientos con este Especialista -->
+      <h4 style="font-size: 18px; margin-bottom: 12px;">Historial de Sesiones con este Especialista</h4>
+      <div id="modalListaSesiones" style="display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto;">
+        <!-- Se insertan dinámicamente -->
+      </div>
+
+      <div style="margin-top: 20px; text-align: right;">
+        <button type="button" class="btn sm" onclick="cerrarModalFicha()">Cerrar Ficha</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container row between">
+      <span class="display" style="font-size:22px;">nicolett.</span>
+      <span>Nicolett Studio Fantasy &copy; 2026 &bull; Historial de Tratamientos y Clientas</span>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+  <script src="js/historial.js"></script>
+</body>
+</html>

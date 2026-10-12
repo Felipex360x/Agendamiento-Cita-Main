@@ -3,237 +3,269 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iniciar Sesión - Nicolet Estudio</title>
+  <title>Acceso y Registro | Nicolett Studio Fantasy</title>
   <link rel="stylesheet" href="css/admin.css">
-  <style>
-    body {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
-      padding: 1.5rem;
-    }
-
-    .login-container {
-      width: 100%;
-      max-width: 440px;
-    }
-
-    .login-card {
-      background: white;
-      border-radius: 16px;
-      padding: 2.25rem 2rem;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
-    }
-
-    .brand-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .brand-logo {
-      width: 52px;
-      height: 52px;
-      background: var(--primary);
-      color: white;
-      font-size: 1.6rem;
-      font-weight: 800;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 0.75rem;
-      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
-    }
-
-    .brand-header h1 {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--gray-dark);
-      letter-spacing: -0.5px;
-    }
-
-    .brand-header p {
-      font-size: 0.88rem;
-      color: var(--gray);
-      margin-top: 0.25rem;
-    }
-
-    .alert-error {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-left: 4px solid #ef4444;
-      color: #991b1b;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      font-size: 0.86rem;
-      margin-bottom: 1.25rem;
-      display: none;
-    }
-
-    .quick-logins {
-      margin-top: 1.5rem;
-      padding-top: 1.25rem;
-      border-top: 1px solid var(--gray-light);
-    }
-
-    .quick-title {
-      font-size: 0.78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--gray);
-      margin-bottom: 0.65rem;
-      text-align: center;
-    }
-
-    .quick-btn-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.5rem;
-    }
-
-    .btn-quick {
-      background: var(--gray-light);
-      border: 1px solid var(--border);
-      padding: 0.5rem 0.4rem;
-      border-radius: 8px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--gray-dark);
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.15s;
-    }
-
-    .btn-quick:hover {
-      background: var(--primary-light);
-      color: var(--primary);
-      border-color: #c7d2fe;
-    }
-
-    .footer-note {
-      text-align: center;
-      margin-top: 1.5rem;
-      color: #94a3b8;
-      font-size: 0.8rem;
-    }
-  </style>
 </head>
 <body>
 
-  <div class="login-container">
-    <div class="login-card">
-      <div class="brand-header">
-        <div class="brand-logo">N</div>
-        <h1>Nicolet Estudio</h1>
-        <p>Sistema de Agendamiento y Gestión de Citas</p>
+  <!-- Encabezado unificado de la marca (Solo admin) -->
+  <header class="site-header">
+    <div class="container">
+      <a href="citas.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY &bull; ADMIN</small></a>
+      <div class="row">
+        <a href="reserva-cliente.html" class="btn sm">Agendar Cita</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenedor Central de Autenticación -->
+  <main class="auth-wrapper">
+    <div class="auth-card">
+
+      <div class="auth-header">
+        <span class="eyebrow">Espacio Privado</span>
+        <h1>Acceso al Sistema</h1>
+        <p class="small" style="margin-top:6px;">Inicia sesión con tu cuenta o regístrate por primera vez</p>
       </div>
 
-      <!-- Alerta de Error -->
-      <div id="errorAlert" class="alert-error">
+      <!-- Banner de sesión activa previa -->
+      <div id="activeSessionBanner" class="alert-banner info">
+        <div class="row between">
+          <span>Sesión activa como <strong id="activeSessionName">Usuario</strong></span>
+          <div class="row" style="gap:6px;">
+            <a id="btnIrPanel" href="citas.html" class="btn sm">Ir al Panel</a>
+            <button type="button" class="btn sm outline" onclick="logout()">Cerrar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alertas de Estado -->
+      <div id="errorAlert" class="alert-banner error">
         <span id="errorMessage">Credenciales incorrectas.</span>
       </div>
+      <div id="successAlert" class="alert-banner success">
+        <span id="successMessage">Acción completada con éxito.</span>
+      </div>
 
-      <!-- Formulario de Login -->
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="correo">Correo Electrónico</label>
-          <input type="email" id="correo" placeholder="ejemplo@estudio.cl" required autofocus>
-        </div>
-
-        <div class="form-group">
-          <label for="password">Contraseña</label>
-          <input type="password" id="password" placeholder="••••••••" required>
-        </div>
-
-        <button type="submit" id="btnSubmit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem; padding: 0.75rem;">
+      <!-- Pestañas: Iniciar Sesión / Registro -->
+      <div class="tab-group">
+        <button type="button" class="tab-btn active" id="tabBtnLogin" onclick="cambiarTab('login')">
           Iniciar Sesión
+        </button>
+        <button type="button" class="tab-btn" id="tabBtnRegistro" onclick="cambiarTab('registro')">
+          Registrar Nueva Cuenta
+        </button>
+      </div>
+
+      <!-- FORMULARIO 1: INICIO DE SESIÓN -->
+      <form id="formLogin">
+        <div class="form-group">
+          <label class="lbl" for="loginCorreo">Correo Electrónico</label>
+          <input type="email" id="loginCorreo" class="field" placeholder="ejemplo@estudio.cl" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="lbl" for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" class="field" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" id="btnSubmitLogin" class="btn" style="width: 100%; margin-top: 10px;">
+          Ingresar al Sistema
         </button>
       </form>
 
-      <!-- Botones de Acceso Rápido para Pruebas -->
-      <div class="quick-logins">
-        <div class="quick-title">Entorno de Pruebas &bull; Acceso Rápido</div>
+      <!-- FORMULARIO 2: REGISTRO DE NUEVO USUARIO -->
+      <form id="formRegistro" style="display: none;">
+        <div class="grid g2" style="gap: 10px;">
+          <div class="form-group">
+            <label class="lbl" for="regNombre">Nombre</label>
+            <input type="text" id="regNombre" class="field" placeholder="Ej: Valentina" required>
+          </div>
+          <div class="form-group">
+            <label class="lbl" for="regApellido">Apellido Paterno</label>
+            <input type="text" id="regApellido" class="field" placeholder="Ej: Pérez" required>
+          </div>
+        </div>
 
-        <!-- Acceso directo garantizado para Admin de Test -->
+        <div class="form-group">
+          <label class="lbl" for="regCorreo">Correo Electrónico</label>
+          <input type="email" id="regCorreo" class="field" placeholder="valentina@gmail.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="lbl" for="regPassword">Contraseña</label>
+          <input type="password" id="regPassword" class="field" placeholder="Mínimo 6 caracteres" minlength="6" maxlength="72" required>
+        </div>
+
+        <div class="form-group">
+          <label class="lbl" for="regTelefono">Teléfono (Opcional)</label>
+          <input type="text" id="regTelefono" class="field" placeholder="+56912345678">
+        </div>
+
+        <button type="submit" id="btnSubmitRegistro" class="btn" style="width: 100%; margin-top: 10px;">
+          Crear Cuenta y Entrar
+        </button>
+      </form>
+
+      <!-- Acceso Rápido para Desarrollo y Pruebas -->
+      <div class="quick-box" id="quickBox">
+        <div class="quick-title">Cuentas de Prueba Preconfiguradas</div>
+
         <button type="button" class="btn-quick" 
-                style="width: 100%; margin-bottom: 0.6rem; background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; font-weight: 700; padding: 0.55rem; font-size: 0.8rem;"
+                style="width: 100%; margin-bottom: 8px; background: var(--secondary); border-color: var(--primary); color: var(--primary); font-weight: 700; padding: 8px;"
                 onclick="llenarCredenciales('admin.test@nicolet.cl', 'AdminTest123!')">
           Admin de Test (Acceso Garantizado)
         </button>
 
-        <div class="quick-btn-grid">
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('admin@nicolet.cl', 'Admin123!')">
-            Admin
-          </button>
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('camila.silva@estudio.cl', 'pro2026')">
-            Especialista
-          </button>
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('martina.contreras@gmail.com', '123412')">
-            Cliente
-          </button>
+        <div class="quick-grid">
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('admin@nicolet.cl', 'Admin123!')">Admin</button>
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('camila.silva@estudio.cl', 'pro2026')">Especialista</button>
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('martina.contreras@gmail.com', '123412')">Martina</button>
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('maximo.rojas@estudio.cl', 'password_seguro_123')">Máximo</button>
+        </div>
+
+        <div class="quick-grid" style="margin-top: 6px; grid-template-columns: repeat(3, 1fr);">
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('marit@gmail.com', '123456')">Marit (123456)</button>
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('gale@gmail.com', '123456')">Gale (123456)</button>
+          <button type="button" class="btn-quick" onclick="llenarCredenciales('prueba1235@gmail.com', '123456')">Prueba (123456)</button>
         </div>
       </div>
-    </div>
 
-    <div class="footer-note">
-      <a href="/" style="color: #cbd5e1; text-decoration: none; font-weight: 500; display: inline-block; margin-bottom: 0.5rem;">&larr; Volver al Sitio Principal</a><br>
-      Nicolet Estudio &copy; 2026 • Autenticación segura con Spring Security & JWT
     </div>
-  </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container row between">
+      <span class="display" style="font-size:22px;">nicolett.</span>
+      <span>Nicolett Studio Fantasy &copy; 2026 &bull; Seguridad con Spring Security & JWT</span>
+    </div>
+  </footer>
 
   <script src="js/auth.js"></script>
   <script>
-    // Si ya tiene sesión activa, redirigir directo a citas
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectParam = urlParams.get('redirect') || 'citas.html';
+    const autoRedirect = urlParams.get('autoredirect') === 'true';
+
+    // Manejo de sesión previa
     if (isAuthenticated()) {
-      window.location.href = 'citas.html';
+      if (autoRedirect) {
+        window.location.href = redirectParam;
+      } else {
+        const user = getAuthUser();
+        const banner = document.getElementById('activeSessionBanner');
+        const nameEl = document.getElementById('activeSessionName');
+        const btnIr = document.getElementById('btnIrPanel');
+        if (banner && user) {
+          nameEl.innerText = `${user.nombre} (${user.rol || 'USUARIO'})`;
+          if (btnIr) btnIr.href = redirectParam;
+          banner.style.display = 'block';
+        }
+      }
     }
 
-    const loginForm = document.getElementById('loginForm');
-    const correoInput = document.getElementById('correo');
-    const passwordInput = document.getElementById('password');
-    const btnSubmit = document.getElementById('btnSubmit');
-    const errorAlert = document.getElementById('errorAlert');
-    const errorMessage = document.getElementById('errorMessage');
+    // Alternar Pestañas
+    function cambiarTab(tab) {
+      const formLogin = document.getElementById('formLogin');
+      const formRegistro = document.getElementById('formRegistro');
+      const tabBtnLogin = document.getElementById('tabBtnLogin');
+      const tabBtnRegistro = document.getElementById('tabBtnRegistro');
+      const quickBox = document.getElementById('quickBox');
+      const errorAlert = document.getElementById('errorAlert');
+      const successAlert = document.getElementById('successAlert');
+
+      errorAlert.style.display = 'none';
+      successAlert.style.display = 'none';
+
+      if (tab === 'login') {
+        formLogin.style.display = 'block';
+        formRegistro.style.display = 'none';
+        tabBtnLogin.classList.add('active');
+        tabBtnRegistro.classList.remove('active');
+        quickBox.style.display = 'block';
+      } else {
+        formLogin.style.display = 'none';
+        formRegistro.style.display = 'block';
+        tabBtnLogin.classList.remove('active');
+        tabBtnRegistro.classList.add('active');
+        quickBox.style.display = 'none';
+      }
+    }
 
     function llenarCredenciales(correo, pass) {
+      cambiarTab('login');
+      const correoInput = document.getElementById('loginCorreo');
+      const passInput = document.getElementById('loginPassword');
       correoInput.value = correo;
-      passwordInput.value = pass;
-      errorAlert.style.display = 'none';
-      passwordInput.focus();
+      passInput.value = pass;
+      document.getElementById('errorAlert').style.display = 'none';
+      passInput.focus();
     }
 
-    loginForm.addEventListener('submit', async (e) => {
+    // Envío Login
+    document.getElementById('formLogin').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const btn = document.getElementById('btnSubmitLogin');
+      const errorAlert = document.getElementById('errorAlert');
+      const errorMsg = document.getElementById('errorMessage');
+
       errorAlert.style.display = 'none';
-      btnSubmit.disabled = true;
-      btnSubmit.innerText = 'Verificando...';
+      btn.disabled = true;
+      btn.innerText = 'Verificando...';
 
       try {
-        const correo = correoInput.value.trim();
-        const password = passwordInput.value;
+        const correo = document.getElementById('loginCorreo').value.trim().toLowerCase();
+        const password = document.getElementById('loginPassword').value.trim();
 
-        const data = await login(correo, password);
+        await login(correo, password);
 
-        btnSubmit.innerText = 'Acceso Correcto';
-        btnSubmit.style.background = '#10b981';
-
-        // Redirigir a citas o usuarios según perfil
+        btn.innerText = 'Acceso Correcto';
         setTimeout(() => {
-          window.location.href = 'citas.html';
-        }, 500);
-
+          window.location.href = redirectParam;
+        }, 300);
       } catch (err) {
-        errorMessage.innerText = err.message || 'No se pudo conectar con el servidor.';
+        errorMsg.innerText = err.message || 'Error al iniciar sesión';
         errorAlert.style.display = 'block';
-        btnSubmit.disabled = false;
-        btnSubmit.innerText = 'Iniciar Sesión';
+        btn.disabled = false;
+        btn.innerText = 'Ingresar al Sistema';
+      }
+    });
+
+    // Envío Registro
+    document.getElementById('formRegistro').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitRegistro');
+      const errorAlert = document.getElementById('errorAlert');
+      const errorMsg = document.getElementById('errorMessage');
+      const successAlert = document.getElementById('successAlert');
+      const successMsg = document.getElementById('successMessage');
+
+      errorAlert.style.display = 'none';
+      successAlert.style.display = 'none';
+      btn.disabled = true;
+      btn.innerText = 'Creando cuenta...';
+
+      try {
+        const nombre = document.getElementById('regNombre').value.trim();
+        const apellidoP = document.getElementById('regApellido').value.trim();
+        const correo = document.getElementById('regCorreo').value.trim().toLowerCase();
+        const password = document.getElementById('regPassword').value.trim();
+        const telefono = document.getElementById('regTelefono').value.trim();
+
+        await register(nombre, apellidoP, correo, password, telefono);
+
+        successMsg.innerText = '¡Cuenta creada exitosamente! Redirigiendo al panel...';
+        successAlert.style.display = 'block';
+        btn.innerText = '¡Bienvenida!';
+
+        setTimeout(() => {
+          window.location.href = redirectParam;
+        }, 600);
+      } catch (err) {
+        errorMsg.innerText = err.message || 'Error al registrar la cuenta';
+        errorAlert.style.display = 'block';
+        btn.disabled = false;
+        btn.innerText = 'Crear Cuenta y Entrar';
       }
     });
   </script>

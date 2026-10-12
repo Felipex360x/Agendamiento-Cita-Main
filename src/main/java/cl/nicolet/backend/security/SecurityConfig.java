@@ -80,6 +80,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas de autenticación y documentación
                 .requestMatchers("/api/v2/nicolet/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/servicios/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/trabajadores/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/disponibilidad/**").permitAll()
                 .requestMatchers("/doc/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

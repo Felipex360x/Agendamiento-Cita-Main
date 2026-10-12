@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Trabajadores | Nicolett Studio Fantasy</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <!-- Encabezado Principal de Marca (Solo conexión admin) -->
+  <header class="site-header">
+    <div class="container">
+      <a href="citas.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY &bull; ADMIN</small></a>
+      <div class="row">
+        <div id="navUserBadgeSlot"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra de Navegación Exclusiva del Módulo Admin -->
+  <div class="staffnav">
+    <div class="container row between">
+      <div class="row" style="gap:18px">
+        <a href="citas.html" class="nav-link">Gestión de Citas</a>
+        <a href="reserva-cliente.html" class="nav-link">Agendar Cita (Cliente)</a>
+        <a href="servicios.html" class="nav-link">Servicios</a>
+        <a href="disponibilidad.html" class="nav-link">Simulador Disponibilidad</a>
+        <a href="panel-trabajador.html" class="nav-link active" style="color:var(--primary); font-weight:700;">Portal Trabajador</a>
+        <a href="historial.html" class="nav-link">Historial Tratamientos</a>
+        <a href="usuarios.html" class="nav-link">Usuarios y Roles</a>
+      </div>
+      <div class="row" style="gap:10px">
+        <div id="statusBadge" class="status">
+          <span id="statusText">Verificando API...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor Principal -->
+  <main class="container" style="padding-bottom: 60px;">
+
+    <!-- Título de Página -->
+    <section class="page-top">
+      <p class="eyebrow">Espacio Operativo de Especialistas</p>
+      <h1 class="page-title">Portal de Gestión para Trabajadores</h1>
+      <p class="small" style="margin-top:4px;">Revisión de citas asignadas, contacto y confirmación directa con los clientes</p>
+    </section>
+
+    <!-- Banner de Alertas -->
+    <div id="alertMessage" class="alert-banner"></div>
+
+    <!-- PANTALLA DE ACCESO RESTRINGIDO (Solo trabajadores / administradores) -->
+    <div id="accesoRestringidoBox" class="panel" style="display: none; text-align: center; max-width: 540px; margin: 40px auto; padding: 36px 24px;">
+      <span class="badge-role cliente" style="background: var(--danger-bg); color: var(--danger); border-color: #f2c7c2; font-size: 12px; padding: 6px 14px;">
+        Acceso Restringido a Trabajadores
+      </span>
+      <h2 style="font-size: 28px; margin: 16px 0 8px;">Módulo Exclusivo para Profesionales</h2>
+      <p style="color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
+        Este módulo está destinado exclusivamente a especialistas y trabajadores del salón para confirmar citas y gestionar atenciones.
+        Tu usuario autenticado actualmente tiene rol <strong id="rolActualUsuario">CLIENTE</strong>.
+      </p>
+      <div class="row" style="justify-content: center; gap: 10px;">
+        <a href="login.html?redirect=panel-trabajador.html" class="btn sm">Iniciar Sesión como Trabajador</a>
+        <a href="citas.html" class="btn sm outline">Volver al Panel</a>
+      </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL DEL PORTAL (Visible para Trabajador/Admin) -->
+    <div id="contenidoPortalTrabajador" style="display: none;">
+
+      <!-- Ficha del Trabajador Autenticado y Selector de Filtro -->
+      <section class="panel" style="margin-bottom: 24px;">
+        <div class="row between">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div id="badgeInicialTrabajador" class="avatar" style="width: 50px; height: 50px; font-size: 18px;">T</div>
+            <div>
+              <div style="font-weight: 700; font-size: 20px; color: var(--fg);" id="nombreTrabajadorHeader">-</div>
+              <div style="font-size: 12px; color: var(--primary); font-weight: 600;" id="cargoTrabajadorHeader">-</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 2px;" id="correoTrabajadorHeader">-</div>
+            </div>
+          </div>
+
+          <!-- Selector de Trabajador si es Administrador -->
+          <div id="selectorAdminTrabajadorContainer" style="display: none; text-align: right;">
+            <label class="lbl" for="adminSelectTrabajador" style="margin: 0 0 4px;">Vista Administrador: Cambiar Profesional</label>
+            <select id="adminSelectTrabajador" class="field" style="width: 240px; height: 34px; font-size: 12px;" onchange="cambiarTrabajadorSeleccionado()">
+              <option value="">Cargando especialistas...</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPIs del Trabajador -->
+      <section class="grid g4" style="margin-bottom: 28px;">
+        <div class="panel" style="border-left: 4px solid var(--warning);">
+          <span class="eyebrow" style="color: var(--warning);">Por Confirmar</span>
+          <div class="kpi" id="kpiPendientes" style="color: var(--warning);">-</div>
+          <p class="small">Citas solicitadas por clientas</p>
+        </div>
+        <div class="panel" style="border-left: 4px solid var(--success);">
+          <span class="eyebrow" style="color: var(--success);">Confirmadas</span>
+          <div class="kpi" id="kpiConfirmadas" style="color: var(--success);">-</div>
+          <p class="small">Citas listas para atención</p>
+        </div>
+        <div class="panel">
+          <span class="eyebrow">Completadas</span>
+          <div class="kpi" id="kpiCompletadas">-</div>
+          <p class="small">Atenciones finalizadas con éxito</p>
+        </div>
+        <div class="panel">
+          <span class="eyebrow">Total Asignadas</span>
+          <div class="kpi" id="kpiTotal">-</div>
+          <p class="small">Historial global de la agenda</p>
+        </div>
+      </section>
+
+      <!-- Pestañas de Vista de Citas -->
+      <div class="tab-group" style="margin-bottom: 20px;">
+        <button type="button" class="tab-btn active" id="tabPendientes" onclick="cambiarTabPortal('pendientes')">
+          Citas Pendientes de Confirmar (<span id="tabCountPendientes">0</span>)
+        </button>
+        <button type="button" class="tab-btn" id="tabConfirmadas" onclick="cambiarTabPortal('confirmadas')">
+          Citas Confirmadas y en Curso (<span id="tabCountConfirmadas">0</span>)
+        </button>
+        <button type="button" class="tab-btn" id="tabTodas" onclick="cambiarTabPortal('todas')">
+          Historial Completo de Citas (<span id="tabCountTodas">0</span>)
+        </button>
+      </div>
+
+      <!-- SECCIÓN 1: CITAS PENDIENTES DE CONFIRMAR (REQUISITO 23) -->
+      <div id="vistaCitasPendientes">
+        <div class="row between" style="margin-bottom: 14px;">
+          <div>
+            <h2 style="font-size: 22px;">Citas Pendientes de Confirmar con la Clienta</h2>
+            <p class="small" style="color: var(--muted);">Revisa las solicitudes de agendamiento y confirma la cita para fijar la reserva en agenda</p>
+          </div>
+          <button type="button" class="btn sm outline" onclick="cargarCitasTrabajador()">↻ Refrescar Solicitudes</button>
+        </div>
+
+        <div id="contenedorTarjetasPendientes" style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="padding: 24px; text-align: center; color: var(--muted); background: var(--secondary); border-radius: 6px;">
+            Cargando solicitudes de cita...
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 2: CITAS CONFIRMADAS Y EN CURSO -->
+      <div id="vistaCitasConfirmadas" style="display: none;">
+        <div class="row between" style="margin-bottom: 14px;">
+          <div>
+            <h2 style="font-size: 22px;">Citas Confirmadas y en Proceso</h2>
+            <p class="small" style="color: var(--muted);">Atenciones listas para hoy y próximas fechas. Puedes marcar el inicio de atención o finalizar el servicio.</p>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Clienta</th>
+                <th>Contacto</th>
+                <th>Servicio</th>
+                <th>Horario Programado</th>
+                <th>Estado</th>
+                <th style="min-width: 140px; text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaConfirmadasBody">
+              <tr><td colspan="7" style="text-align:center; padding:2rem;">Cargando citas confirmadas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 3: TODAS LAS CITAS -->
+      <div id="vistaTodasCitas" style="display: none;">
+        <div class="row between" style="margin-bottom: 14px;">
+          <h2 style="font-size: 22px;">Todas las Citas del Profesional</h2>
+          <a href="historial.html" class="btn sm">Ver Historial de Tratamientos &rarr;</a>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Clienta</th>
+                <th>Tratamiento</th>
+                <th>Fecha y Hora</th>
+                <th>Precio</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tablaTodasBody">
+              <tr><td colspan="6" style="text-align:center; padding:2rem;">Cargando historial de citas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container row between">
+      <span class="display" style="font-size:22px;">nicolett.</span>
+      <span>Nicolett Studio Fantasy &copy; 2026 &bull; Módulo para Especialistas y Trabajadores</span>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+  <script src="js/panel-trabajador.js"></script>
+</body>
+</html>

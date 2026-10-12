@@ -32,4 +32,15 @@ public class CitaCreateDTO {
 
     @Schema(description = "Notas adicionales ingresadas por el cliente", example = "Primera sesión")
     private String notasCliente;
+
+    @Schema(description = "Estado inicial de la cita (opcional, por defecto CONFIRMADA)", example = "PENDIENTE")
+    private cl.nicolet.backend.model.EstadoCita estado;
+
+    public CitaCreateDTO(Long clienteId, Long trabajadorId, Long servicioId, LocalDateTime fechaHoraInicio, String notasCliente) {
+        this.clienteId = clienteId;
+        this.trabajadorId = trabajadorId;
+        this.servicioId = servicioId;
+        this.fechaHoraInicio = fechaHoraInicio;
+        this.notasCliente = notasCliente;
+    }
 }

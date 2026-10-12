@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Servicios | Nicolett Studio Fantasy</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <!-- Encabezado Principal de Marca (Solo conexión admin) -->
+  <header class="site-header">
+    <div class="container">
+      <a href="citas.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY &bull; ADMIN</small></a>
+      <div class="row">
+        <div id="navUserBadgeSlot"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra de Navegación Exclusiva del Módulo Admin -->
+  <div class="staffnav">
+    <div class="container row between">
+      <div class="row" style="gap:18px">
+        <a href="citas.html" class="nav-link">Gestión de Citas</a>
+        <a href="reserva-cliente.html" class="nav-link">Agendar Cita (Cliente)</a>
+        <a href="servicios.html" class="nav-link active" style="color:var(--primary); font-weight:700;">Servicios</a>
+        <a href="disponibilidad.html" class="nav-link">Simulador Disponibilidad</a>
+        <a href="panel-trabajador.html" class="nav-link">Portal Trabajador</a>
+        <a href="historial.html" class="nav-link">Historial Tratamientos</a>
+        <a href="usuarios.html" class="nav-link">Usuarios y Roles</a>
+      </div>
+      <div class="row" style="gap:10px">
+        <div id="statusBadge" class="status">
+          <span id="statusText">Verificando API...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor Principal -->
+  <main class="container" style="padding-bottom: 60px;">
+
+    <!-- Título de Página -->
+    <section class="page-top">
+      <p class="eyebrow">Catálogo Profesional</p>
+      <h1 class="page-title">Gestión y Creación de Servicios</h1>
+    </section>
+
+    <!-- Banner de Alertas -->
+    <div id="alertMessage" class="alert-banner"></div>
+
+    <!-- Indicadores Clave (KPIs) -->
+    <section class="grid g3" style="margin-bottom: 28px;">
+      <div class="panel">
+        <span class="eyebrow">Servicios Activos</span>
+        <div class="kpi" id="totalServiciosCount">-</div>
+        <p class="small">Catálogo habilitado para reservas</p>
+      </div>
+      <div class="panel">
+        <span class="eyebrow">Duración Promedio</span>
+        <div class="kpi" id="duracionPromedio">-</div>
+        <p class="small">Minutos por atención estimada</p>
+      </div>
+      <div class="panel">
+        <span class="eyebrow">Tarifa Promedio</span>
+        <div class="kpi" id="precioPromedio">-</div>
+        <p class="small">Valor referencial en pesos chilenos</p>
+      </div>
+    </section>
+
+    <!-- Formulario de Creación / Edición y Tabla -->
+    <div class="grid" style="grid-template-columns: 380px 1fr; gap: 28px; align-items: start;">
+
+      <!-- Formulario: Registrar / Editar Servicio -->
+      <section class="panel" id="formServiceCard">
+        <div class="row between" style="margin-bottom: 16px;">
+          <h2 style="font-size: 26px;" id="serviceFormTitle">Nuevo Servicio</h2>
+          <span id="serviceFormBadge" class="status online" style="font-size: 9px;">POST /servicios</span>
+        </div>
+
+        <!-- Indicador de modo edición -->
+        <div id="serviceEditAlert" class="edit-indicator-bar" style="display: none;">
+          <span>Editando Servicio <strong id="serviceEditTargetId">#0</strong></span>
+          <button type="button" class="btn sm outline" onclick="cancelarEdicionServicio()">Cancelar</button>
+        </div>
+
+        <form id="servicioForm">
+          <input type="hidden" id="editServicioId" value="">
+
+          <div class="form-group">
+            <label class="lbl" for="servicioNombre">Nombre del Tratamiento / Servicio</label>
+            <input type="text" id="servicioNombre" class="field" placeholder="Ej: Balayage & Olaplex Iluminación" required>
+          </div>
+
+          <div class="grid g2" style="gap: 12px;">
+            <div class="form-group">
+              <label class="lbl" for="servicioDuracion">Duración (Minutos)</label>
+              <input type="number" id="servicioDuracion" class="field" placeholder="45" min="10" step="5" required>
+            </div>
+            <div class="form-group">
+              <label class="lbl" for="servicioPrecio">Precio (CLP $)</label>
+              <input type="number" id="servicioPrecio" class="field" placeholder="25000" min="100" step="500" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="lbl" for="servicioDescripcion">Descripción del Servicio</label>
+            <textarea id="servicioDescripcion" class="field" rows="3" placeholder="Detalle del procedimiento, productos aplicados y recomendaciones previas..."></textarea>
+          </div>
+
+          <button type="submit" id="btnSubmitServicio" class="btn" style="width: 100%; margin-top: 8px;">
+            + Guardar Servicio
+          </button>
+          <button type="button" id="btnCancelServicio" class="btn outline" style="width: 100%; margin-top: 8px; display: none;" onclick="cancelarEdicionServicio()">
+            Cancelar Edición
+          </button>
+        </form>
+      </section>
+
+      <!-- Tabla de Servicios Registrados -->
+      <section class="panel" style="padding: 0; overflow: hidden;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid var(--border);" class="row between">
+          <div>
+            <span class="eyebrow">Catálogo en Vivo</span>
+            <h2 style="font-size: 26px; margin-top: 2px;">Servicios Disponibles</h2>
+          </div>
+          <div class="search-bar-row">
+            <input type="text" id="inputBuscarServicio" class="field" placeholder="Filtrar servicio..." style="width: 160px; height: 32px; padding: 4px 10px; font-size: 11px;">
+            <button type="button" class="btn sm outline" onclick="cargarServicios()">Actualizar</button>
+          </div>
+        </div>
+
+        <div class="table-container" style="border: none; border-radius: 0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">ID</th>
+                <th>Servicio / Tratamiento</th>
+                <th>Duración</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th style="min-width: 170px; text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="serviciosTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--muted); padding: 2rem;">
+                  Cargando catálogo de servicios...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container row between">
+      <span class="display" style="font-size:22px;">nicolett.</span>
+      <span>Nicolett Studio Fantasy &copy; 2026 &bull; Panel de Administración de Servicios</span>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+  <script src="js/servicios.js"></script>
+</body>
+</html>

@@ -19,16 +19,20 @@ public class UsuarioCreateDTO {
     @NotBlank(message = "el Apellido Paterno no puede estar vacio")
     private String apellidoP;
 
-    @Schema(description = "correo de usuario", example = "maixmo@gmail.com")
-    @NotBlank(message = "el Correo  no puede estar vacio")
+    @Schema(description = "correo de usuario", example = "maximo@gmail.com")
+    @NotBlank(message = "el Correo no puede estar vacio")
     private String correo;
 
     @Schema(description = "contraseña", example = "123124")
-    @NotBlank(message = "la contraseña no puede estar vacia")
+    @jakarta.validation.constraints.Size(max = 72, message = "la contraseña no puede exceder los 72 caracteres")
     private String password;
 
     @Schema(description = "ID del tipo de usuario asignado", example = "1")
     private Long tipoUsuarioId;
+
+    public void setCorreo(String correo) {
+        this.correo = (correo != null) ? correo.trim().toLowerCase() : null;
+    }
 
     public UsuarioCreateDTO(String nombre, String apellidoP, String correo, String password) {
         this.nombre = nombre;

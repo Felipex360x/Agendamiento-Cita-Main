@@ -3,227 +3,170 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nicolet Estudio - Agendamiento de Citas</title>
+  <title>Gestión de Citas | Nicolett Studio Fantasy</title>
   <link rel="stylesheet" href="css/admin.css">
-  <style>
-    .nav-links {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    .nav-link {
-      text-decoration: none;
-      color: var(--gray-dark);
-      font-weight: 600;
-      padding: 0.4rem 0.8rem;
-      border-radius: 8px;
-      transition: background 0.2s, color 0.2s;
-    }
-    .nav-link:hover {
-      background: var(--gray-light);
-      color: var(--primary);
-    }
-    .nav-link.active {
-      background: var(--primary-light);
-      color: var(--primary);
-    }
-    .badge-estado {
-      display: inline-block;
-      padding: 0.25rem 0.6rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-    .badge-estado.CONFIRMADA {
-      background: #dcfce7;
-      color: #15803d;
-    }
-    .badge-estado.PENDIENTE {
-      background: #fef9c3;
-      color: #a16207;
-    }
-    .badge-estado.EN_ATENCION {
-      background: #e0e7ff;
-      color: #4338ca;
-    }
-    .badge-estado.COMPLETADA {
-      background: #e0f2fe;
-      color: #0369a1;
-    }
-    .badge-estado.CANCELADA {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-    .badge-estado.NO_ASISTIO {
-      background: #f3f4f6;
-      color: #4b5563;
-    }
-    .btn-action-group {
-      display: flex;
-      gap: 0.4rem;
-    }
-    .alert-banner {
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      font-size: 0.88rem;
-      font-weight: 500;
-      display: none;
-    }
-    .alert-banner.success {
-      background: #dcfce7;
-      color: #15803d;
-      border: 1px solid #86efac;
-      display: block;
-    }
-    .alert-banner.error {
-      background: #fee2e2;
-      color: #b91c1c;
-      border: 1px solid #fca5a5;
-      display: block;
-    }
-    .info-helper {
-      font-size: 0.8rem;
-      color: var(--gray);
-      margin-top: 0.25rem;
-    }
-  </style>
 </head>
 <body>
 
-  <!-- Barra de Navegación -->
-  <header class="navbar">
-    <div class="brand">
-      <div class="brand-icon">N</div>
-      <div>
-        <div class="brand-title">Nicolet Estudio</div>
-        <div class="brand-subtitle">Módulo de Agendamiento de Citas</div>
+  <!-- Encabezado Principal de Marca (Solo conexión admin) -->
+  <header class="site-header">
+    <div class="container">
+      <a href="citas.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY &bull; ADMIN</small></a>
+      <div class="row">
+        <div id="navUserBadgeSlot"></div>
       </div>
     </div>
-    <nav class="nav-links">
-      <a href="usuarios.html" class="nav-link">Gestión de Usuarios</a>
-      <a href="citas.html" class="nav-link active">Agendamiento de Citas</a>
-      <a href="/" class="nav-link" target="_blank">Ver Sitio Web &nearr;</a>
-      <div id="statusBadge" class="status-badge">
-        <span class="status-dot"></span>
-        <span id="statusText">Conectando...</span>
-      </div>
-    </nav>
   </header>
 
-  <!-- Contenedor Principal -->
-  <main class="container">
+  <!-- Barra de Navegación Exclusiva del Módulo Admin -->
+  <div class="staffnav">
+    <div class="container row between">
+      <div class="row" style="gap:18px">
+        <a href="citas.html" class="nav-link active" style="color:var(--primary); font-weight:700;">Gestión de Citas</a>
+        <a href="reserva-cliente.html" class="nav-link">Agendar Cita (Cliente)</a>
+        <a href="servicios.html" class="nav-link">Servicios</a>
+        <a href="disponibilidad.html" class="nav-link">Simulador Disponibilidad</a>
+        <a href="panel-trabajador.html" class="nav-link">Portal Trabajador</a>
+        <a href="historial.html" class="nav-link">Historial Tratamientos</a>
+        <a href="usuarios.html" class="nav-link">Usuarios y Roles</a>
+      </div>
+      <div class="row" style="gap:10px">
+        <div id="statusBadge" class="status">
+          <span id="statusText">Verificando API...</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Tarjetas de Estadísticas -->
-    <section class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-title">Total de Citas</span>
-        <span id="totalCitas" class="stat-value">-</span>
-        <span class="stat-footer">Histórico registrado en base de datos</span>
+  <!-- Contenedor Principal -->
+  <main class="container" style="padding-bottom: 60px;">
+
+    <!-- Título de Página -->
+    <section class="page-top">
+      <p class="eyebrow">Módulo Operativo</p>
+      <h1 class="page-title">Gestión y Agendamiento de Citas</h1>
+    </section>
+
+    <!-- Banner de Alertas -->
+    <div id="alertMessage" class="alert-banner"></div>
+
+    <!-- Indicadores Clave (KPIs) -->
+    <section class="grid g4" style="margin-bottom: 28px;">
+      <div class="panel">
+        <span class="eyebrow">Total Citas</span>
+        <div class="kpi" id="totalCitas">-</div>
+        <p class="small">Citas persistidas en base de datos</p>
       </div>
-      <div class="stat-card">
-        <span class="stat-title">Citas Confirmadas</span>
-        <span id="citasConfirmadas" class="stat-value">-</span>
-        <span class="stat-footer">Listas para ser atendidas</span>
+      <div class="panel">
+        <span class="eyebrow">Confirmadas</span>
+        <div class="kpi" id="citasConfirmadas">-</div>
+        <p class="small">Atenciones activas confirmadas</p>
       </div>
-      <div class="stat-card">
-        <span class="stat-title">Servicios Disponibles</span>
-        <span id="totalServicios" class="stat-value">-</span>
-        <span class="stat-footer">Catálogo activo en Nicolet Estudio</span>
+      <div class="panel">
+        <span class="eyebrow">Especialistas</span>
+        <div class="kpi" id="totalTrabajadoresKPI">-</div>
+        <p class="small">Trabajadores activos en sistema</p>
       </div>
-      <div class="stat-card">
-        <span class="stat-title">Documentación API</span>
-        <a href="/doc/swagger-ui.html" target="_blank" style="text-decoration:none; color: var(--primary); font-weight:700; font-size:1.15rem; margin-top:0.25rem;">
-          Swagger UI ↗
-        </a>
-        <span class="stat-footer">OpenAPI v3 en /doc/swagger-ui.html</span>
+      <div class="panel">
+        <span class="eyebrow">Clientas</span>
+        <div class="kpi" id="totalClientesKPI">-</div>
+        <p class="small">Clientes registrados en sistema</p>
       </div>
     </section>
 
-    <!-- Alertas en pantalla -->
-    <div id="alertMessage" class="alert-banner"></div>
+    <!-- Formulario de Agendamiento y Tabla -->
+    <div class="grid" style="grid-template-columns: 380px 1fr; gap: 28px; align-items: start;">
 
-    <!-- Layout Formulario + Tabla -->
-    <div class="layout-grid">
-
-      <!-- Formulario de Agendamiento -->
-      <section class="card" id="citaFormCard">
-        <div class="card-header">
-          <h2 class="card-title">Agendar Nueva Cita</h2>
-          <span class="badge-role cliente" style="font-size: 0.72rem;">POST /citas</span>
+      <!-- Formulario: Agendar Nueva Cita -->
+      <section class="panel">
+        <div class="row between" style="margin-bottom: 16px;">
+          <h2 style="font-size: 26px;">Agendar Cita</h2>
+          <span class="status online" style="font-size: 9px;">POST /citas</span>
         </div>
 
         <form id="citaForm">
+          <!-- Selección de Clienta -->
           <div class="form-group">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-              <label for="clienteId" style="margin:0;">Cliente</label>
-              <button type="button" class="btn btn-sm btn-secondary" onclick="abrirModalCliente()" style="font-size:0.75rem; padding:0.2rem 0.5rem;">+ Nuevo Cliente</button>
+            <div class="row between" style="margin-bottom: 4px;">
+              <label class="lbl" for="clienteId" style="margin: 0;">Clienta (Rol Cliente)</label>
+              <button type="button" class="btn sm outline" style="height: 22px; padding: 0 8px; font-size: 9px;" onclick="abrirModalCliente()">+ Nueva Clienta</button>
             </div>
-            <select id="clienteId" required>
-              <option value="" disabled selected>Cargando clientes...</option>
+            <select id="clienteId" class="field" required>
+              <option value="" disabled selected>Cargando clientas...</option>
             </select>
           </div>
 
+          <!-- Selección de Especialista -->
           <div class="form-group">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-              <label for="trabajadorId" style="margin:0;">Profesional / Especialista</label>
-              <button type="button" class="btn btn-sm btn-secondary" onclick="abrirModalTrabajador()" style="font-size:0.75rem; padding:0.2rem 0.5rem;">+ Nuevo Profesional</button>
+            <div class="row between" style="margin-bottom: 4px;">
+              <label class="lbl" for="trabajadorId" style="margin: 0;">Especialista (Rol Trabajador)</label>
+              <button type="button" class="btn sm outline" style="height: 22px; padding: 0 8px; font-size: 9px;" onclick="abrirModalTrabajador()">+ Nuevo Profesional</button>
             </div>
-            <select id="trabajadorId" required>
-              <option value="" disabled selected>Cargando profesionales...</option>
+            <select id="trabajadorId" class="field" required>
+              <option value="" disabled selected>Cargando especialistas...</option>
             </select>
           </div>
 
+          <!-- Selección de Servicio -->
           <div class="form-group">
-            <label for="servicioId">Servicio</label>
-            <select id="servicioId" required>
+            <div class="row between" style="margin-bottom: 4px;">
+              <label class="lbl" for="servicioId" style="margin: 0;">Servicio a Realizar</label>
+              <a href="servicios.html" class="btn sm outline" style="height: 22px; padding: 0 8px; font-size: 9px; text-decoration: none;">+ Catálogo</a>
+            </div>
+            <select id="servicioId" class="field" required>
               <option value="" disabled selected>Cargando servicios...</option>
             </select>
             <div id="servicioInfo" class="info-helper"></div>
           </div>
 
+          <!-- Fecha y Hora de Inicio -->
           <div class="form-group">
-            <label for="fechaHoraInicio">Fecha y Hora de Inicio</label>
-            <input type="datetime-local" id="fechaHoraInicio" required>
-            <div class="info-helper">La hora de término se calcula automáticamente según la duración del servicio.</div>
+            <label class="lbl" for="fechaHoraInicio">Fecha y Hora de Inicio</label>
+            <input type="datetime-local" id="fechaHoraInicio" class="field" required>
+            <div class="info-helper">Calcula el fin según la duración del servicio</div>
           </div>
 
+          <!-- Notas de la Clienta -->
           <div class="form-group">
-            <label for="notasCliente">Notas o Instrucciones (Opcional)</label>
-            <textarea id="notasCliente" rows="2" placeholder="Ej: Primera cita, consultar por diseño personalizado..." style="width:100%; padding:0.6rem; border:1px solid var(--border); border-radius:8px; resize:vertical;"></textarea>
+            <label class="lbl" for="notasCliente">Notas o Preferencias</label>
+            <textarea id="notasCliente" class="field" rows="2" placeholder="Ej: Tonos neutros, retiro de permanente previo..."></textarea>
           </div>
 
-          <button type="submit" id="btnSubmitCita" class="btn btn-primary" style="width: 100%;">
+          <button type="submit" class="btn" style="width: 100%; margin-top: 8px;">
             Confirmar y Agendar Cita
           </button>
         </form>
       </section>
 
-      <!-- Tabla de Citas -->
-      <section class="card" id="tablaCard">
-        <div class="card-header">
-          <h2 class="card-title">Agenda de Citas</h2>
-          <button class="btn btn-sm btn-secondary" onclick="cargarCitas()">Refrescar</button>
+      <!-- Tabla de Citas Registradas -->
+      <section class="panel" style="padding: 0; overflow: hidden;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid var(--border);" class="row between">
+          <div>
+            <span class="eyebrow">Registro de Citas</span>
+            <h2 style="font-size: 26px; margin-top: 2px;">Citas Programadas</h2>
+          </div>
+          <button type="button" class="btn sm outline" onclick="cargarCitas()">
+            Actualizar
+          </button>
         </div>
 
-        <div class="table-container">
+        <div class="table-container" style="border: none; border-radius: 0;">
           <table class="data-table">
             <thead>
               <tr>
                 <th>Código</th>
-                <th>Cliente</th>
-                <th>Profesional</th>
+                <th>Clienta</th>
+                <th>Especialista</th>
                 <th>Servicio</th>
-                <th>Fecha y Horario</th>
+                <th>Inicio &rarr; Fin</th>
                 <th>Estado</th>
-                <th>Acciones</th>
+                <th style="min-width: 130px;">Acciones</th>
               </tr>
             </thead>
             <tbody id="citasTableBody">
               <tr>
-                <td colspan="7" style="text-align: center; color: var(--gray); padding: 2rem;">
-                  Cargando citas del sistema...
+                <td colspan="7" style="text-align: center; color: var(--muted); padding: 2rem;">
+                  Cargando citas...
                 </td>
               </tr>
             </tbody>
@@ -232,65 +175,124 @@
       </section>
 
     </div>
+
+    <!-- SECCIÓN REQUISITO 8: VISUALIZACIÓN DE USUARIOS CON ROL CLIENTE Y TRABAJADOR -->
+    <section class="panel" style="margin-top: 36px;">
+      <div class="row between" style="margin-bottom: 16px;">
+        <div>
+          <span class="eyebrow">Control de Usuarios del Negocio</span>
+          <h2 style="font-size: 26px; margin-top: 2px;">Usuarios Registrados: Trabajadores y Clientes</h2>
+          <p class="small">Listado en vivo de usuarios sincronizados automáticamente para el agendamiento</p>
+        </div>
+        <div class="row" style="gap:8px;">
+          <a href="usuarios.html" class="btn sm outline">+ Administrar Usuarios y Roles</a>
+          <button type="button" class="btn sm" onclick="cargarDatosFormulario()">↻ Actualizar Listas</button>
+        </div>
+      </div>
+
+      <div class="grid g2" style="gap: 24px; align-items: start;">
+
+        <!-- Tarjeta Trabajadores -->
+        <div style="border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: var(--card);">
+          <div class="row between" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+            <div style="font-weight: 700; font-size: 14px; color: var(--fg);">
+              Trabajadores / Especialistas (<span id="spanCountTrabajadores">0</span>)
+            </div>
+            <span class="badge-role profesional">Rol Trabajador</span>
+          </div>
+          <div id="listaTrabajadoresRender" style="max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+            <div style="color: var(--muted); font-size: 11px; text-align: center; padding: 1rem;">Cargando trabajadores...</div>
+          </div>
+        </div>
+
+        <!-- Tarjeta Clientes -->
+        <div style="border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: var(--card);">
+          <div class="row between" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+            <div style="font-weight: 700; font-size: 14px; color: var(--fg);">
+              Clientes Registrados (<span id="spanCountClientes">0</span>)
+            </div>
+            <span class="badge-role cliente">Rol Cliente</span>
+          </div>
+          <div id="listaClientesRender" style="max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+            <div style="color: var(--muted); font-size: 11px; text-align: center; padding: 1rem;">Cargando clientes...</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </main>
 
-  <!-- Modal Rápido: Nuevo Cliente -->
-  <div id="modalCliente" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
-    <div style="background:#fff; border-radius:12px; width:90%; max-width:440px; padding:1.5rem; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-      <h3 style="margin-bottom:1rem; font-size:1.15rem;">Registrar Nuevo Cliente</h3>
+  <!-- Modal: Registrar Nueva Clienta -->
+  <div id="modalCliente" class="modal">
+    <div class="panel">
+      <div class="row between" style="margin-bottom: 16px;">
+        <h3 style="font-size: 26px;">Registrar Nueva Clienta</h3>
+        <button type="button" class="btn sm outline" onclick="cerrarModalCliente()">✕</button>
+      </div>
       <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)">
-        <div class="form-group" style="margin-bottom:0.75rem;">
-          <label>Nombre</label>
-          <input type="text" id="nuevoClienteNombre" placeholder="Ej: Andrea" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        <div class="form-group">
+          <label class="lbl">Nombre</label>
+          <input type="text" id="nuevoClienteNombre" class="field" placeholder="Ej: Valentina" required>
         </div>
-        <div class="form-group" style="margin-bottom:0.75rem;">
-          <label>Apellido Paterno</label>
-          <input type="text" id="nuevoClienteApellido" placeholder="Ej: Morales" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        <div class="form-group">
+          <label class="lbl">Apellido Paterno</label>
+          <input type="text" id="nuevoClienteApellido" class="field" placeholder="Ej: Muñoz" required>
         </div>
-        <div class="form-group" style="margin-bottom:0.75rem;">
-          <label>Correo Electrónico</label>
-          <input type="email" id="nuevoClienteCorreo" placeholder="andrea.morales@gmail.com" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        <div class="form-group">
+          <label class="lbl">Correo Electrónico</label>
+          <input type="email" id="nuevoClienteCorreo" class="field" placeholder="valentina@gmail.com" required>
         </div>
-        <div class="form-group" style="margin-bottom:0.75rem;">
-          <label>Teléfono (Opcional)</label>
-          <input type="text" id="nuevoClienteTelefono" placeholder="+56912345678" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        <div class="form-group">
+          <label class="lbl">Teléfono</label>
+          <input type="text" id="nuevoClienteTelefono" class="field" placeholder="+56912345678" required>
         </div>
-        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
-          <button type="button" class="btn btn-secondary" onclick="cerrarModalCliente()">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+        <div class="row" style="justify-content: flex-end; margin-top: 20px;">
+          <button type="button" class="btn sm outline" onclick="cerrarModalCliente()">Cancelar</button>
+          <button type="submit" class="btn sm">Guardar Clienta</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal Rápido: Nuevo Profesional -->
-  <div id="modalTrabajador" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
-    <div style="background:#fff; border-radius:12px; width:90%; max-width:440px; padding:1.5rem; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-      <h3 style="margin-bottom:1rem; font-size:1.15rem;">Registrar Nuevo Profesional</h3>
+  <!-- Modal: Registrar Nuevo Especialista -->
+  <div id="modalTrabajador" class="modal">
+    <div class="panel">
+      <div class="row between" style="margin-bottom: 16px;">
+        <h3 style="font-size: 26px;">Registrar Nuevo Especialista</h3>
+        <button type="button" class="btn sm outline" onclick="cerrarModalTrabajador()">✕</button>
+      </div>
       <form id="formNuevoTrabajador" onsubmit="guardarNuevoTrabajador(event)">
-        <div class="form-group" style="margin-bottom:0.75rem;">
-          <label>Nombre</label>
-          <input type="text" id="nuevoTrabajadorNombre" placeholder="Ej: Ignacio" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        <div class="form-group">
+          <label class="lbl">Nombre</label>
+          <input type="text" id="nuevoTrabajadorNombre" class="field" placeholder="Ej: Ignacio" required>
         </div>
-        <div class="form-group" style="margin-bottom:0.75rem;">
-          <label>Apellido Paterno</label>
-          <input type="text" id="nuevoTrabajadorApellido" placeholder="Ej: Rios" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        <div class="form-group">
+          <label class="lbl">Apellido Paterno</label>
+          <input type="text" id="nuevoTrabajadorApellido" class="field" placeholder="Ej: Ríos" required>
         </div>
-        <div class="form-group" style="margin-bottom:0.75rem;">
-          <label>Correo Electrónico</label>
-          <input type="email" id="nuevoTrabajadorCorreo" placeholder="ignacio.rios@estudio.cl" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        <div class="form-group">
+          <label class="lbl">Correo Electrónico</label>
+          <input type="email" id="nuevoTrabajadorCorreo" class="field" placeholder="ignacio.rios@estudio.cl" required>
         </div>
-        <div class="form-group" style="margin-bottom:0.75rem;">
-          <label>Especialidad / Cargo</label>
-          <input type="text" id="nuevoTrabajadorCargo" placeholder="Ej: Terapeuta Facial y Corporal" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px;">
+        <div class="form-group">
+          <label class="lbl">Especialidad / Cargo</label>
+          <input type="text" id="nuevoTrabajadorCargo" class="field" placeholder="Ej: Estilista y Colorista" required>
         </div>
-        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
-          <button type="button" class="btn btn-secondary" onclick="cerrarModalTrabajador()">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar Profesional</button>
+        <div class="row" style="justify-content: flex-end; margin-top: 20px;">
+          <button type="button" class="btn sm outline" onclick="cerrarModalTrabajador()">Cancelar</button>
+          <button type="submit" class="btn sm">Guardar Especialista</button>
         </div>
       </form>
     </div>
   </div>
+
+  <footer class="footer">
+    <div class="container row between">
+      <span class="display" style="font-size:22px;">nicolett.</span>
+      <span>Nicolett Studio Fantasy &copy; 2026 &bull; Agendamiento y Control de Citas</span>
+    </div>
+  </footer>
 
   <script src="js/auth.js"></script>
   <script src="js/citas.js"></script>

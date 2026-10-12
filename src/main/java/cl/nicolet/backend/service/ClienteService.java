@@ -41,7 +41,8 @@ public class ClienteService {
         if (usuarioRepository == null || clienteRepository == null) return;
         List<Usuario> usuarios = usuarioRepository.findAll();
         for (Usuario u : usuarios) {
-            if (u.getTipoUsuario() != null && "CLIENTE".equalsIgnoreCase(u.getTipoUsuario().getNombre())) {
+            if (u.getTipoUsuario() != null && u.getTipoUsuario().getNombre() != null &&
+               u.getTipoUsuario().getNombre().toUpperCase().contains("CLIENTE")) {
                 if (!clienteRepository.existsByUsuarioId(u.getId())) {
                     Cliente c = new Cliente();
                     c.setUsuario(u);

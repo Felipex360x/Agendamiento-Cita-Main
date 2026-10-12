@@ -47,6 +47,18 @@ class AuthControllerTest {
     @MockBean
     private cl.nicolet.backend.security.LoginAttemptService loginAttemptService;
 
+    @MockBean
+    private cl.nicolet.backend.repository.UsuarioRepository usuarioRepository;
+
+    @MockBean
+    private cl.nicolet.backend.repository.TipoUsuarioRepository tipoUsuarioRepository;
+
+    @MockBean
+    private cl.nicolet.backend.repository.ClienteRepository clienteRepository;
+
+    @MockBean
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -86,5 +98,68 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v2/nicolet/auth/register - debe registrar nuevo cliente y retornar HTTP 201 con token")
+    void debeRegistrarClienteExitosamente() throws Exception {
+        cl.nicolet.backend.dto.RegistroRequestDTO request = new cl.nicolet.backend.dto.RegistroRequestDTO(
+                "Paula", "Vargas", "paula.vargas@estudio.cl", "clave12345", "+56912345678"
+        );
+
+        when(usuarioRepository.findByCorreoIgnoreCase("paula.vargas@estudio.cl")).thenReturn(java.util.Optional.empty());
+
+        cl.nicolet.backend.model.TipoUsuario rolCliente = new cl.nicolet.backend.model.TipoUsuario();
+        rolCliente.setId(2L);
+        rolCliente.setNombre("CLIENTE");
+        when(tipoUsuarioRepository.findByNombreIgnoreCase("CLIENTE")).thenReturn(java.util.Optional.of(rolCliente));
+
+        when(passwordEncoder.encode("clave12345")).thenReturn("encoded_pass");
+
+        cl.nicolet.backend.model.Usuario usuarioGuardado = new cl.nicolet.backend.model.Usuario();
+        usuarioGuardado.setId(10L);
+        usuarioGuardado.setNombre("Paula");
+        usuarioGuardado.setApellidoP("Vargas");
+        usuarioGuardado.setCorreo("paula.vargas@estudio.cl");
+        usuarioGuardado.setTipoUsuario(rolCliente);
+        when(usuarioRepository.save(any(cl.nicolet.backend.model.Usuario.class))).thenReturn(usuarioGuardado);
+
+        cl.nicolet.backend.model.Cliente clienteGuardado = new cl.nicolet.backend.model.Cliente();
+        clienteGuardado.setId(5L);
+        clienteGuardado.setUsuario(usuarioGuardado);
+        when(clienteRepository.save(any(cl.nicolet.backend.model.Cliente.class))).thenReturn(clienteGuardado);
+
+        UserDetailsImpl userDetails = new UserDetailsImpl(
+                10L, "Paula", "Vargas", "paula.vargas@estudio.cl", "encoded_pass",
+                List.of(new SimpleGrantedAuthority("ROLE_CLIENTE"))
+        );
+        Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(auth);
+        when(jwtUtils.generarToken(any(UserDetailsImpl.class))).thenReturn("jwt.token.registro");
+
+        mockMvc.perform(post("/api/v2/nicolet/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.token").value("jwt.token.registro"))
+                .andExpect(jsonPath("$.correo").value("paula.vargas@estudio.cl"))
+                .andExpect(jsonPath("$.rol").value("CLIENTE"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v2/nicolet/auth/register - debe rechazar si el correo ya está registrado con HTTP 400")
+    void debeRechazarRegistroSiCorreoYaExiste() throws Exception {
+        cl.nicolet.backend.dto.RegistroRequestDTO request = new cl.nicolet.backend.dto.RegistroRequestDTO(
+                "Paula", "Vargas", "paula.vargas@estudio.cl", "clave12345", "+56912345678"
+        );
+
+        when(usuarioRepository.findByCorreoIgnoreCase("paula.vargas@estudio.cl"))
+                .thenReturn(java.util.Optional.of(new cl.nicolet.backend.model.Usuario()));
+
+        mockMvc.perform(post("/api/v2/nicolet/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("El correo electrónico ya se encuentra registrado."));
     }
 }

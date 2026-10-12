@@ -3,141 +3,164 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nicolet Estudio - Gestión de Usuarios</title>
+  <title>Gestión de Usuarios y Roles | Nicolett Studio Fantasy</title>
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
 
-  <!-- Barra de Navegación -->
-  <header class="navbar">
-    <div class="brand">
-      <div class="brand-icon">N</div>
-      <div>
-        <div class="brand-title">Nicolet Estudio</div>
-        <div class="brand-subtitle">Gestión de Usuarios</div>
-      </div>
-    </div>
-    <div style="display: flex; gap: 1rem; align-items: center;">
-      <a href="usuarios.html" style="text-decoration:none; color: var(--primary); font-weight:700; background: var(--primary-light); padding: 0.4rem 0.8rem; border-radius: 8px;">Usuarios</a>
-      <a href="citas.html" style="text-decoration:none; color: var(--gray-dark); font-weight:600; padding: 0.4rem 0.8rem; border-radius: 8px;">Agendar Citas</a>
-      <a href="/" style="text-decoration:none; color: var(--gray-dark); font-weight:600; padding: 0.4rem 0.8rem; border-radius: 8px;" target="_blank">Ver Sitio Web &nearr;</a>
-      <div id="statusBadge" class="status-badge">
-        <span class="status-dot"></span>
-        <span id="statusText">Verificando conexión...</span>
+  <!-- Encabezado Principal de Marca (Solo conexión admin) -->
+  <header class="site-header">
+    <div class="container">
+      <a href="citas.html" class="wordmark">nicolett<span>.</span><small>STUDIO FANTASY &bull; ADMIN</small></a>
+      <div class="row">
+        <div id="navUserBadgeSlot"></div>
       </div>
     </div>
   </header>
 
-  <!-- Contenedor Principal -->
-  <main class="container">
+  <!-- Barra de Navegación Exclusiva del Módulo Admin -->
+  <div class="staffnav">
+    <div class="container row between">
+      <div class="row" style="gap:18px">
+        <a href="citas.html" class="nav-link">Gestión de Citas</a>
+        <a href="reserva-cliente.html" class="nav-link">Agendar Cita (Cliente)</a>
+        <a href="servicios.html" class="nav-link">Servicios</a>
+        <a href="disponibilidad.html" class="nav-link">Simulador Disponibilidad</a>
+        <a href="panel-trabajador.html" class="nav-link">Portal Trabajador</a>
+        <a href="historial.html" class="nav-link">Historial Tratamientos</a>
+        <a href="usuarios.html" class="nav-link active" style="color:var(--primary); font-weight:700;">Usuarios y Roles</a>
+      </div>
+      <div class="row" style="gap:10px">
+        <div id="statusBadge" class="status">
+          <span id="statusText">Verificando API...</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Tarjetas de Estadísticas / Info -->
-    <section class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-title">Usuarios Registrados</span>
-        <span id="totalUsers" class="stat-value">-</span>
-        <span class="stat-footer">Persistidos en Base de Datos MySQL</span>
+  <!-- Contenedor Principal -->
+  <main class="container" style="padding-bottom: 60px;">
+
+    <!-- Título de Página -->
+    <section class="page-top">
+      <p class="eyebrow">Administración del Sistema</p>
+      <h1 class="page-title">Gestión de Usuarios y Roles</h1>
+    </section>
+
+    <!-- Indicadores Clave (KPIs) -->
+    <section class="grid g3" style="margin-bottom: 28px;">
+      <div class="panel">
+        <span class="eyebrow">Usuarios Registrados</span>
+        <div class="kpi" id="totalUsers">-</div>
+        <p class="small" style="color: var(--muted); font-size: 11px; margin-top: 4px;">Persistidos en Base de Datos MySQL</p>
       </div>
-      <div class="stat-card">
-        <span class="stat-title">Tipos de Usuario</span>
-        <span id="totalTipos" class="stat-value">-</span>
-        <span class="stat-footer">Roles activos en sistema</span>
+      <div class="panel">
+        <span class="eyebrow">Tipos de Usuario</span>
+        <div class="kpi" id="totalTipos">-</div>
+        <p class="small" style="color: var(--muted); font-size: 11px; margin-top: 4px;">Roles activos en sistema</p>
       </div>
-      <div class="stat-card">
-        <span class="stat-title">Documentación API</span>
-        <a href="/doc/swagger-ui.html" target="_blank" style="text-decoration:none; color: var(--primary); font-weight:700; font-size:1.15rem; margin-top:0.25rem;">
-          Ver Swagger UI ↗
-        </a>
-        <span class="stat-footer">OpenAPI v3 en /doc/swagger-ui.html</span>
+      <div class="panel">
+        <span class="eyebrow">Documentación API</span>
+        <div style="margin: 6px 0 4px;">
+          <a href="/doc/swagger-ui.html" target="_blank" style="text-decoration:none; color: var(--primary); font-family: var(--display); font-size: 26px; font-weight:600;">
+            Swagger UI &nearr;
+          </a>
+        </div>
+        <p class="small" style="color: var(--muted); font-size: 11px;">OpenAPI v3 en /doc/swagger-ui.html</p>
       </div>
     </section>
 
     <!-- Sección Principal: Formulario y Tabla -->
-    <div class="layout-grid">
+    <div class="grid" style="grid-template-columns: 380px 1fr; gap: 28px; align-items: start;">
 
       <!-- Formulario para Registrar / Editar Usuario -->
-      <section class="card" id="formCard">
-        <div class="card-header">
-          <h2 class="card-title" id="formTitle">Registrar Usuario</h2>
-          <span id="formMethodBadge" class="badge-role cliente" style="font-size: 0.72rem;">POST</span>
+      <section class="panel" id="formCard">
+        <div class="row between" style="margin-bottom: 16px;">
+          <h2 style="font-size: 24px;" id="formTitle">Registrar Usuario</h2>
+          <span id="formMethodBadge" class="status online" style="font-size: 10px;">POST</span>
         </div>
 
         <!-- Banner de modo edición -->
-        <div id="editAlert" class="edit-indicator" style="display: none;">
+        <div id="editAlert" class="edit-indicator-bar" style="display: none;">
           <span>Editando Usuario <strong id="editTargetId">#0</strong></span>
-          <button type="button" class="btn btn-sm btn-secondary" onclick="cancelarEdicion()">Cancelar</button>
+          <button type="button" class="btn sm outline" onclick="cancelarEdicion()">Cancelar</button>
         </div>
 
         <form id="userForm">
           <input type="hidden" id="editUserId" value="">
 
           <div class="form-group">
-            <label for="nombre">Nombre</label>
+            <label class="lbl" for="nombre">Nombre</label>
             <input type="text" id="nombre" placeholder="Ej: Valentina" required>
           </div>
           <div class="form-group">
-            <label for="apellidoP">Apellido Paterno</label>
+            <label class="lbl" for="apellidoP">Apellido Paterno</label>
             <input type="text" id="apellidoP" placeholder="Ej: Soto" required>
           </div>
           <div class="form-group">
-            <label for="correo">Correo Electrónico</label>
+            <label class="lbl" for="correo">Correo Electrónico</label>
             <input type="email" id="correo" placeholder="Ej: valentina.soto@gmail.com" required>
           </div>
           <div class="form-group">
-            <label for="password">Contraseña</label>
+            <label class="lbl" for="password" id="passwordLabel">Contraseña</label>
             <input type="password" id="password" placeholder="••••••••" required>
+            <div id="passwordHelper" style="display: none; font-size: 11px; color: var(--muted); margin-top: 4px;">
+              Dejar en blanco para conservar la contraseña actual
+            </div>
           </div>
           <div class="form-group">
-            <label for="tipoUsuarioId">Tipo de Usuario / Rol</label>
+            <label class="lbl" for="tipoUsuarioId">Tipo de Usuario / Rol</label>
             <select id="tipoUsuarioId" required>
               <option value="" disabled selected>Cargando roles...</option>
             </select>
           </div>
-          <button type="submit" id="btnSubmit" class="btn btn-primary">
-            + Guardar Usuario (POST)
-          </button>
-          <button type="button" id="btnCancelEdit" class="btn btn-secondary" style="display: none; margin-top: 0.5rem;" onclick="cancelarEdicion()">
-            Cancelar Edición
-          </button>
+          <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+            <button type="submit" id="btnSubmit" class="btn" style="width: 100%;">
+              + Guardar Usuario (POST)
+            </button>
+            <button type="button" id="btnCancelEdit" class="btn outline" style="width: 100%; display: none;" onclick="cancelarEdicion()">
+              Cancelar Edición
+            </button>
+          </div>
         </form>
       </section>
 
       <!-- Tabla de Usuarios Registrados -->
-      <section class="card">
-        <div class="card-header" style="flex-wrap: wrap; gap: 0.75rem;">
-          <h2 class="card-title">Listado de Usuarios</h2>
+      <section class="panel">
+        <div class="row between" style="margin-bottom: 18px;">
+          <h2 style="font-size: 24px;">Listado de Usuarios</h2>
           
           <!-- Barra de Búsqueda por ID (GET) y Refrescar -->
-          <div class="search-container">
+          <div class="search-bar-row">
             <input type="number" id="searchIdInput" placeholder="ID (ej: 1)" min="1">
-            <button id="btnSearchId" class="btn btn-sm btn-primary" type="button">
-              Buscar ID (GET)
+            <button id="btnSearchId" class="btn sm" type="button">
+              Buscar ID
             </button>
-            <button id="btnResetSearch" class="btn btn-sm btn-secondary" type="button" style="display: none;">
+            <button id="btnResetSearch" class="btn sm outline" type="button" style="display: none;">
               Ver Todos
             </button>
-            <button id="btnRefresh" class="btn btn-sm btn-refresh" type="button">
-              ↻ Listar Todos (GET)
+            <button id="btnRefresh" class="btn sm outline" type="button">
+              ↻ Actualizar
             </button>
           </div>
         </div>
 
         <!-- Notificación de filtro activo -->
-        <div id="searchNotice" style="display: none; padding: 0.5rem 0.85rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; justify-content: space-between; align-items: center;">
-          <span>Resultado para ID: <strong id="searchNoticeId">#0</strong></span>
-          <button type="button" class="btn btn-sm btn-secondary" onclick="restablecerBusqueda()">Ver Todos los Usuarios</button>
+        <div id="searchNotice" style="display: none; padding: 10px 14px; background: var(--secondary); border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: 4px; margin-bottom: 16px; font-size: 12px; justify-content: space-between; align-items: center;">
+          <span>Resultado para: <strong id="searchNoticeId">#0</strong></span>
+          <button type="button" class="btn sm outline" onclick="restablecerBusqueda()">Ver Todos los Usuarios</button>
         </div>
 
-        <div class="table-responsive">
-          <table>
+        <div class="table-container">
+          <table class="data-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th style="width: 50px;">ID</th>
                 <th>Nombre</th>
                 <th>Apellido</th>
                 <th>Correo</th>
                 <th>Tipo Usuario</th>
-                <th style="min-width: 140px;">Acciones</th>
+                <th style="min-width: 150px; text-align: right;">Acciones</th>
               </tr>
             </thead>
             <tbody id="userTableBody">
@@ -153,6 +176,14 @@
 
   <!-- Notificaciones Toast -->
   <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Pie de Página -->
+  <footer class="footer">
+    <div class="container row between">
+      <span>&copy; 2026 Nicolett Studio Fantasy. Plataforma Administrativa.</span>
+      <span>API Spring Boot REST v2 &bull; MariaDB / MySQL</span>
+    </div>
+  </footer>
 
   <script src="js/auth.js"></script>
   <script src="js/index.js"></script>

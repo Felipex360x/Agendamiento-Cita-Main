@@ -77,10 +77,14 @@ public class UsuarioService {
         Usuario u = new Usuario();
         u.setNombre(dto.getNombre());
         u.setApellidoP(dto.getApellidoP());
-        u.setCorreo(dto.getCorreo());
+        String correo = dto.getCorreo() != null ? dto.getCorreo().trim().toLowerCase() : "";
+        u.setCorreo(correo);
 
         String pass = dto.getPassword();
-        if (pass != null && passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$")) {
+        if (pass == null || pass.isBlank()) {
+            throw new IllegalArgumentException("La contraseña es obligatoria para registrar un nuevo usuario");
+        }
+        if (passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$")) {
             pass = passwordEncoder.encode(pass);
         }
         u.setPassword(pass);
@@ -128,8 +132,7 @@ public class UsuarioService {
     private void sincronizarPerfil(Usuario u) {
         if (u.getTipoUsuario() == null) return;
         String rol = u.getTipoUsuario().getNombre();
-
-        if ("CLIENTE".equalsIgnoreCase(rol) && clienteRepository != null) {
+        if (rol != null && rol.toUpperCase().contains("CLIENTE") && clienteRepository != null) {
             if (!clienteRepository.existsByUsuarioId(u.getId())) {
                 Log.info("Auto-creando perfil de Cliente para usuario id={}", u.getId());
                 Cliente c = new Cliente();
@@ -137,7 +140,7 @@ public class UsuarioService {
                 c.setActivo(true);
                 clienteRepository.save(c);
             }
-        } else if ("PROFESIONAL".equalsIgnoreCase(rol) && trabajadorRepository != null) {
+        } else if (rol != null && (rol.toUpperCase().contains("PROFESIONAL") || rol.toUpperCase().contains("TRABAJADOR") || rol.toUpperCase().contains("ESPECIALISTA")) && trabajadorRepository != null) {
             if (!trabajadorRepository.existsByUsuarioId(u.getId())) {
                 Log.info("Auto-creando perfil de Trabajador para usuario id={}", u.getId());
                 Trabajador t = new Trabajador();
@@ -174,6 +177,18 @@ public class UsuarioService {
         Log.info("Eliminando Usuario id={}", id);
         if (!usuarioRepository.existsById(id)) {
             throw new RecursoNoEncontradoException("Usuario no encontrado: " + id);
+        }
+        if (clienteRepository != null) {
+            clienteRepository.findByUsuarioId(id).ifPresent(c -> {
+                Log.info("Eliminando perfil de cliente asociado al usuario id={}", id);
+                clienteRepository.delete(c);
+            });
+        }
+        if (trabajadorRepository != null) {
+            trabajadorRepository.findByUsuarioId(id).ifPresent(t -> {
+                Log.info("Eliminando perfil de trabajador asociado al usuario id={}", id);
+                trabajadorRepository.delete(t);
+            });
         }
         usuarioRepository.deleteById(id);
         Log.info("Usuario id={} eliminado", id);

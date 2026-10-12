@@ -22,11 +22,18 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import cl.nicolet.backend.dto.RegistroRequestDTO;
+import cl.nicolet.backend.model.Cliente;
+import cl.nicolet.backend.model.TipoUsuario;
+import cl.nicolet.backend.model.Usuario;
+import cl.nicolet.backend.repository.ClienteRepository;
+import cl.nicolet.backend.repository.TipoUsuarioRepository;
+
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v2/nicolet/auth")
-@Tag(name = "Autenticación", description = "Endpoints de inicio de sesión y verificación de tokens JWT")
+@Tag(name = "Autenticación", description = "Endpoints de inicio de sesión, registro y verificación de tokens JWT")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class AuthController {
 
@@ -41,10 +48,22 @@ public class AuthController {
     @Autowired
     private LoginAttemptService loginAttemptService;
 
+    @Autowired
+    private cl.nicolet.backend.repository.UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private TipoUsuarioRepository tipoUsuarioRepository;
+
+    @Autowired
+    private ClienteRepository clienteRepository;
+
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión y obtener token JWT")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest, HttpServletRequest request) {
-        String correo = loginRequest.getCorreo() != null ? loginRequest.getCorreo().trim() : "";
+        String correo = loginRequest.getCorreo() != null ? loginRequest.getCorreo().trim().toLowerCase() : "";
         String clientIp = obtenerIpCliente(request);
 
         // 1. Verificación de tasa de intentos (Rate Limiting anti-fuerza bruta)
@@ -61,12 +80,36 @@ public class AuthController {
         log.info("Intento de inicio de sesión para correo: {}", correo);
 
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            correo,
-                            loginRequest.getPassword()
-                    )
-            );
+            Authentication authentication;
+            try {
+                authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                correo,
+                                loginRequest.getPassword()
+                        )
+                );
+            } catch (BadCredentialsException bce) {
+                // Migración transparente de contraseña legacy en texto plano si coincide exactamente
+                var usuarioOpt = usuarioRepository.findByCorreoIgnoreCase(correo);
+                if (usuarioOpt.isPresent()) {
+                    var u = usuarioOpt.get();
+                    if (u.getPassword() != null 
+                            && !u.getPassword().startsWith("$2a$") 
+                            && !u.getPassword().startsWith("$2b$")
+                            && u.getPassword().equals(loginRequest.getPassword())) {
+                        log.info("Migrando contraseña legacy en texto plano a BCrypt durante login para: {}", correo);
+                        u.setPassword(passwordEncoder.encode(loginRequest.getPassword()));
+                        usuarioRepository.save(u);
+                        authentication = authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(correo, loginRequest.getPassword())
+                        );
+                    } else {
+                        throw bce;
+                    }
+                } else {
+                    throw bce;
+                }
+            }
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -140,6 +183,65 @@ public class AuthController {
                 "correo", userDetails.getCorreo(),
                 "rol", rol
         ));
+    }
+
+    @PostMapping("/register")
+    @Operation(summary = "Registrar nuevo usuario/cliente y obtener sesión inicial")
+    public ResponseEntity<?> register(@Valid @RequestBody RegistroRequestDTO request) {
+        String correo = request.getCorreo() != null ? request.getCorreo().trim().toLowerCase() : "";
+        log.info("Solicitud de registro de nuevo usuario con correo: {}", correo);
+
+        if (usuarioRepository.findByCorreoIgnoreCase(correo).isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", HttpStatus.BAD_REQUEST.value(),
+                    "error", "Bad Request",
+                    "mensaje", "El correo electrónico ya se encuentra registrado."
+            ));
+        }
+
+        TipoUsuario tipoCliente = tipoUsuarioRepository.findByNombreIgnoreCase("CLIENTE")
+                .orElseGet(() -> {
+                    TipoUsuario nuevoTipo = new TipoUsuario();
+                    nuevoTipo.setNombre("CLIENTE");
+                    nuevoTipo.setDescripcion("Cliente que solicita y agenda citas");
+                    return tipoUsuarioRepository.save(nuevoTipo);
+                });
+
+        Usuario nuevoUsuario = new Usuario();
+        nuevoUsuario.setNombre(request.getNombre().trim());
+        nuevoUsuario.setApellidoP(request.getApellidoP().trim());
+        nuevoUsuario.setCorreo(correo);
+        nuevoUsuario.setPassword(passwordEncoder.encode(request.getPassword()));
+        nuevoUsuario.setTipoUsuario(tipoCliente);
+        Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
+
+        // Crear perfil de cliente automático para agendamiento inmediato
+        Cliente nuevoCliente = new Cliente();
+        nuevoCliente.setUsuario(usuarioGuardado);
+        nuevoCliente.setTelefono(request.getTelefono() != null && !request.getTelefono().isBlank() ? request.getTelefono().trim() : null);
+        nuevoCliente.setActivo(true);
+        clienteRepository.save(nuevoCliente);
+
+        // Autenticar automáticamente y generar token de bienvenida
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(correo, request.getPassword())
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        String jwt = jwtUtils.generarToken(userDetails);
+
+        AuthResponseDTO response = AuthResponseDTO.builder()
+                .token(jwt)
+                .tipoToken("Bearer")
+                .id(usuarioGuardado.getId())
+                .nombre(usuarioGuardado.getNombre())
+                .apellidoP(usuarioGuardado.getApellidoP())
+                .correo(usuarioGuardado.getCorreo())
+                .rol("CLIENTE")
+                .build();
+
+        log.info("Usuario registrado exitosamente con id={}, rol=CLIENTE", usuarioGuardado.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     private String obtenerIpCliente(HttpServletRequest request) {
