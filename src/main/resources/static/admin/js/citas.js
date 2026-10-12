@@ -2,7 +2,7 @@
 // Nicolet Estudio - Frontend Agendamiento de Citas
 // ========================================================
 
-const API_BASE = 'http://localhost:8080/api/v2/nicolet';
+const API_BASE = '/api/v2/nicolet';
 const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));
 
 // Estado local en memoria
