@@ -277,6 +277,61 @@ Disponible con el servidor iniciado en:
 
 ---
 
+## Requerimientos Faltantes para Finalizar la Plataforma Web
+
+A continuación se detalla la lista de requerimientos funcionales, no funcionales e integraciones de interfaz que restan para dar por completado el 100% del alcance del sistema:
+
+### 1. Pasarela de Pago y Transaccionalidad (Nivel 2)
+* **RF06 - Integración Transbank Webpay Plus REST v1.2:**
+  * Implementar flujo de pago con el SDK oficial (`transbank-sdk-java:6.2.1`).
+  * Endpoints backend para iniciar transacción (`POST /api/v2/nicolet/pagos/iniciar`) y confirmar retorno con token WS (`POST /api/v2/nicolet/pagos/confirmar`).
+  * Cobro de abono de garantía ($5.000 CLP) o pago completo del tratamiento seleccionado.
+  * Persistencia en tabla `pago` (código de autorización, monto, últimos 4 dígitos, fecha/hora).
+  * Transición automática de la cita a `CONFIRMADA` tras la aprobación bancaria.
+* **RNF04 - Bloqueo Temporal de Horario con TTL (15 minutos):**
+  * Mecanismo de bloqueo provisional del bloque horario mientras la clienta se encuentra en la pasarela de Webpay.
+  * Si la transacción es rechazada o excede el TTL de 15 minutos, liberar automáticamente el bloque para otras clientas.
+* **RNF07 - Cumplimiento Normativo PCI-DSS:**
+  * Redirección segura 3D Secure / Webpay Plus sin capturar ni almacenar números de tarjeta bancaria en el backend del estudio.
+
+### 2. Módulo de Gestión de Inventario e Insumos (Nivel 3)
+* **RF13 - Catálogo y CRUD de Insumos/Productos:**
+  * Tabla `producto_insumo` con campos: nombre, categoría, unidad de medida (ml, gr, unidades), stock actual y stock mínimo.
+  * Interfaz administrativa `static/admin/inventario.html` para consultar, crear y actualizar existencias.
+* **RF14 - Deducción Automática de Stock por Servicio Realizado:**
+  * Tabla asociativa `servicio_insumo` que define la "receta técnica" de insumos consumidos por cada tratamiento.
+  * Descuento automático de existencias en el inventario cuando una cita cambia al estado `COMPLETADA`.
+* **RF15 - Alertas Visuales de Stock Crítico:**
+  * Endpoint `GET /api/v2/nicolet/productos/alertas-stock` que liste insumos con existencia menor o igual al umbral mínimo.
+  * Badges y avisos de color ámbar/rojo en el panel administrativo.
+* **RF16 - Kardex y Trazabilidad de Movimientos:**
+  * Tabla `movimiento_stock` para registrar entradas (compras), salidas automáticas (servicios prestados) y mermas manuales con usuario y fecha.
+
+### 3. Ficha Técnica y Notificaciones (Nivel 4)
+* **RF20 - Notificaciones Automáticas por Correo Electrónico:**
+  * Integración con `spring-boot-starter-mail` (servidor SMTP / SendGrid).
+  * Envío automático de correo con comprobante de reserva a la clienta tras agendar.
+  * Notificación al especialista asignado sobre nuevas citas pendientes o confirmadas.
+  * Tarea programada para envío de recordatorio 24 horas antes de la cita.
+* **RNF08 - Generación y Descarga de Comprobante / Voucher PDF Oficial:**
+  * Exportación en PDF descargable (OpenPDF / iText) con resumen de la cita, especialista, fecha, abono pagado y código QR de validación.
+
+### 4. Inteligencia de Negocio y Seguridad Avanzada (Nivel 5)
+* **RF21 - Motor Automatizado de Fidelización de Clientes Inactivos:**
+  * Job programado con Spring (`@Scheduled`) para detectar clientas sin atenciones en los últimos 60 o 90 días.
+  * Generación de alertas en el panel para campañas de re-contacto y promociones personalizadas.
+* **RNF09 - Auditoría Integral de Operaciones:**
+  * Tabla de bitácora `auditoria_operacion` para trazabilidad de cancelaciones de citas, modificaciones de precios y ajustes manuales de inventario (con usuario, IP y timestamp).
+* **RNF12 - Respaldo Periódico Automatizado de Base de Datos:**
+  * Script automatizado con `mysqldump` programado en el servidor para resguardo continuo de la base de datos MySQL.
+
+### 5. Integraciones Frontend Pendientes en la Web
+* **Enlace Público de Agendamiento:** Conectar el botón *"Reservar Cita"* de la página principal del salón (`static/index.html`) directamente con el asistente guiado de reserva de clientes (`static/admin/reserva-cliente.html` o widget embebido).
+* **Botón de Descarga de Voucher:** Incorporar botón de descarga de PDF en el comprobante final de agendamiento.
+* **Pantalla de Inventario:** Crear el archivo `static/admin/inventario.html` con su respectivo `inventario.js` enlazado a la barra de navegación administrativa.
+
+---
+
 ## Pruebas Automatizadas
 
 El proyecto cuenta con **94 pruebas automatizadas** que validan la capa de datos, lógica de negocio de agendamiento, cálculo de disponibilidad horaria, catálogo de servicios, perfiles de usuarios y seguridad con Spring Security y JWT:
