@@ -1,5 +1,5 @@
-const API_URL = 'http://localhost:8080/api/v2/nicolet/usuarios';
-const TIPOS_API_URL = 'http://localhost:8080/api/v2/nicolet/tipos-usuario';
+const API_URL = '/api/v2/nicolet/usuarios';
+const TIPOS_API_URL = '/api/v2/nicolet/tipos-usuario';
 
 // Elementos DOM
 const userTableBody = document.getElementById('userTableBody');
