@@ -5,7 +5,6 @@ import cl.nicolet.backend.dto.UsuarioDTO;
 import cl.nicolet.backend.exception.RecursoNoEncontradoException;
 import cl.nicolet.backend.model.Usuario;
 import cl.nicolet.backend.repository.UsuarioRepository;
-import cl.nicolet.backend.service.UsuarioService;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

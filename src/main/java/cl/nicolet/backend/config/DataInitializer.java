@@ -2,7 +2,6 @@ package cl.nicolet.backend.config;
 
 import cl.nicolet.backend.model.*;
 import cl.nicolet.backend.repository.*;
-import cl.nicolet.backend.security.LoginAttemptService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +15,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -59,15 +57,15 @@ public class DataInitializer implements CommandLineRunner {
         TipoUsuario tipoPro = obtenerOCrearTipo("PROFESIONAL", "Profesional o especialista que atiende las citas");
 
         // 2. Usuarios base y de prueba garantizados
-        Usuario admin = obtenerOCrearUsuario("Maximo", "Rojas", "maximo.rojas@estudio.cl", "password_seguro_123", tipoAdmin);
-        Usuario adminTest = obtenerOCrearUsuario("Admin", "Test", "admin.test@nicolet.cl", "AdminTest123!", tipoAdmin);
-        Usuario adminNicolet = obtenerOCrearUsuario("Administrador", "Nicolet", "admin@nicolet.cl", "Admin123!", tipoAdmin);
-        Usuario adminContacto = obtenerOCrearUsuario("Nicolet", "Estudio", "contacto@nicollet.cl", "admin2026", tipoAdmin);
+        obtenerOCrearUsuario("Maximo", "Rojas", "maximo.rojas@estudio.cl", "password_seguro_123", tipoAdmin);
+        obtenerOCrearUsuario("Admin", "Test", "admin.test@nicolet.cl", "AdminTest123!", tipoAdmin);
+        obtenerOCrearUsuario("Administrador", "Nicolet", "admin@nicolet.cl", "Admin123!", tipoAdmin);
+        obtenerOCrearUsuario("Nicolet", "Estudio", "contacto@nicollet.cl", "admin2026", tipoAdmin);
         Usuario userMartina = obtenerOCrearUsuario("Martina", "Contreras", "martina.contreras@gmail.com", "123412", tipoCliente);
         Usuario userCamila = obtenerOCrearUsuario("Camila", "Silva", "camila.silva@estudio.cl", "pro2026", tipoPro);
         Usuario userMarit = obtenerOCrearUsuario("Martina", "Soto", "marit@gmail.com", "123456", tipoCliente);
         Usuario userGale = obtenerOCrearUsuario("Felipe", "Galle", "gale@gmail.com", "123456", tipoCliente);
-        Usuario userPrueba = obtenerOCrearUsuario("Prueba", "Admin", "prueba1235@gmail.com", "123456", tipoAdmin);
+        obtenerOCrearUsuario("Prueba", "Admin", "prueba1235@gmail.com", "123456", tipoAdmin);
 
         // Migrar automáticamente a BCrypt cualquier usuario preexistente en la base de datos con contraseña en texto plano
         List<Usuario> todosLosUsuarios = usuarioRepository.findAll();
@@ -109,7 +107,7 @@ public class DataInitializer implements CommandLineRunner {
             return clienteRepository.save(c);
         });
 
-        Cliente clienteGale = clienteRepository.findByUsuarioId(userGale.getId()).orElseGet(() -> {
+        clienteRepository.findByUsuarioId(userGale.getId()).orElseGet(() -> {
             log.info("Inicializando perfil de Cliente para {}", userGale.getNombre());
             Cliente c = new Cliente();
             c.setUsuario(userGale);
