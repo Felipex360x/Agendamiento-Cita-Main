@@ -1,16 +1,12 @@
 package cl.nicolet.backend.dto;
 
+import cl.nicolet.backend.model.EstadoCita;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class CitaCreateDTO {
 
     @Schema(description = "ID del cliente que solicita la cita", example = "1")
@@ -33,7 +29,10 @@ public class CitaCreateDTO {
     private String notasCliente;
 
     @Schema(description = "Estado inicial de la cita (opcional, por defecto CONFIRMADA)", example = "PENDIENTE")
-    private cl.nicolet.backend.model.EstadoCita estado;
+    private EstadoCita estado;
+
+    public CitaCreateDTO() {
+    }
 
     public CitaCreateDTO(Long clienteId, Long trabajadorId, Long servicioId, LocalDateTime fechaHoraInicio, String notasCliente) {
         this.clienteId = clienteId;
@@ -41,5 +40,79 @@ public class CitaCreateDTO {
         this.servicioId = servicioId;
         this.fechaHoraInicio = fechaHoraInicio;
         this.notasCliente = notasCliente;
+    }
+
+    public CitaCreateDTO(Long clienteId, Long trabajadorId, Long servicioId, LocalDateTime fechaHoraInicio, String notasCliente, EstadoCita estado) {
+        this.clienteId = clienteId;
+        this.trabajadorId = trabajadorId;
+        this.servicioId = servicioId;
+        this.fechaHoraInicio = fechaHoraInicio;
+        this.notasCliente = notasCliente;
+        this.estado = estado;
+    }
+
+    public Long getClienteId() {
+        return clienteId;
+    }
+
+    public void setClienteId(Long clienteId) {
+        this.clienteId = clienteId;
+    }
+
+    public Long getTrabajadorId() {
+        return trabajadorId;
+    }
+
+    public void setTrabajadorId(Long trabajadorId) {
+        this.trabajadorId = trabajadorId;
+    }
+
+    public Long getServicioId() {
+        return servicioId;
+    }
+
+    public void setServicioId(Long servicioId) {
+        this.servicioId = servicioId;
+    }
+
+    public LocalDateTime getFechaHoraInicio() {
+        return fechaHoraInicio;
+    }
+
+    public void setFechaHoraInicio(LocalDateTime fechaHoraInicio) {
+        this.fechaHoraInicio = fechaHoraInicio;
+    }
+
+    public String getNotasCliente() {
+        return notasCliente;
+    }
+
+    public void setNotasCliente(String notasCliente) {
+        this.notasCliente = notasCliente;
+    }
+
+    public EstadoCita getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoCita estado) {
+        this.estado = estado;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CitaCreateDTO that)) return false;
+        return Objects.equals(clienteId, that.clienteId)
+                && Objects.equals(trabajadorId, that.trabajadorId)
+                && Objects.equals(servicioId, that.servicioId)
+                && Objects.equals(fechaHoraInicio, that.fechaHoraInicio)
+                && Objects.equals(notasCliente, that.notasCliente)
+                && estado == that.estado;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(clienteId, trabajadorId, servicioId, fechaHoraInicio, notasCliente, estado);
     }
 }

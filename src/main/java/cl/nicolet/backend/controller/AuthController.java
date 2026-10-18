@@ -63,6 +63,11 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión y obtener token JWT")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest, HttpServletRequest request) {
+        if (loginRequest.getPassword() != null && loginRequest.getPassword().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "password", "La contraseña no puede exceder los 72 caracteres"
+            ));
+        }
         String correo = loginRequest.getCorreo() != null ? loginRequest.getCorreo().trim().toLowerCase() : "";
         String clientIp = obtenerIpCliente(request);
 
@@ -188,6 +193,11 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "Registrar nuevo usuario/cliente y obtener sesión inicial")
     public ResponseEntity<?> register(@Valid @RequestBody RegistroRequestDTO request) {
+        if (request.getPassword() != null && request.getPassword().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "password", "La contraseña debe tener entre 6 y 72 caracteres"
+            ));
+        }
         String correo = request.getCorreo() != null ? request.getCorreo().trim().toLowerCase() : "";
         log.info("Solicitud de registro de nuevo usuario con correo: {}", correo);
 

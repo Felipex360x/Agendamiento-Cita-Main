@@ -123,7 +123,7 @@ public class UsuarioController {
         @ApiResponse(responseCode="400",description ="Correo existente")
     })
     @PostMapping("/manual")
-    public ResponseEntity<?> crearConValidacionManual(@Parameter(description = "ingrese el post para ver si correo existe")@RequestBody UsuarioCreateDTO dto){
+    public ResponseEntity<?> crearConValidacionManual(@Parameter(description = "ingrese el post para ver si correo existe") @Valid @RequestBody UsuarioCreateDTO dto){
         List<String> errores = usuarioService.validarUsuarioManual(dto);
         if(!errores.isEmpty()){
             return new ResponseEntity<>(errores, HttpStatus.BAD_REQUEST);

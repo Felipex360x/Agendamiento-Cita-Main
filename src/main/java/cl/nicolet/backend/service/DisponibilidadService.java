@@ -85,15 +85,18 @@ public class DisponibilidadService {
                 .filter(c -> c.getEstado() != EstadoCita.CANCELADA)
                 .collect(Collectors.toList());
 
-        // 5. Generar bloques horarios
+        // 5. Generar bloques horarios (usando LocalDateTime para evitar wrap-around de medianoche / bucle infinito)
         List<BloqueHorarioDTO> bloques = new ArrayList<>();
-        LocalTime cursor = horario.getHoraInicio();
+        LocalDateTime cursorDT = fecha.atTime(horario.getHoraInicio());
+        LocalDateTime limiteFinDT = fecha.atTime(horario.getHoraFin());
         int pasoMinutos = 30; // Intervalo de 30 minutos para opciones de inicio
         LocalTime ahora = LocalTime.now();
         boolean esHoy = fecha.isEqual(LocalDate.now());
 
-        while (!cursor.plusMinutes(duracionMinutos).isAfter(horario.getHoraFin())) {
-            LocalTime slotFin = cursor.plusMinutes(duracionMinutos);
+        while (!cursorDT.plusMinutes(duracionMinutos).isAfter(limiteFinDT)) {
+            LocalDateTime slotFinDateTime = cursorDT.plusMinutes(duracionMinutos);
+            LocalTime cursor = cursorDT.toLocalTime();
+            LocalTime slotFin = slotFinDateTime.toLocalTime();
             boolean disponible = true;
             String motivo = null;
 
@@ -115,8 +118,7 @@ public class DisponibilidadService {
 
             // Validación C: Solapamiento con citas existentes
             if (disponible) {
-                LocalDateTime slotInicioDateTime = fecha.atTime(cursor);
-                LocalDateTime slotFinDateTime = fecha.atTime(slotFin);
+                LocalDateTime slotInicioDateTime = cursorDT;
 
                 boolean solapaCita = citasDelDia.stream().anyMatch(c ->
                         slotInicioDateTime.isBefore(c.getFechaHoraFin()) &&
@@ -130,7 +132,7 @@ public class DisponibilidadService {
             }
 
             bloques.add(new BloqueHorarioDTO(cursor, slotFin, disponible, motivo));
-            cursor = cursor.plusMinutes(pasoMinutos);
+            cursorDT = cursorDT.plusMinutes(pasoMinutos);
         }
 
         return bloques;

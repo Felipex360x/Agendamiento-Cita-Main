@@ -74,8 +74,9 @@ public class ClienteService {
             throw new IllegalArgumentException("El usuario ya tiene un perfil de cliente registrado");
         }
 
-        if (dto.getRutDni() != null && !dto.getRutDni().isBlank() && clienteRepository.existsByRutDni(dto.getRutDni())) {
-            throw new IllegalArgumentException("El RUT/DNI ya se encuentra registrado: " + dto.getRutDni());
+        String rutNormalizado = (dto.getRutDni() != null && !dto.getRutDni().isBlank()) ? dto.getRutDni().trim() : null;
+        if (rutNormalizado != null && clienteRepository.existsByRutDni(rutNormalizado)) {
+            throw new IllegalArgumentException("El RUT/DNI ya se encuentra registrado: " + rutNormalizado);
         }
 
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
@@ -84,7 +85,7 @@ public class ClienteService {
         Cliente c = new Cliente();
         c.setUsuario(usuario);
         c.setTelefono(dto.getTelefono());
-        c.setRutDni(dto.getRutDni());
+        c.setRutDni(rutNormalizado);
         c.setFechaNacimiento(dto.getFechaNacimiento());
         c.setNotasPreferencias(dto.getNotasPreferencias());
         c.setActivo(true);
@@ -98,12 +99,13 @@ public class ClienteService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado: " + id));
 
         if (dto.getRutDni() != null && !dto.getRutDni().isBlank()) {
-            clienteRepository.findByRutDni(dto.getRutDni())
+            String rutNormalizado = dto.getRutDni().trim();
+            clienteRepository.findByRutDni(rutNormalizado)
                     .filter(existente -> !existente.getId().equals(id))
                     .ifPresent(existente -> {
-                        throw new IllegalArgumentException("El RUT/DNI ya se encuentra registrado: " + dto.getRutDni());
+                        throw new IllegalArgumentException("El RUT/DNI ya se encuentra registrado: " + rutNormalizado);
                     });
-            c.setRutDni(dto.getRutDni());
+            c.setRutDni(rutNormalizado);
         }
         if (dto.getTelefono() != null) {
             c.setTelefono(dto.getTelefono());

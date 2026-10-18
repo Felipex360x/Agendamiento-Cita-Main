@@ -180,7 +180,9 @@ public class CitaService {
         LocalTime horaInicioCita = inicio.toLocalTime();
         LocalTime horaFinCita = fin.toLocalTime();
 
-        if (horaInicioCita.isBefore(horario.getHoraInicio()) || horaFinCita.isAfter(horario.getHoraFin())) {
+        if (!inicio.toLocalDate().equals(fin.toLocalDate()) ||
+                horaInicioCita.isBefore(horario.getHoraInicio()) ||
+                horaFinCita.isAfter(horario.getHoraFin())) {
             throw new IllegalArgumentException(String.format(
                     "El horario solicitado (%s - %s) está fuera de la jornada de atención del profesional (%s - %s)",
                     horaInicioCita, horaFinCita, horario.getHoraInicio(), horario.getHoraFin()

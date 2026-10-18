@@ -2,8 +2,6 @@ package cl.nicolet.backend.security;
 
 import cl.nicolet.backend.model.Usuario;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,8 +10,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@Getter
-@AllArgsConstructor
 public class UserDetailsImpl implements UserDetails {
 
     private final Long id;
@@ -25,6 +21,16 @@ public class UserDetailsImpl implements UserDetails {
     private final String password;
 
     private final Collection<? extends GrantedAuthority> authorities;
+
+    public UserDetailsImpl(Long id, String nombre, String apellidoP, String correo, String password,
+                           Collection<? extends GrantedAuthority> authorities) {
+        this.id = id;
+        this.nombre = nombre;
+        this.apellidoP = apellidoP;
+        this.correo = correo;
+        this.password = password;
+        this.authorities = authorities;
+    }
 
     public static UserDetailsImpl build(Usuario usuario) {
         String rolNombre = "CLIENTE";
@@ -43,6 +49,22 @@ public class UserDetailsImpl implements UserDetails {
                 usuario.getPassword(),
                 authorities
         );
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public String getApellidoP() {
+        return apellidoP;
+    }
+
+    public String getCorreo() {
+        return correo;
     }
 
     @Override

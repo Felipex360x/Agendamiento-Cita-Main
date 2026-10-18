@@ -10,18 +10,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
-@Data
 @Entity
 @Table(name = "cita")
-@NoArgsConstructor
-@AllArgsConstructor
 public class Cita {
 
     @Id
@@ -64,4 +59,150 @@ public class Cita {
 
     @Column(name = "motivo_cancelacion")
     private String motivoCancelacion;
+
+    public Cita() {
+    }
+
+    public Cita(Long id, String codigoReserva, Cliente cliente, Trabajador trabajador, Servicio servicio,
+                LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, EstadoCita estado,
+                BigDecimal precioFinal, String notasCliente, String notasTrabajador, String motivoCancelacion) {
+        this.id = id;
+        this.codigoReserva = codigoReserva;
+        this.cliente = cliente;
+        this.trabajador = trabajador;
+        this.servicio = servicio;
+        this.fechaHoraInicio = fechaHoraInicio;
+        this.fechaHoraFin = fechaHoraFin;
+        this.estado = estado;
+        this.precioFinal = precioFinal;
+        this.notasCliente = notasCliente;
+        this.notasTrabajador = notasTrabajador;
+        this.motivoCancelacion = motivoCancelacion;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getCodigoReserva() {
+        return codigoReserva;
+    }
+
+    public void setCodigoReserva(String codigoReserva) {
+        this.codigoReserva = codigoReserva;
+    }
+
+    public Cliente getCliente() {
+        return cliente;
+    }
+
+    public void setCliente(Cliente cliente) {
+        this.cliente = cliente;
+    }
+
+    public Trabajador getTrabajador() {
+        return trabajador;
+    }
+
+    public void setTrabajador(Trabajador trabajador) {
+        this.trabajador = trabajador;
+    }
+
+    public Servicio getServicio() {
+        return servicio;
+    }
+
+    public void setServicio(Servicio servicio) {
+        this.servicio = servicio;
+    }
+
+    public LocalDateTime getFechaHoraInicio() {
+        return fechaHoraInicio;
+    }
+
+    public void setFechaHoraInicio(LocalDateTime fechaHoraInicio) {
+        this.fechaHoraInicio = fechaHoraInicio;
+    }
+
+    public LocalDateTime getFechaHoraFin() {
+        return fechaHoraFin;
+    }
+
+    public void setFechaHoraFin(LocalDateTime fechaHoraFin) {
+        this.fechaHoraFin = fechaHoraFin;
+    }
+
+    public EstadoCita getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoCita estado) {
+        this.estado = estado;
+    }
+
+    public BigDecimal getPrecioFinal() {
+        return precioFinal;
+    }
+
+    public void setPrecioFinal(BigDecimal precioFinal) {
+        this.precioFinal = precioFinal;
+    }
+
+    public String getNotasCliente() {
+        return notasCliente;
+    }
+
+    public void setNotasCliente(String notasCliente) {
+        this.notasCliente = notasCliente;
+    }
+
+    public String getNotasTrabajador() {
+        return notasTrabajador;
+    }
+
+    public void setNotasTrabajador(String notasTrabajador) {
+        this.notasTrabajador = notasTrabajador;
+    }
+
+    public String getMotivoCancelacion() {
+        return motivoCancelacion;
+    }
+
+    public void setMotivoCancelacion(String motivoCancelacion) {
+        this.motivoCancelacion = motivoCancelacion;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Cita that)) return false;
+        return Objects.equals(id, that.id)
+                && Objects.equals(codigoReserva, that.codigoReserva)
+                && Objects.equals(cliente, that.cliente)
+                && Objects.equals(trabajador, that.trabajador)
+                && Objects.equals(servicio, that.servicio)
+                && Objects.equals(fechaHoraInicio, that.fechaHoraInicio)
+                && Objects.equals(fechaHoraFin, that.fechaHoraFin)
+                && estado == that.estado
+                && Objects.equals(precioFinal, that.precioFinal)
+                && Objects.equals(notasCliente, that.notasCliente)
+                && Objects.equals(notasTrabajador, that.notasTrabajador)
+                && Objects.equals(motivoCancelacion, that.motivoCancelacion);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, codigoReserva, cliente, trabajador, servicio, fechaHoraInicio, fechaHoraFin,
+                estado, precioFinal, notasCliente, notasTrabajador, motivoCancelacion);
+    }
+
+    @Override
+    public String toString() {
+        return "Cita(id=" + id + ", codigoReserva=" + codigoReserva + ", estado=" + estado
+                + ", fechaHoraInicio=" + fechaHoraInicio + ")";
+    }
 }

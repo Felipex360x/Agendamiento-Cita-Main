@@ -92,6 +92,9 @@ public class UsuarioService {
         if (pass == null || pass.isBlank()) {
             throw new IllegalArgumentException("La contraseña es obligatoria para registrar un nuevo usuario");
         }
+        if (pass.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new IllegalArgumentException("la contraseña no puede exceder los 72 caracteres");
+        }
         if (passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$")) {
             pass = passwordEncoder.encode(pass);
         }
@@ -126,6 +129,9 @@ public class UsuarioService {
 
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             String pass = dto.getPassword();
+            if (pass.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+                throw new IllegalArgumentException("la contraseña no puede exceder los 72 caracteres");
+            }
             if (passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$")) {
                 pass = passwordEncoder.encode(pass);
             }
@@ -146,16 +152,37 @@ public class UsuarioService {
     private void sincronizarPerfil(Usuario u) {
         if (u.getTipoUsuario() == null) return;
         String rol = u.getTipoUsuario().getNombre();
-        if (rol != null && rol.toUpperCase().contains("CLIENTE") && clienteRepository != null) {
-            if (!clienteRepository.existsByUsuarioId(u.getId())) {
+        boolean esCliente = rol != null && rol.toUpperCase().contains("CLIENTE");
+        boolean esProfesional = rol != null && (rol.toUpperCase().contains("PROFESIONAL") || rol.toUpperCase().contains("TRABAJADOR") || rol.toUpperCase().contains("ESPECIALISTA"));
+
+        if (esCliente && clienteRepository != null) {
+            clienteRepository.findByUsuarioId(u.getId()).ifPresentOrElse(c -> {
+                if (!Boolean.TRUE.equals(c.getActivo())) {
+                    c.setActivo(true);
+                    clienteRepository.save(c);
+                }
+            }, () -> {
                 Log.info("Auto-creando perfil de Cliente para usuario id={}", u.getId());
                 Cliente c = new Cliente();
                 c.setUsuario(u);
                 c.setActivo(true);
                 clienteRepository.save(c);
+            });
+            if (trabajadorRepository != null) {
+                trabajadorRepository.findByUsuarioId(u.getId()).ifPresent(t -> {
+                    if (Boolean.TRUE.equals(t.getActivo())) {
+                        t.setActivo(false);
+                        trabajadorRepository.save(t);
+                    }
+                });
             }
-        } else if (rol != null && (rol.toUpperCase().contains("PROFESIONAL") || rol.toUpperCase().contains("TRABAJADOR") || rol.toUpperCase().contains("ESPECIALISTA")) && trabajadorRepository != null) {
-            if (!trabajadorRepository.existsByUsuarioId(u.getId())) {
+        } else if (esProfesional && trabajadorRepository != null) {
+            trabajadorRepository.findByUsuarioId(u.getId()).ifPresentOrElse(t -> {
+                if (!Boolean.TRUE.equals(t.getActivo())) {
+                    t.setActivo(true);
+                    trabajadorRepository.save(t);
+                }
+            }, () -> {
                 Log.info("Auto-creando perfil de Trabajador para usuario id={}", u.getId());
                 Trabajador t = new Trabajador();
                 t.setUsuario(u);
@@ -183,6 +210,15 @@ public class UsuarioService {
                         horarioDisponibilidadRepository.save(h);
                     }
                 }
+            });
+        } else {
+            if (trabajadorRepository != null) {
+                trabajadorRepository.findByUsuarioId(u.getId()).ifPresent(t -> {
+                    if (Boolean.TRUE.equals(t.getActivo())) {
+                        t.setActivo(false);
+                        trabajadorRepository.save(t);
+                    }
+                });
             }
         }
     }

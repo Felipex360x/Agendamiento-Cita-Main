@@ -44,12 +44,13 @@ public class ServicioService {
     }
 
     public ServicioDTO crear(ServicioCreateDTO dto) {
-        log.info("Creando nuevo servicio nombre={}", dto.getNombre());
-        if (servicioRepository.existsByNombreIgnoreCase(dto.getNombre())) {
-            Optional<Servicio> existenteOpt = servicioRepository.findByNombreIgnoreCase(dto.getNombre());
+        String nombreLimpio = dto.getNombre() != null ? dto.getNombre().trim() : "";
+        log.info("Creando nuevo servicio nombre={}", nombreLimpio);
+        if (servicioRepository.existsByNombreIgnoreCase(nombreLimpio)) {
+            Optional<Servicio> existenteOpt = servicioRepository.findByNombreIgnoreCase(nombreLimpio);
             if (existenteOpt.isPresent() && Boolean.FALSE.equals(existenteOpt.get().getActivo())) {
                 Servicio inactivo = existenteOpt.get();
-                inactivo.setNombre(dto.getNombre());
+                inactivo.setNombre(nombreLimpio);
                 inactivo.setDescripcion(dto.getDescripcion());
                 inactivo.setDuracionMinutos(dto.getDuracionMinutos());
                 inactivo.setPrecio(dto.getPrecio());
@@ -58,10 +59,10 @@ public class ServicioService {
                 vincularServicioATrabajadoresActivos(reactivado);
                 return toDTO(reactivado);
             }
-            throw new IllegalArgumentException("Ya existe un servicio con el nombre: " + dto.getNombre());
+            throw new IllegalArgumentException("Ya existe un servicio con el nombre: " + nombreLimpio);
         }
         Servicio s = new Servicio();
-        s.setNombre(dto.getNombre());
+        s.setNombre(nombreLimpio);
         s.setDescripcion(dto.getDescripcion());
         s.setDuracionMinutos(dto.getDuracionMinutos());
         s.setPrecio(dto.getPrecio());
@@ -73,12 +74,16 @@ public class ServicioService {
     }
 
     private void vincularServicioATrabajadoresActivos(Servicio servicio) {
-        if (trabajadorRepository == null || servicio == null) return;
+        if (trabajadorRepository == null || servicio == null || servicio.getId() == null) return;
         List<Trabajador> trabajadores = trabajadorRepository.findByActivoTrue();
         for (Trabajador t : trabajadores) {
-            if (t.getServicios() != null && !t.getServicios().contains(servicio)) {
-                t.getServicios().add(servicio);
-                trabajadorRepository.save(t);
+            if (t.getServicios() != null) {
+                boolean yaVinculado = t.getServicios().stream()
+                        .anyMatch(s -> s.getId() != null && s.getId().equals(servicio.getId()));
+                if (!yaVinculado) {
+                    t.getServicios().add(servicio);
+                    trabajadorRepository.save(t);
+                }
             }
         }
     }
@@ -88,13 +93,14 @@ public class ServicioService {
         Servicio s = servicioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado: " + id));
 
-        servicioRepository.findByNombreIgnoreCase(dto.getNombre())
+        String nombreLimpio = dto.getNombre() != null ? dto.getNombre().trim() : "";
+        servicioRepository.findByNombreIgnoreCase(nombreLimpio)
                 .filter(existente -> !existente.getId().equals(id))
                 .ifPresent(existente -> {
-                    throw new IllegalArgumentException("Ya existe otro servicio con el nombre: " + dto.getNombre());
+                    throw new IllegalArgumentException("Ya existe otro servicio con el nombre: " + nombreLimpio);
                 });
 
-        s.setNombre(dto.getNombre());
+        s.setNombre(nombreLimpio);
         s.setDescripcion(dto.getDescripcion());
         s.setDuracionMinutos(dto.getDuracionMinutos());
         s.setPrecio(dto.getPrecio());
