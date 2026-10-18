@@ -347,7 +347,8 @@ async function manejarAgendamiento(e) {
     const data = await res.json();
 
     if (!res.ok) {
-      const errorMsg = data.error || (data.errores ? Object.values(data.errores).join(', ') : 'No se pudo agendar la cita');
+      const fieldErrors = data && typeof data === 'object' ? Object.values(data).join(', ') : null;
+      const errorMsg = data.error || (data.errores ? Object.values(data.errores).join(', ') : fieldErrors) || 'No se pudo agendar la cita';
       mostrarAlerta(`Error: ${errorMsg}`, true);
       return;
     }

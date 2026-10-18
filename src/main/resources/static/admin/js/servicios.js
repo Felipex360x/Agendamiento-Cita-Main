@@ -222,7 +222,8 @@ async function manejarGuardarServicio(e) {
     const data = await res.json().catch(() => null);
 
     if (!res.ok) {
-      const errorMsg = data?.error || (data?.errores ? Object.values(data.errores).join(', ') : 'Error al guardar servicio');
+      const fieldErrors = data && typeof data === 'object' ? Object.values(data).join(', ') : null;
+      const errorMsg = data?.error || (data?.errores ? Object.values(data.errores).join(', ') : fieldErrors) || 'Error al guardar servicio';
       mostrarAlerta(`Error: ${errorMsg}`, true);
       btnSubmitServicio.disabled = false;
       btnSubmitServicio.textContent = esEdicion ? 'Actualizar Servicio' : '+ Guardar Servicio';

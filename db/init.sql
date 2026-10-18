@@ -114,6 +114,7 @@ CREATE TABLE IF NOT EXISTS horario_disponibilidad (
     hora_inicio_descanso TIME NULL,
     hora_fin_descanso TIME NULL,
     activo BOOLEAN NOT NULL DEFAULT TRUE,
+    UNIQUE KEY uk_trabajador_dia (trabajador_id, dia_semana),
     CONSTRAINT fk_horario_trabajador 
         FOREIGN KEY (trabajador_id) 
         REFERENCES trabajador (id) 
@@ -227,7 +228,13 @@ INSERT INTO horario_disponibilidad (trabajador_id, dia_semana, hora_inicio, hora
 (1, 2, '09:00:00', '18:00:00', '13:00:00', '14:00:00', TRUE),
 (1, 3, '09:00:00', '18:00:00', '13:00:00', '14:00:00', TRUE),
 (1, 4, '09:00:00', '18:00:00', '13:00:00', '14:00:00', TRUE),
-(1, 5, '09:00:00', '18:00:00', '13:00:00', '14:00:00', TRUE);
+(1, 5, '09:00:00', '18:00:00', '13:00:00', '14:00:00', TRUE)
+ON DUPLICATE KEY UPDATE
+    hora_inicio = VALUES(hora_inicio),
+    hora_fin = VALUES(hora_fin),
+    hora_inicio_descanso = VALUES(hora_inicio_descanso),
+    hora_fin_descanso = VALUES(hora_fin_descanso),
+    activo = VALUES(activo);
 
 -- Citas de prueba del sistema
 -- 1. Cita confirmada (Martina con Camila para Manicura Rusa)

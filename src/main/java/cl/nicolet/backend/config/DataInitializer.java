@@ -146,6 +146,14 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // 6. Horarios de atención para Camila (Lunes a Viernes 09:00 a 18:00, colación 13:00 - 14:00)
+        List<HorarioDisponibilidad> horariosExistentes = horarioDisponibilidadRepository.findByTrabajadorId(trabajadorCamila.getId());
+        Set<Integer> diasVistos = new HashSet<>();
+        for (HorarioDisponibilidad hExistente : horariosExistentes) {
+            if (Boolean.TRUE.equals(hExistente.getActivo()) && !diasVistos.add(hExistente.getDiaSemana())) {
+                horarioDisponibilidadRepository.delete(hExistente);
+            }
+        }
+
         for (int dia = 1; dia <= 5; dia++) {
             final int diaActual = dia;
             if (horarioDisponibilidadRepository.findByTrabajadorIdAndDiaSemanaAndActivoTrue(trabajadorCamila.getId(), diaActual).isEmpty()) {

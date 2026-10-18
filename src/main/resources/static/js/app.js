@@ -49,8 +49,19 @@ const pages={
    if(s===2)h=`<div class="grid g3">${SPECIALISTS.map(x=>`<button class="choice ${st.specialist===x.id?'selected':''}" data-k="specialist" data-v="${x.id}"><span class="row"><span class="avatar">${x.initials}</span><span><strong>${x.name}</strong><br><span class="small">${x.specialty}</span></span></span></button>`).join('')}</div>`;
    if(s===3)h=`<div class="grid g4">${days.map(d=>`<button class="choice ${st.date===iso(d)?'selected':''}" data-k="date" data-v="${iso(d)}"><span>${d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'short'})}</span></button>`).join('')}</div>`;
    if(s===4){
-    const workerId = isNaN(st.specialist) ? 1 : st.specialist;
-    const sId = isNaN(st.service) ? 1 : st.service;
+    const spMap = { camila: 1, valentina: 2, isidora: 3 };
+    const svcMap = { cabello: 1, color: 2, unas: 3, tratamiento: 4 };
+    const workerId = isNaN(st.specialist) ? (spMap[st.specialist] || 1) : st.specialist;
+    const sId = isNaN(st.service) ? (svcMap[st.service] || 1) : st.service;
+    h='<div class="panel" style="text-align:center"><p class="small">Consultando disponibilidad...</p></div>';
+    const bindTimeButtons = () => {
+      $('#content').querySelectorAll('[data-k="time"]').forEach(b=>b.onclick=()=>{
+        st.time=b.dataset.v;
+        $('#content').querySelectorAll('[data-k="time"]').forEach(btn=>btn.classList.toggle('selected',btn.dataset.v===st.time));
+        $('#next').disabled=!st.time;
+        $('#summary').innerHTML=`<p class="eyebrow">Tu momento en Nicolett</p><p style="margin-top:12px">${svc()?.name||'—'}</p><p class="small">${sp()?.name||'Especialista por elegir'}<br>${st.date||'Fecha'} · ${st.time||'Hora'}</p><hr style="border:0;border-top:1px solid var(--border);margin:14px 0"><div class="row between"><span class="small">Abono</span><strong>${money(DEPOSIT)}</strong></div>`;
+      });
+    };
     fetch(`/api/v2/nicolet/disponibilidad?trabajadorId=${workerId}&fecha=${st.date}&servicioId=${sId}`)
      .then(r => r.ok ? r.json() : Promise.reject())
      .then(bloques => {
@@ -59,15 +70,16 @@ const pages={
          return;
        }
        $('#content').innerHTML=`<div class="grid g4">${bloques.map(b=>{
-         const hh=b.horaInicio.slice(0,5);
-         return `<button class="choice ${st.time===hh?'selected':''}" data-k="time" data-v="${hh}" ${!b.disponible?'disabled style="opacity:.4"':''}>${hh}${!b.disponible?` · ${b.motivoNoDisponible.toLowerCase()}`:''}</button>`;
+         const hh=(b.horaInicio||'').slice(0,5);
+         const motivo=(b.motivoNoDisponible||'ocupado').toLowerCase();
+         return `<button class="choice ${st.time===hh?'selected':''}" data-k="time" data-v="${hh}" ${!b.disponible?'disabled style="opacity:.4"':''}>${hh}${!b.disponible?` · ${motivo}`:''}</button>`;
        }).join('')}</div>`;
-       $('#content').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{st[b.dataset.k]=b.dataset.v;draw()});
+       bindTimeButtons();
      })
      .catch(()=>{
        const t=taken();
        $('#content').innerHTML=`<div class="grid g4">${hours.map(x=>`<button class="choice ${st.time===x?'selected':''}" data-k="time" data-v="${x}" ${t.includes(x)?'disabled style="opacity:.4"':''}>${x}${t.includes(x)?' · ocupada':''}</button>`).join('')}</div>`;
-       $('#content').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{st[b.dataset.k]=b.dataset.v;draw()});
+       bindTimeButtons();
      });
    }
    if(s===5)h=`<div class="panel"><p><strong>${svc().name}</strong> con ${sp().name}</p><p class="small">${st.date} · ${st.time} · ${svc().duration} min</p><label class="lbl">Nombre completo</label><input class="field" id="f-name" value="${st.name}"><label class="lbl">Correo</label><input class="field" id="f-email" type="email" value="${st.email}"><label class="lbl">Teléfono</label><input class="field" id="f-phone" value="${st.phone}"><p class="small" style="margin-top:14px">Al reservar se crea tu ficha de clienta para registrar observaciones de la atención.</p></div>`;

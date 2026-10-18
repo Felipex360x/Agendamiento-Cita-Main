@@ -130,9 +130,27 @@ public class TrabajadorService {
         if (dto.getServicioIds() != null && !dto.getServicioIds().isEmpty()) {
             Set<Servicio> servicios = new HashSet<>(servicioRepository.findAllById(dto.getServicioIds()));
             t.setServicios(servicios);
+        } else if (servicioRepository != null) {
+            t.setServicios(new HashSet<>(servicioRepository.findByActivoTrue()));
         }
 
-        return toDTO(trabajadorRepository.save(t));
+        Trabajador guardado = trabajadorRepository.save(t);
+
+        if (horarioDisponibilidadRepository != null && horarioDisponibilidadRepository.findByTrabajadorId(guardado.getId()).isEmpty()) {
+            for (int dia = 1; dia <= 5; dia++) {
+                HorarioDisponibilidad h = new HorarioDisponibilidad();
+                h.setTrabajador(guardado);
+                h.setDiaSemana(dia);
+                h.setHoraInicio(LocalTime.of(9, 0));
+                h.setHoraFin(LocalTime.of(18, 0));
+                h.setHoraInicioDescanso(LocalTime.of(13, 0));
+                h.setHoraFinDescanso(LocalTime.of(14, 0));
+                h.setActivo(true);
+                horarioDisponibilidadRepository.save(h);
+            }
+        }
+
+        return toDTO(guardado);
     }
 
     public TrabajadorDTO actualizar(Long id, TrabajadorCreateDTO dto) {
@@ -140,14 +158,28 @@ public class TrabajadorService {
         Trabajador t = trabajadorRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Trabajador no encontrado: " + id));
 
-        t.setTelefono(dto.getTelefono());
-        t.setCargoEspecialidad(dto.getCargoEspecialidad());
-        t.setBiografia(dto.getBiografia());
+        if (dto.getRutDni() != null && !dto.getRutDni().isBlank()) {
+            trabajadorRepository.findByRutDni(dto.getRutDni())
+                    .filter(existente -> !existente.getId().equals(id))
+                    .ifPresent(existente -> {
+                        throw new IllegalArgumentException("El RUT/DNI ya se encuentra registrado: " + dto.getRutDni());
+                    });
+            t.setRutDni(dto.getRutDni());
+        }
+        if (dto.getTelefono() != null) {
+            t.setTelefono(dto.getTelefono());
+        }
+        if (dto.getCargoEspecialidad() != null && !dto.getCargoEspecialidad().isBlank()) {
+            t.setCargoEspecialidad(dto.getCargoEspecialidad());
+        }
+        if (dto.getBiografia() != null) {
+            t.setBiografia(dto.getBiografia());
+        }
         if (dto.getComisionPorcentaje() != null) {
             t.setComisionPorcentaje(dto.getComisionPorcentaje());
         }
 
-        if (dto.getServicioIds() != null) {
+        if (dto.getServicioIds() != null && !dto.getServicioIds().isEmpty()) {
             Set<Servicio> servicios = new HashSet<>(servicioRepository.findAllById(dto.getServicioIds()));
             t.setServicios(servicios);
         }

@@ -62,10 +62,10 @@ function showToast(message, type = 'success') {
 // Actualizar indicador de estado
 function setStatus(online) {
   if (online) {
-    statusBadge.className = 'status-badge online';
+    statusBadge.className = 'status online';
     statusText.innerText = 'Backend Conectado (8080)';
   } else {
-    statusBadge.className = 'status-badge offline';
+    statusBadge.className = 'status offline';
     statusText.innerText = 'Backend Desconectado';
   }
 }
@@ -341,7 +341,8 @@ async function handleGuardarUsuario(e) {
       cargarUsuarios();
     } else {
       const errorData = await response.json().catch(() => null);
-      const msg = errorData?.error || (esModoEdicion ? 'Error al actualizar usuario' : 'Error al registrar usuario');
+      const fieldErrors = errorData && typeof errorData === 'object' ? Object.values(errorData).join(', ') : null;
+      const msg = errorData?.error || fieldErrors || (esModoEdicion ? 'Error al actualizar usuario' : 'Error al registrar usuario');
       showToast(msg, 'error');
     }
   } catch (error) {

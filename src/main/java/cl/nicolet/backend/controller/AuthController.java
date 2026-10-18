@@ -178,9 +178,9 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of(
                 "id", userDetails.getId(),
-                "nombre", userDetails.getNombre(),
-                "apellidoP", userDetails.getApellidoP(),
-                "correo", userDetails.getCorreo(),
+                "nombre", userDetails.getNombre() != null ? userDetails.getNombre() : "",
+                "apellidoP", userDetails.getApellidoP() != null ? userDetails.getApellidoP() : "",
+                "correo", userDetails.getCorreo() != null ? userDetails.getCorreo() : "",
                 "rol", rol
         ));
     }
@@ -191,7 +191,7 @@ public class AuthController {
         String correo = request.getCorreo() != null ? request.getCorreo().trim().toLowerCase() : "";
         log.info("Solicitud de registro de nuevo usuario con correo: {}", correo);
 
-        if (usuarioRepository.findByCorreoIgnoreCase(correo).isPresent()) {
+        if (usuarioRepository.existsByCorreoIgnoreCase(correo) || usuarioRepository.findByCorreoIgnoreCase(correo).isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                     "status", HttpStatus.BAD_REQUEST.value(),
                     "error", "Bad Request",

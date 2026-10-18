@@ -97,9 +97,23 @@ public class ClienteService {
         Cliente c = clienteRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado: " + id));
 
-        c.setTelefono(dto.getTelefono());
-        c.setFechaNacimiento(dto.getFechaNacimiento());
-        c.setNotasPreferencias(dto.getNotasPreferencias());
+        if (dto.getRutDni() != null && !dto.getRutDni().isBlank()) {
+            clienteRepository.findByRutDni(dto.getRutDni())
+                    .filter(existente -> !existente.getId().equals(id))
+                    .ifPresent(existente -> {
+                        throw new IllegalArgumentException("El RUT/DNI ya se encuentra registrado: " + dto.getRutDni());
+                    });
+            c.setRutDni(dto.getRutDni());
+        }
+        if (dto.getTelefono() != null) {
+            c.setTelefono(dto.getTelefono());
+        }
+        if (dto.getFechaNacimiento() != null) {
+            c.setFechaNacimiento(dto.getFechaNacimiento());
+        }
+        if (dto.getNotasPreferencias() != null) {
+            c.setNotasPreferencias(dto.getNotasPreferencias());
+        }
 
         return toDTO(clienteRepository.save(c));
     }
