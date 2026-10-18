@@ -1,6 +1,4 @@
-// ========================================================
-// Nicolet Estudio - Consola de Pruebas y Diagnóstico
-// ========================================================
+// Consola de pruebas y diagnóstico
 
 var API_BASE = window.API_BASE || '/api/v2/nicolet';
 const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));

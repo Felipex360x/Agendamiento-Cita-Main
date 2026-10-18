@@ -51,12 +51,10 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         log.info("Verificando datos iniciales del sistema...");
 
-        // 1. Roles / Tipos de usuario
         TipoUsuario tipoAdmin = obtenerOCrearTipo("ADMINISTRADOR", "Administrador con acceso total");
         TipoUsuario tipoCliente = obtenerOCrearTipo("CLIENTE", "Cliente que solicita y agenda citas");
         TipoUsuario tipoPro = obtenerOCrearTipo("PROFESIONAL", "Profesional o especialista que atiende las citas");
 
-        // 2. Usuarios base y de prueba garantizados
         obtenerOCrearUsuario("Maximo", "Rojas", "maximo.rojas@estudio.cl", "password_seguro_123", tipoAdmin);
         obtenerOCrearUsuario("Admin", "Test", "admin.test@nicolet.cl", "AdminTest123!", tipoAdmin);
         obtenerOCrearUsuario("Administrador", "Nicolet", "admin@nicolet.cl", "Admin123!", tipoAdmin);
@@ -67,7 +65,7 @@ public class DataInitializer implements CommandLineRunner {
         Usuario userGale = obtenerOCrearUsuario("Felipe", "Galle", "gale@gmail.com", "123456", tipoCliente);
         obtenerOCrearUsuario("Prueba", "Admin", "prueba1235@gmail.com", "123456", tipoAdmin);
 
-        // Migrar automáticamente a BCrypt cualquier usuario preexistente en la base de datos con contraseña en texto plano
+        // Encriptar contraseñas en texto plano si existen
         List<Usuario> todosLosUsuarios = usuarioRepository.findAll();
         for (Usuario u : todosLosUsuarios) {
             if (u.getPassword() != null && !u.getPassword().startsWith("$2a$") && !u.getPassword().startsWith("$2b$")) {
@@ -77,12 +75,10 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        // 3. Catálogo de Servicios
         Servicio sCorte = obtenerOCrearServicio("Corte de Cabello y Peinado", "Lavado, corte estilizado y secado profesional", 45, new BigDecimal("18000.00"));
         Servicio sManicura = obtenerOCrearServicio("Manicura Rusa con Esmaltado Permanente", "Limpieza profunda de cutículas y esmaltado de alta duración", 60, new BigDecimal("22000.00"));
         Servicio sFacial = obtenerOCrearServicio("Tratamiento Facial Hidratante", "Limpieza profunda, exfoliación y mascarilla regeneradora", 60, new BigDecimal("28000.00"));
 
-        // 4. Perfiles de Cliente
         Cliente clienteMartina = clienteRepository.findByUsuarioId(userMartina.getId()).orElseGet(() -> {
             log.info("Inicializando perfil de Cliente para {}", userMartina.getNombre());
             Cliente c = new Cliente();
@@ -119,7 +115,6 @@ public class DataInitializer implements CommandLineRunner {
             return clienteRepository.save(c);
         });
 
-        // 5. Perfil Trabajador para Camila
         Trabajador trabajadorCamila = trabajadorRepository.findByUsuarioId(userCamila.getId()).orElseGet(() -> {
             log.info("Inicializando perfil de Trabajador para {}", userCamila.getNombre());
             Trabajador t = new Trabajador();
@@ -143,7 +138,7 @@ public class DataInitializer implements CommandLineRunner {
             trabajadorCamila = trabajadorRepository.save(trabajadorCamila);
         }
 
-        // 6. Horarios de atención para Camila (Lunes a Viernes 09:00 a 18:00, colación 13:00 - 14:00)
+        // Horarios de atención de lunes a viernes
         List<HorarioDisponibilidad> horariosExistentes = horarioDisponibilidadRepository.findByTrabajadorId(trabajadorCamila.getId());
         Set<Integer> diasVistos = new HashSet<>();
         for (HorarioDisponibilidad hExistente : horariosExistentes) {
@@ -167,7 +162,7 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        // 7. Citas semilla de ejemplo
+        // Citas iniciales de prueba
         if (citaRepository.findByCodigoReserva("RES-2026-0001").isEmpty()) {
             log.info("Inicializando cita RES-2026-0001 (CONFIRMADA)...");
             Cita cita = new Cita();
@@ -242,7 +237,6 @@ public class DataInitializer implements CommandLineRunner {
         return usuarioRepository.findByCorreoIgnoreCase(correo)
                 .map(u -> {
                     boolean modificado = false;
-                    // Garantizar siempre la contraseña esperada para todos los usuarios semilla
                     if (passwordEncoder != null && !passwordEncoder.matches(pass, u.getPassword())) {
                         log.info("Sincronizando contraseña garantizada para usuario semilla {}", correo);
                         u.setPassword(encodedPass);

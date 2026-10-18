@@ -36,7 +36,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Login: Autenticación exitosa devuelve JWT válido y no expone contraseña")
+    @DisplayName("Login exitoso devuelve JWT y oculta la contraseña")
     void testLoginExitoso() throws Exception {
         LoginRequestDTO request = new LoginRequestDTO("maximo.rojas@estudio.cl", "password_seguro_123");
 
@@ -57,7 +57,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Login: Contraseña incorrecta devuelve 401 sin fugar información")
+    @DisplayName("Contraseña incorrecta devuelve 401")
     void testLoginPasswordIncorrecta() throws Exception {
         LoginRequestDTO request = new LoginRequestDTO("maximo.rojas@estudio.cl", "PasswordIncorrecta999!");
 
@@ -71,7 +71,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Login: Usuario inexistente devuelve mismo 401 que contraseña errónea (Anti-Enumeración)")
+    @DisplayName("Usuario inexistente devuelve 401")
     void testAntiEnumeracionUsuarioInexistente() throws Exception {
         LoginRequestDTO request = new LoginRequestDTO("usuario_fantasma_no_existe@estudio.cl", "CualquierClave123!");
 
@@ -84,7 +84,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Login: Rechazo de correo vacío o nulo con 400 Bad Request")
+    @DisplayName("Rechazar correo vacío con 400")
     void testRechazoCorreoVacio() throws Exception {
         LoginRequestDTO request = new LoginRequestDTO("", "Password123!");
 
@@ -96,7 +96,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Login: Rechazo de correo malformado / Inyección SQL básica con 400 Bad Request")
+    @DisplayName("Rechazar correo con formato inválido con 400")
     void testRechazoInyeccionSQLYCorreoMalformado() throws Exception {
         LoginRequestDTO request = new LoginRequestDTO("' OR 1=1 --", "Password123!");
 
@@ -108,7 +108,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Login: Rechazo de contraseña vacía con 400 Bad Request")
+    @DisplayName("Rechazar contraseña vacía con 400")
     void testRechazoPasswordVacia() throws Exception {
         LoginRequestDTO request = new LoginRequestDTO("maximo.rojas@estudio.cl", "   ");
 
@@ -120,7 +120,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Login: Rechazo de contraseña mayor a 72 caracteres (Anti-DoS y límite BCrypt)")
+    @DisplayName("Rechazar contraseña mayor a 72 caracteres")
     void testRechazoPasswordDemasiadoLarga_AntiDoS() throws Exception {
         String passwordGigante = "A".repeat(73);
         LoginRequestDTO request = new LoginRequestDTO("maximo.rojas@estudio.cl", passwordGigante);
@@ -133,7 +133,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Login: Normalización y saneamiento de espacios en blanco en correo")
+    @DisplayName("Limpiar espacios en blanco del correo al iniciar sesión")
     void testSanitizacionEspaciosEnBlancoCorreo() throws Exception {
         LoginRequestDTO request = new LoginRequestDTO("  maximo.rojas@estudio.cl  ", "password_seguro_123");
 
@@ -146,11 +146,10 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Login: Bloqueo anti-fuerza bruta tras 5 intentos fallidos retorna HTTP 429 Too Many Requests")
+    @DisplayName("Bloquear temporalmente tras 5 intentos fallidos")
     void testProteccionFuerzaBrutaRateLimiting() throws Exception {
         LoginRequestDTO intentoInvalido = new LoginRequestDTO("maximo.rojas@estudio.cl", "clave_mala");
 
-        // 5 intentos fallidos permitidos
         for (int i = 0; i < 5; i++) {
             mockMvc.perform(post("/api/v2/nicolet/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -158,7 +157,6 @@ public class LoginSecurityIntegrationTest {
                     .andExpect(status().isUnauthorized());
         }
 
-        // El 6to intento consecutivo debe ser rechazado inmediatamente con HTTP 429 sin consultar la BD
         mockMvc.perform(post("/api/v2/nicolet/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(intentoInvalido)))
@@ -168,7 +166,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad API: Endpoint protegido rechaza peticiones sin token con 401 Unauthorized")
+    @DisplayName("Endpoint protegido rechaza peticiones sin token con 401")
     void testEndpointProtegidoSinToken() throws Exception {
         mockMvc.perform(get("/api/v2/nicolet/citas"))
                 .andExpect(status().isUnauthorized())
@@ -177,7 +175,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad API: Endpoint protegido rechaza token falso o manipulado con 401 Unauthorized")
+    @DisplayName("Endpoint protegido rechaza token inválido con 401")
     void testEndpointProtegidoTokenFalso() throws Exception {
         mockMvc.perform(get("/api/v2/nicolet/citas")
                         .header("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.token_falso_manipulado.firma_invalida"))
@@ -186,7 +184,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad API: Endpoint protegido rechaza header Authorization sin prefijo Bearer")
+    @DisplayName("Endpoint protegido rechaza header Authorization sin Bearer")
     void testEndpointProtegidoHeaderSinBearer() throws Exception {
         mockMvc.perform(get("/api/v2/nicolet/citas")
                         .header("Authorization", "Basic dXN1YXJpbzpjb250cmFzZW5h"))
@@ -195,9 +193,8 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Seguridad Flujo Completo: Login exitoso genera token que permite consumir /me")
+    @DisplayName("Login exitoso permite consultar /me con el token generado")
     void testFlujoCompletoLoginYConsumoMe() throws Exception {
-        // 1. Iniciar sesión
         LoginRequestDTO login = new LoginRequestDTO("maximo.rojas@estudio.cl", "password_seguro_123");
         MvcResult loginResult = mockMvc.perform(post("/api/v2/nicolet/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -208,7 +205,6 @@ public class LoginSecurityIntegrationTest {
         String token = objectMapper.readTree(loginResult.getResponse().getContentAsString()).get("token").asText();
         assertThat(token).isNotBlank();
 
-        // 2. Consumir /me con el Bearer token
         mockMvc.perform(get("/api/v2/nicolet/auth/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
@@ -217,7 +213,7 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Admin Test: Usuario administrador de prueba garantizado siempre permite ingresar")
+    @DisplayName("Usuario admin de prueba puede iniciar sesión")
     void testAdminTestAccesoGarantizado() throws Exception {
         LoginRequestDTO login = new LoginRequestDTO("admin.test@nicolet.cl", "AdminTest123!");
 
@@ -231,11 +227,10 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Admin Test: Acceso garantizado incluso si la IP está bloqueada por intentos fallidos previos")
+    @DisplayName("Usuario admin de prueba puede ingresar aunque haya intentos fallidos previos")
     void testAdminTestSuperaBloqueoPorFuerzaBruta() throws Exception {
         LoginRequestDTO ataque = new LoginRequestDTO("maximo.rojas@estudio.cl", "clave_falsa");
 
-        // Bloquear la IP con 5 intentos fallidos
         for (int i = 0; i < 5; i++) {
             mockMvc.perform(post("/api/v2/nicolet/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -243,13 +238,11 @@ public class LoginSecurityIntegrationTest {
                     .andExpect(status().isUnauthorized());
         }
 
-        // El usuario normal está bloqueado (429)
         mockMvc.perform(post("/api/v2/nicolet/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(ataque)))
                 .andExpect(status().isTooManyRequests());
 
-        // El Admin Test siempre puede ingresar sin importar el bloqueo de IP y lo desbloquea
         LoginRequestDTO adminTest = new LoginRequestDTO("admin.test@nicolet.cl", "AdminTest123!");
         mockMvc.perform(post("/api/v2/nicolet/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

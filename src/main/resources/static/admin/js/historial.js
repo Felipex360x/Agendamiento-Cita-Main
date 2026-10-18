@@ -1,7 +1,3 @@
-// ========================================================
-// Nicolett Studio Fantasy - Historial de Tratamientos
-// ========================================================
-
 var API_BASE = window.API_BASE || '/api/v2/nicolet';
 const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));
 
@@ -10,7 +6,6 @@ let trabajadorSeleccionado = null;
 let citasHistorial = [];
 let usuarioActual = null;
 
-// Elementos DOM
 const statusBadge = document.getElementById('statusBadge');
 const statusText = document.getElementById('statusText');
 const alertMessage = document.getElementById('alertMessage');
@@ -82,7 +77,6 @@ async function cargarTrabajadores() {
       return;
     }
 
-    // Si el usuario autenticado es un trabajador, seleccionarlo a él por defecto
     if (usuarioActual) {
       trabajadorSeleccionado = listaTrabajadores.find(t => t.usuario && t.usuario.id === usuarioActual.id);
     }
@@ -154,14 +148,12 @@ async function cargarHistorialTratamientos() {
 function actualizarKPIsHistorial(citas) {
   kpiTotalTratamientos.textContent = citas.length;
 
-  // Clientes únicos
   const idsClientes = new Set();
   citas.forEach(c => {
     if (c.cliente?.id) idsClientes.add(c.cliente.id);
   });
   kpiClientasUnicas.textContent = idsClientes.size;
 
-  // Ventas totales (excluyendo canceladas)
   const suma = citas
     .filter(c => c.estado !== 'CANCELADA')
     .reduce((acc, c) => acc + Number(c.precioFinal || 0), 0);
@@ -198,7 +190,6 @@ function renderizarTablaHistorial(citas) {
     return;
   }
 
-  // Ordenar cronológicamente descendente (más recientes primero)
   const ordenadas = [...citas].sort((a, b) => new Date(b.fechaHoraInicio) - new Date(a.fechaHoraInicio));
 
   tablaHistorialBody.innerHTML = ordenadas.map(cita => {
@@ -247,9 +238,6 @@ function renderizarTablaHistorial(citas) {
   }).join('');
 }
 
-// ----------------------------------------------------
-// MODAL: FICHA TÉCNICA DE LA CLIENTA (REQUISITO 25)
-// ----------------------------------------------------
 function abrirFichaClienta(clienteId, nombre, correo, telefono) {
   if (!clienteId) return;
 

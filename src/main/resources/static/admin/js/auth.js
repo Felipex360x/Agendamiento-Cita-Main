@@ -1,9 +1,3 @@
-// ========================================================
-// Módulo de Autenticación y Manejo de Sesión (Frontend)
-// Nicolet Estudio - Sistema de Agendamiento
-// ========================================================
-
-// Detección automática del host del backend (resiliente a Live Server port 5500, puertos alternativos o file://)
 function getApiBaseUrl() {
   if (typeof window !== 'undefined') {
     if (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8080')) {
@@ -18,12 +12,10 @@ window.AUTH_API_URL = `${window.API_BASE}/auth`;
 const TOKEN_KEY = 'nicolet_jwt_token';
 const USER_KEY = 'nicolet_jwt_user';
 
-// Obtener token almacenado
 function getAuthToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-// Obtener datos del usuario logueado
 function getAuthUser() {
   try {
     const data = localStorage.getItem(USER_KEY);
@@ -33,7 +25,6 @@ function getAuthUser() {
   }
 }
 
-// Guardar datos de sesión
 function setAuthSession(data) {
   if (data && data.token) {
     localStorage.setItem(TOKEN_KEY, data.token);
@@ -48,20 +39,17 @@ function setAuthSession(data) {
   }
 }
 
-// Cerrar sesión
 function logout() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   window.location.href = 'login.html';
 }
 
-// Verificar si existe sesión activa
 function isAuthenticated() {
   const token = getAuthToken();
   return !!token;
 }
 
-// Proteger vista: Si no está autenticado, redirigir a login.html
 function requireAuth() {
   if (!isAuthenticated()) {
     const currentPage = window.location.pathname.split('/').pop() || 'citas.html';
@@ -71,7 +59,6 @@ function requireAuth() {
   return true;
 }
 
-// Iniciar sesión llamando a la API
 async function login(correo, password) {
   const authUrl = window.AUTH_API_URL || `${getApiBaseUrl()}/auth`;
   let response;
@@ -105,7 +92,6 @@ async function login(correo, password) {
   return data;
 }
 
-// Registrar nuevo usuario/cliente para primer acceso
 async function register(nombre, apellidoP, correo, password, telefono = '') {
   const authUrl = window.AUTH_API_URL || `${getApiBaseUrl()}/auth`;
   let response;
@@ -136,7 +122,6 @@ async function register(nombre, apellidoP, correo, password, telefono = '') {
   return data;
 }
 
-// Wrapper para llamadas fetch con token JWT automático y resolución dinámica de URL
 async function authenticatedFetch(url, options = {}) {
   const token = getAuthToken();
   const headers = Object.assign({}, options.headers || {});
@@ -158,7 +143,6 @@ async function authenticatedFetch(url, options = {}) {
 
   const response = await fetch(finalUrl, options);
 
-  // Si el token expiró o no es válido (401), redirigir al login
   if (response.status === 401) {
     console.warn('Sesión expirada o token inválido. Redirigiendo a login...');
     logout();
@@ -168,7 +152,6 @@ async function authenticatedFetch(url, options = {}) {
   return response;
 }
 
-// Renderizar badge de usuario y botón de cerrar sesión en el navbar
 function renderNavUserBadge() {
   const user = getAuthUser();
   if (!user) {
@@ -179,7 +162,6 @@ function renderNavUserBadge() {
     return;
   }
 
-  // Evitar duplicados
   if (document.getElementById('navUserContainer')) return;
 
   const slot = document.getElementById('navUserBadgeSlot');
@@ -231,7 +213,6 @@ function renderNavUserBadge() {
   targetParent.appendChild(container);
 }
 
-// Auto-inicializar renderizado de usuario si la página ya cargó
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', renderNavUserBadge);
 } else {

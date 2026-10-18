@@ -1,19 +1,13 @@
-// ========================================================
-// Nicolett Studio Fantasy - Frontend Agendamiento de Citas
-// ========================================================
-
 var API_BASE = window.API_BASE || '/api/v2/nicolet';
 function getApiBase() {
   return window.API_BASE || API_BASE || '/api/v2/nicolet';
 }
 const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));
 
-// Estado local en memoria
 let serviciosDisponibles = [];
 let clientesDisponibles = [];
 let trabajadoresDisponibles = [];
 
-// Elementos DOM
 const statusBadge = document.getElementById('statusBadge');
 const statusText = document.getElementById('statusText');
 const alertMessage = document.getElementById('alertMessage');
@@ -36,7 +30,6 @@ const spanCountClientes = document.getElementById('spanCountClientes');
 const listaTrabajadoresRender = document.getElementById('listaTrabajadoresRender');
 const listaClientesRender = document.getElementById('listaClientesRender');
 
-// Iniciar al cargar
 document.addEventListener('DOMContentLoaded', async () => {
   if (typeof requireAuth === 'function' && !requireAuth()) return;
   establecerFechaMinima();
@@ -44,7 +37,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await cargarDatosFormulario();
   await cargarCitas();
 
-  // Soporte para preselección desde URL (ej: citas.html?servicioId=2&trabajadorId=1&fechaHora=2026-10-20T10:00:00)
   const params = new URLSearchParams(window.location.search);
   const sIdParam = params.get('servicioId');
   const tIdParam = params.get('trabajadorId');
@@ -61,7 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     fechaHoraInicioInput.value = fechaHoraParam.slice(0, 16);
   }
 
-  // Event listener en select de servicio para mostrar detalles
   servicioSelect.addEventListener('change', actualizarInfoServicio);
   citaForm.addEventListener('submit', manejarAgendamiento);
 });
@@ -76,14 +67,12 @@ function actualizarInfoServicio() {
   }
 }
 
-// Configurar fecha mínima como momento actual
 function establecerFechaMinima() {
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   fechaHoraInicioInput.min = now.toISOString().slice(0, 16);
 }
 
-// Alertas visuales
 function mostrarAlerta(mensaje, esError = false) {
   alertMessage.className = `alert-banner ${esError ? 'error' : 'success'}`;
   alertMessage.textContent = mensaje;
@@ -93,7 +82,6 @@ function mostrarAlerta(mensaje, esError = false) {
   }, 6000);
 }
 
-// Verificar conexión con el backend
 async function verificarConexion() {
   const base = getApiBase();
   try {
@@ -114,11 +102,9 @@ function marcarDesconectado() {
   statusText.textContent = 'Sin conexión';
 }
 
-// Cargar Clientes, Trabajadores y Servicios para los Selects y Tableros
 async function cargarDatosFormulario() {
   const base = getApiBase();
   try {
-    // 1. Cargar Servicios
     const resServicios = await apiFetch(`${base}/servicios`);
     if (resServicios.ok) {
       serviciosDisponibles = await resServicios.json();
@@ -132,7 +118,6 @@ async function cargarDatosFormulario() {
       servicioSelect.innerHTML = '<option value="" disabled>Error al cargar servicios</option>';
     }
 
-    // 2. Cargar Clientes (Rol Cliente)
     const resClientes = await apiFetch(`${base}/clientes`);
     if (resClientes.ok) {
       clientesDisponibles = await resClientes.json();
@@ -151,7 +136,6 @@ async function cargarDatosFormulario() {
       clienteSelect.innerHTML = '<option value="" disabled>Error al cargar clientas</option>';
     }
 
-    // 3. Cargar Especialistas (Rol Trabajador)
     const resTrabajadores = await apiFetch(`${base}/trabajadores`);
     if (resTrabajadores.ok) {
       trabajadoresDisponibles = await resTrabajadores.json();
@@ -174,7 +158,6 @@ async function cargarDatosFormulario() {
   }
 }
 
-// Renderizado de usuarios con rol Trabajador (Requisito 8)
 function renderizarListaTrabajadores(trabajadores) {
   if (!listaTrabajadoresRender) return;
   if (!trabajadores || trabajadores.length === 0) {
@@ -201,7 +184,6 @@ function renderizarListaTrabajadores(trabajadores) {
   }).join('');
 }
 
-// Renderizado de usuarios con rol Cliente (Requisito 8)
 function renderizarListaClientes(clientes) {
   if (!listaClientesRender) return;
   if (!clientes || clientes.length === 0) {

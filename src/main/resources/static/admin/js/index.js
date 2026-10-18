@@ -70,9 +70,7 @@ function setStatus(online) {
   }
 }
 
-// ==========================================
-// 1. GET: Cargar tipos de usuario (Roles)
-// ==========================================
+// Cargar tipos de usuario
 async function cargarTiposUsuario() {
   try {
     const response = await (window.authenticatedFetch || fetch)(TIPOS_API_URL);
@@ -97,9 +95,7 @@ async function cargarTiposUsuario() {
   }
 }
 
-// ==========================================
-// 2. GET: Listar todos los usuarios
-// ==========================================
+// Listar usuarios
 async function cargarUsuarios() {
   try {
     userTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--gray);">Cargando usuarios...</td></tr>`;
@@ -120,7 +116,6 @@ async function cargarUsuarios() {
   }
 }
 
-// Renderizar filas de la tabla
 function renderizarUsuarios(usuarios) {
   if (!usuarios || usuarios.length === 0) {
     userTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--gray);">No hay usuarios registrados aún.</td></tr>`;
@@ -163,9 +158,7 @@ function renderizarUsuarios(usuarios) {
   });
 }
 
-// ==========================================
-// 3. GET: Buscar usuario por ID
-// ==========================================
+// Buscar usuario por ID
 async function handleBuscarPorId() {
   const id = searchIdInput.value.trim();
   if (!id) {
@@ -183,7 +176,6 @@ async function handleBuscarPorId() {
       const usuario = await response.json();
       renderizarUsuarios([usuario]);
       
-      // Mostrar feedback de búsqueda activa
       searchNotice.style.display = 'flex';
       searchNoticeId.innerText = `#${usuario.id} (${usuario.nombre} ${usuario.apellidoP})`;
       btnResetSearch.style.display = 'inline-flex';
@@ -203,7 +195,6 @@ async function handleBuscarPorId() {
   }
 }
 
-// Restablecer búsqueda y volver a listar todos
 function restablecerBusqueda() {
   searchIdInput.value = '';
   searchNotice.style.display = 'none';
@@ -211,12 +202,9 @@ function restablecerBusqueda() {
   cargarUsuarios();
 }
 
-// ==========================================
-// 4. PUT: Modo edición y carga de datos
-// ==========================================
+// Cargar datos para edición
 async function prepararEdicion(id) {
   try {
-    // Obtener los datos más recientes del usuario desde la API (GET /id)
     const response = await (window.authenticatedFetch || fetch)(`${API_URL}/${id}`);
     if (!response.ok) {
       showToast(`No se pudo obtener el usuario #${id} para editar`, 'error');
@@ -224,13 +212,11 @@ async function prepararEdicion(id) {
     }
     const usuario = await response.json();
 
-    // Rellenar formulario con los datos existentes
     editUserId.value = usuario.id;
     document.getElementById('nombre').value = usuario.nombre || '';
     document.getElementById('apellidoP').value = usuario.apellidoP || '';
     document.getElementById('correo').value = usuario.correo || '';
 
-    // Contraseña opcional al editar
     const passwordInput = document.getElementById('password');
     passwordInput.value = '';
     passwordInput.removeAttribute('required');
@@ -238,12 +224,10 @@ async function prepararEdicion(id) {
     const helper = document.getElementById('passwordHelper');
     if (helper) helper.style.display = 'block';
 
-    // Asignar el tipo de usuario si lo tiene
     if (usuario.tipoUsuario && usuario.tipoUsuario.id) {
       tipoUsuarioSelect.value = usuario.tipoUsuario.id;
     }
 
-    // Cambiar estado visual del formulario a Modo Edición (PUT)
     formTitle.innerText = `Editar Usuario #${usuario.id}`;
     formMethodBadge.innerText = 'PUT';
     formMethodBadge.className = 'badge-role administrador';
@@ -254,7 +238,6 @@ async function prepararEdicion(id) {
     editTargetId.innerText = `#${usuario.id} (${usuario.nombre})`;
     editAlert.style.display = 'flex';
 
-    // Desplazar vista hacia el formulario si está en pantallas pequeñas
     document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
     document.getElementById('nombre').focus();
 
@@ -266,7 +249,6 @@ async function prepararEdicion(id) {
   }
 }
 
-// Cancelar modo edición y volver a modo creación (POST)
 function cancelarEdicion() {
   editUserId.value = '';
   userForm.reset();
@@ -288,9 +270,7 @@ function cancelarEdicion() {
   showToast('Modo edición cancelado', 'success');
 }
 
-// ==========================================
-// 5. POST / PUT: Crear o Actualizar usuario
-// ==========================================
+// Crear o actualizar usuario
 async function handleGuardarUsuario(e) {
   e.preventDefault();
 
@@ -351,9 +331,7 @@ async function handleGuardarUsuario(e) {
   }
 }
 
-// ==========================================
-// 6. DELETE: Eliminar usuario por ID
-// ==========================================
+// Eliminar usuario
 async function handleEliminarUsuario(id) {
   if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente al usuario #${id}?`)) {
     return;
@@ -367,7 +345,6 @@ async function handleEliminarUsuario(id) {
     if (response.ok) {
       showToast(`Usuario #${id} eliminado correctamente (DELETE 204)`, 'success');
       
-      // Si se estaba editando a este usuario, cancelar modo edición
       if (editUserId.value === String(id)) {
         cancelarEdicion();
       }

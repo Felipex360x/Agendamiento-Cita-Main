@@ -1,8 +1,5 @@
 @echo off
-rem ==============================================================================
-rem Script de Inicio Seguro (CMD): Agendamiento de Citas Backend
-rem Libera automáticamente el puerto 8080 y arranca el servidor
-rem ==============================================================================
+rem Libera el puerto 8080 e inicia el servidor
 
 echo Verificando estado del puerto 8080...
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8080" ^| findstr "LISTENING"') do (

@@ -1,13 +1,8 @@
-// ========================================================
-// Nicolett Studio Fantasy - Administración de Servicios
-// ========================================================
-
 var API_BASE = window.API_BASE || '/api/v2/nicolet';
 const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));
 
 let listaServicios = [];
 
-// Elementos DOM
 const statusBadge = document.getElementById('statusBadge');
 const statusText = document.getElementById('statusText');
 const alertMessage = document.getElementById('alertMessage');

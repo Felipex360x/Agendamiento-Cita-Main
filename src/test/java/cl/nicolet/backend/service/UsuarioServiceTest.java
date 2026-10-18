@@ -33,22 +33,17 @@ class UsuarioServiceTest {
     @InjectMocks
     private UsuarioService usuarioService;
 
-    // -------------------------------- FINDALL ------------------------------------------------
-
     @Test
-    @DisplayName("findAll - debe retornar lista de Usuario cuando existen registros")
+    @DisplayName("findAll - debe retornar lista de usuarios cuando existen registros")
     void debeRetornarListaDeUsuario() {
-        // Given
         List<Usuario> usuariosSimulados = List.of(
             new Usuario(1L, "Martina", "Contreras", "Mar.con@gmail.com", "123412"),
             new Usuario(2L, "Paulina", "Contreras", "Pauli.con@gmail.com", "123412")
         );
         when(usuarioRepository.findAll()).thenReturn(usuariosSimulados);
 
-        // When
         List<UsuarioDTO> resultado = usuarioService.findAll();
 
-        // Then 
         assertNotNull(resultado);
         assertEquals(2, resultado.size());
         assertEquals("Martina", resultado.get(0).getNombre());
@@ -57,34 +52,26 @@ class UsuarioServiceTest {
     }
 
     @Test
-    @DisplayName("findAll - debe retornar lista vacia cuando no hay Usuario")
+    @DisplayName("findAll - debe retornar lista vacía cuando no hay usuarios")
     void debeRetornarListaVaciaSiNoHayUsuario() {
-        // Given
         when(usuarioRepository.findAll()).thenReturn(List.of());
 
-        // When
         List<UsuarioDTO> resultado = usuarioService.findAll();
 
-        // Then
         assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
     }
 
-    // -------------------------------- FINDBYID ------------------------------------------------
-
     @Test
-    @DisplayName("findById - debe retornar el DTO correcto cuando el usuario existe")
+    @DisplayName("findById - debe retornar el usuario cuando existe")
     void debeRetornarUsuarioPorId() {
-        // Given
         Usuario usuario = new Usuario(
             1L, "Martina", "Contreras", "Mar.con@gmail.com", "123412"
         );
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
 
-        // When
         UsuarioDTO resultado = usuarioService.findById(1L);
 
-        // Then
         assertNotNull(resultado);
         assertEquals(1L, resultado.getId());
         assertEquals("Martina", resultado.getNombre());
@@ -92,20 +79,16 @@ class UsuarioServiceTest {
     }
 
     @Test
-    @DisplayName("findById - debe lanzar RecursoNoEncontradoException cuando el ID no existe")
+    @DisplayName("findById - debe lanzar excepción cuando el ID no existe")
     void debeLanzarExcepcionCuandoUsuarioNoExiste() {
-        // Given
         when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // When & Then
         assertThrows(RecursoNoEncontradoException.class, () -> usuarioService.findById(999L));
     }
 
-    // ── crear ──────────────────────────────────────────────────────────────────
     @Test
-    @DisplayName("crear - debe persistir y retornar el usuario con ID generado")
+    @DisplayName("crear - debe guardar y retornar el usuario creado")
     void debeCrearUsuarioCorrectamente() {
-        // Given
         UsuarioCreateDTO dto = new UsuarioCreateDTO(
             "Martina", "Contreras", "Mar.con@gmail.com", "123412"
         );
@@ -114,10 +97,8 @@ class UsuarioServiceTest {
         );
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(guardado);
 
-        // When
         UsuarioDTO resultado = usuarioService.crear(dto);
 
-        // Then  
         assertNotNull(resultado);
         assertEquals(3L, resultado.getId());
         assertEquals("Martina", resultado.getNombre());
@@ -126,7 +107,7 @@ class UsuarioServiceTest {
     }
 
     @Test
-    @DisplayName("crear - debe cifrar la contraseña antes de persistir")
+    @DisplayName("crear - debe cifrar la contraseña al guardar")
     void debeCifrarPasswordAlCrear() {
         UsuarioCreateDTO dto = new UsuarioCreateDTO("Ana", "Perez", "ana@gmail.com", "plaintxt123");
         when(passwordEncoder.encode("plaintxt123")).thenReturn("$2a$10$encodedpasswordhash");
@@ -139,28 +120,22 @@ class UsuarioServiceTest {
         verify(passwordEncoder, times(1)).encode("plaintxt123");
     }
 
-    // ── eliminar ───────────────────────────────────────────────────────────────
     @Test
-    @DisplayName("eliminar - debe lanzar excepción al intentar eliminar un ID inexistente")
+    @DisplayName("eliminar - debe lanzar excepción si el usuario no existe")
     void debeLanzarExcepcionAlEliminarUsuarioInexistente() {
-        // Given
         when(usuarioRepository.existsById(999L)).thenReturn(false);
 
-        // When & Then
         assertThrows(RecursoNoEncontradoException.class, () -> usuarioService.eliminar(999L));
         verify(usuarioRepository, never()).deleteById(any());
     }
 
     @Test
-    @DisplayName("eliminar - debe invocar deleteById cuando el usuario existe")
+    @DisplayName("eliminar - debe eliminar el usuario cuando existe")
     void debeEliminarUsuarioExistente() {
-        // Given
         when(usuarioRepository.existsById(1L)).thenReturn(true);
 
-        // When
         usuarioService.eliminar(1L);
 
-        // Then
         verify(usuarioRepository, times(1)).deleteById(1L);
     }
 }

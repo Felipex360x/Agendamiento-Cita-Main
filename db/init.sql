@@ -1,23 +1,16 @@
--- ========================================================
--- Base de Datos para el Sistema de Agendamiento de Citas
--- Microservicio: backend (Nicolet Estudio)
--- ========================================================
+-- Esquema de base de datos y datos iniciales
 
 CREATE DATABASE IF NOT EXISTS universidad_backend CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE universidad_backend;
 
--- ========================================================
--- 1. Tabla tipo_usuario (Roles del sistema)
--- ========================================================
+-- Tabla tipo_usuario
 CREATE TABLE IF NOT EXISTS tipo_usuario (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL UNIQUE,
     descripcion VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ========================================================
--- 2. Tabla usuario (Credenciales e información base)
--- ========================================================
+-- Tabla usuario
 CREATE TABLE IF NOT EXISTS usuario (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -33,9 +26,7 @@ CREATE TABLE IF NOT EXISTS usuario (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ========================================================
--- 3. Tabla cliente (Perfil especializado del cliente)
--- ========================================================
+-- Tabla cliente
 CREATE TABLE IF NOT EXISTS cliente (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     usuario_id BIGINT NOT NULL UNIQUE,
@@ -52,9 +43,7 @@ CREATE TABLE IF NOT EXISTS cliente (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ========================================================
--- 4. Tabla trabajador (Perfil del especialista / profesional)
--- ========================================================
+-- Tabla trabajador
 CREATE TABLE IF NOT EXISTS trabajador (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     usuario_id BIGINT NOT NULL UNIQUE,
@@ -72,9 +61,7 @@ CREATE TABLE IF NOT EXISTS trabajador (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ========================================================
--- 5. Tabla servicio (Catálogo de servicios ofrecidos)
--- ========================================================
+-- Tabla servicio
 CREATE TABLE IF NOT EXISTS servicio (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(120) NOT NULL UNIQUE,
@@ -85,9 +72,7 @@ CREATE TABLE IF NOT EXISTS servicio (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ========================================================
--- 6. Tabla trabajador_servicio (Relación M:N)
--- ========================================================
+-- Tabla trabajador_servicio
 CREATE TABLE IF NOT EXISTS trabajador_servicio (
     trabajador_id BIGINT NOT NULL,
     servicio_id BIGINT NOT NULL,
@@ -102,13 +87,11 @@ CREATE TABLE IF NOT EXISTS trabajador_servicio (
         ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ========================================================
--- 7. Tabla horario_disponibilidad (Jornada del trabajador)
--- ========================================================
+-- Tabla horario_disponibilidad
 CREATE TABLE IF NOT EXISTS horario_disponibilidad (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     trabajador_id BIGINT NOT NULL,
-    dia_semana TINYINT NOT NULL COMMENT '1=Lunes, 2=Martes, ..., 7=Domingo',
+    dia_semana TINYINT NOT NULL COMMENT '1=Lunes a 7=Domingo',
     hora_inicio TIME NOT NULL,
     hora_fin TIME NOT NULL,
     hora_inicio_descanso TIME NULL,
@@ -121,9 +104,7 @@ CREATE TABLE IF NOT EXISTS horario_disponibilidad (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ========================================================
--- 8. Tabla cita (Agendamiento central del negocio)
--- ========================================================
+-- Tabla cita
 CREATE TABLE IF NOT EXISTS cita (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     codigo_reserva VARCHAR(20) NOT NULL UNIQUE,
@@ -159,11 +140,8 @@ CREATE TABLE IF NOT EXISTS cita (
     INDEX idx_cita_estado (estado)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ========================================================
--- Datos iniciales (Seed Data)
--- ========================================================
+-- Datos iniciales
 
--- Roles / Tipos de usuario predeterminados
 INSERT INTO tipo_usuario (id, nombre, descripcion) VALUES
 (1, 'ADMINISTRADOR', 'Administrador con acceso total al sistema'),
 (2, 'CLIENTE', 'Cliente que solicita y agenda citas'),
@@ -172,7 +150,6 @@ ON DUPLICATE KEY UPDATE
     nombre = VALUES(nombre), 
     descripcion = VALUES(descripcion);
 
--- Usuarios de prueba iniciales (Contraseñas encriptadas con BCrypt garantizadas)
 INSERT INTO usuario (id, nombre, apellidop, correo, password, tipo_usuario_id) VALUES
 (1, 'Maximo', 'Rojas', 'maximo.rojas@estudio.cl', '$2a$10$LLC9MYDORke3rHMe0Kgtw.N5SWYIvxJ6sTcLdOe07QqaBF7JY4I.O', 1),
 (2, 'Martina', 'Contreras', 'martina.contreras@gmail.com', '$2a$10$ESfiyf6jPxhbBftsI7L30eB.b4OQ4lGu..T/uUkEgcFSb/5FPvc6i', 2),
@@ -190,7 +167,6 @@ ON DUPLICATE KEY UPDATE
     password = VALUES(password),
     tipo_usuario_id = VALUES(tipo_usuario_id);
 
--- Perfiles de Clientes de prueba (asociados a usuarios 2: Martina, 7: Martina Soto, 8: Felipe Galle)
 INSERT INTO cliente (id, usuario_id, telefono, rut_dni, fecha_nacimiento, notas_preferencias, activo) VALUES
 (1, 2, '+56912345678', '19876543-2', '1998-05-14', 'Prefiere tonos neutros para manicura', TRUE),
 (2, 7, '+56977778888', '20123456-7', '2000-03-20', 'Alérgica a productos con alcohol', TRUE),
@@ -199,14 +175,12 @@ ON DUPLICATE KEY UPDATE
     telefono = VALUES(telefono),
     notas_preferencias = VALUES(notas_preferencias);
 
--- Perfil de Trabajador de prueba (asociado a usuario 4: Camila)
 INSERT INTO trabajador (id, usuario_id, rut_dni, telefono, cargo_especialidad, biografia, comision_porcentaje, activo) VALUES
 (1, 4, '18234567-8', '+56987654321', 'Especialista en Estilismo y Manicura', '5 años de experiencia en estética integral', 30.00, TRUE)
 ON DUPLICATE KEY UPDATE
     cargo_especialidad = VALUES(cargo_especialidad),
     biografia = VALUES(biografia);
 
--- Catálogo inicial de Servicios
 INSERT INTO servicio (id, nombre, descripcion, duracion_minutos, precio, activo) VALUES
 (1, 'Corte de Cabello y Peinado', 'Lavado, corte estilizado y secado profesional', 45, 18000.00, TRUE),
 (2, 'Manicura Rusa con Esmaltado Permanente', 'Limpieza profunda de cutículas y esmaltado de alta duración', 60, 22000.00, TRUE),
@@ -216,13 +190,11 @@ ON DUPLICATE KEY UPDATE
     duracion_minutos = VALUES(duracion_minutos),
     precio = VALUES(precio);
 
--- Asignación de servicios que ofrece Camila (Trabajador 1)
 INSERT IGNORE INTO trabajador_servicio (trabajador_id, servicio_id) VALUES
 (1, 1),
 (1, 2),
 (1, 3);
 
--- Horario de disponibilidad de Camila (Lunes a Viernes: 09:00 a 18:00 con colación 13:00 - 14:00)
 INSERT INTO horario_disponibilidad (trabajador_id, dia_semana, hora_inicio, hora_fin, hora_inicio_descanso, hora_fin_descanso, activo) VALUES
 (1, 1, '09:00:00', '18:00:00', '13:00:00', '14:00:00', TRUE),
 (1, 2, '09:00:00', '18:00:00', '13:00:00', '14:00:00', TRUE),
@@ -236,10 +208,6 @@ ON DUPLICATE KEY UPDATE
     hora_fin_descanso = VALUES(hora_fin_descanso),
     activo = VALUES(activo);
 
--- Citas de prueba del sistema
--- 1. Cita confirmada (Martina con Camila para Manicura Rusa)
--- 2. Cita pendiente para validación en panel de trabajadores (Martina Soto con Camila para Corte)
--- 3. Cita completada para consulta en historial de tratamientos (Martina con Camila para Facial)
 INSERT INTO cita (id, codigo_reserva, cliente_id, trabajador_id, servicio_id, fecha_hora_inicio, fecha_hora_fin, estado, precio_final, notas_cliente, notas_trabajador) VALUES
 (1, 'RES-2026-0001', 1, 1, 2, '2026-10-15 10:00:00', '2026-10-15 11:00:00', 'CONFIRMADA', 22000.00, 'Primera sesión', 'Revisar estado de cutículas previas'),
 (2, 'RES-2026-0002', 2, 1, 1, '2026-10-18 11:30:00', '2026-10-18 12:15:00', 'PENDIENTE', 18000.00, 'Cita reservada desde portal cliente - Requiere confirmación', NULL),

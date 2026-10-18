@@ -92,45 +92,37 @@ public class CitaService {
         log.info("Procesando agendamiento de cita para clienteId={}, trabajadorId={}, servicioId={}",
                 dto.getClienteId(), dto.getTrabajadorId(), dto.getServicioId());
 
-        // 1. Validar Cliente
         Cliente cliente = clienteRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado: " + dto.getClienteId()));
         if (!Boolean.TRUE.equals(cliente.getActivo())) {
             throw new IllegalArgumentException("El cliente se encuentra inactivo");
         }
 
-        // 2. Validar Trabajador
         Trabajador trabajador = trabajadorRepository.findById(dto.getTrabajadorId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Trabajador no encontrado: " + dto.getTrabajadorId()));
         if (!Boolean.TRUE.equals(trabajador.getActivo())) {
             throw new IllegalArgumentException("El trabajador se encuentra inactivo");
         }
 
-        // 3. Validar Servicio
         Servicio servicio = servicioRepository.findById(dto.getServicioId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado: " + dto.getServicioId()));
         if (!Boolean.TRUE.equals(servicio.getActivo())) {
             throw new IllegalArgumentException("El servicio seleccionado no está activo actualmente");
         }
 
-        // 4. Validar Fecha futura (con 2 min de tolerancia para el llenado del formulario)
         LocalDateTime inicio = dto.getFechaHoraInicio();
         if (inicio.isBefore(LocalDateTime.now().minusMinutes(2))) {
             throw new IllegalArgumentException("La fecha y hora de agendamiento debe ser posterior al momento actual");
         }
 
-        // 5. Cálculo automático de fin según duración del servicio
         LocalDateTime fin = inicio.plusMinutes(servicio.getDuracionMinutos());
 
-        // 6. Validar contra jornada laboral del profesional
         validarHorarioLaboral(trabajador.getId(), inicio, fin);
 
-        // 7. Validar Antisolapamiento de citas
         if (citaRepository.existeSolapamiento(trabajador.getId(), inicio, fin)) {
             throw new IllegalArgumentException("El profesional ya tiene una cita agendada en el horario solicitado");
         }
 
-        // 8. Construir y guardar la cita
         Cita cita = new Cita();
         cita.setCodigoReserva(generarCodigoReserva());
         cita.setCliente(cliente);
@@ -168,7 +160,7 @@ public class CitaService {
     }
 
     private void validarHorarioLaboral(Long trabajadorId, LocalDateTime inicio, LocalDateTime fin) {
-        int diaSemana = inicio.getDayOfWeek().getValue(); // 1 = Lunes, ..., 7 = Domingo
+        int diaSemana = inicio.getDayOfWeek().getValue();
         Optional<HorarioDisponibilidad> horarioOpt = horarioDisponibilidadRepository
                 .findByTrabajadorIdAndDiaSemanaAndActivoTrue(trabajadorId, diaSemana);
 
@@ -189,7 +181,6 @@ public class CitaService {
             ));
         }
 
-        // Validar que no se cruce con el descanso/almuerzo si existe
         if (horario.getHoraInicioDescanso() != null && horario.getHoraFinDescanso() != null) {
             boolean solapaDescanso = horaInicioCita.isBefore(horario.getHoraFinDescanso()) &&
                                      horaFinCita.isAfter(horario.getHoraInicioDescanso());

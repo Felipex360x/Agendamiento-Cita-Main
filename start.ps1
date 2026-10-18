@@ -1,8 +1,4 @@
-# ==============================================================================
-# Script de Inicio Seguro: Agendamiento de Citas Backend
-# 1. Libera automáticamente el puerto 8080 si quedó bloqueado por un proceso anterior
-# 2. Inicia Spring Boot sin conflictos de puerto
-# ==============================================================================
+# Libera el puerto 8080 e inicia el servidor
 
 Write-Host "Verificando estado del peruano  8080..." -ForegroundColor Cyan
 

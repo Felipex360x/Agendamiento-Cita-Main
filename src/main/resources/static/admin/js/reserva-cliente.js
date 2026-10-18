@@ -1,7 +1,3 @@
-// ========================================================
-// Nicolett Studio Fantasy - Agendamiento de Citas Cliente
-// ========================================================
-
 var API_BASE = window.API_BASE || '/api/v2/nicolet';
 const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));
 
@@ -12,7 +8,6 @@ let trabajadorSeleccionado = null;
 let fechaSeleccionada = null;
 let horarioSeleccionado = null;
 
-// Elementos DOM
 const statusBadge = document.getElementById('statusBadge');
 const statusText = document.getElementById('statusText');
 const alertMessage = document.getElementById('alertMessage');
@@ -58,7 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await cargarServicios();
   await cargarTrabajadores();
 
-  // Procesar parámetros de URL (si viene desde servicios.html o disponibilidad.html)
   const params = new URLSearchParams(window.location.search);
   const sIdParam = params.get('servicioId');
   const tIdParam = params.get('trabajadorId');
@@ -121,9 +115,7 @@ function verificarEstadoSesion() {
   }
 }
 
-// ----------------------------------------------------
-// PASO 1: SERVICIOS
-// ----------------------------------------------------
+// Paso 1: Servicios
 async function cargarServicios() {
   try {
     const res = await apiFetch(`${API_BASE}/servicios`);
@@ -159,16 +151,13 @@ function seleccionarServicio(id) {
 
   servicioSeleccionado = s;
 
-  // Actualizar tarjetas activas
   document.querySelectorAll('#gridServicios .selectable-card').forEach(c => c.classList.remove('selected'));
   const card = document.getElementById(`card-servicio-${id}`);
   if (card) card.classList.add('selected');
 
-  // Actualizar resumen
   resumenServicioTexto.textContent = `${s.nombre} (${s.duracionMinutos}m)`;
   resumenPrecioTexto.textContent = `$${Number(s.precio).toLocaleString('es-CL')}`;
 
-  // Desbloquear Paso 2
   panelPaso2.style.opacity = '1';
   panelPaso2.style.pointerEvents = 'auto';
   stepIndicator1.classList.add('completed');
@@ -180,15 +169,12 @@ function seleccionarServicio(id) {
     badgeServ.className = 'status online';
   }
 
-  // Si ya había trabajador seleccionado, recalcular horarios
   if (trabajadorSeleccionado) {
     cargarHorariosDisponibles();
   }
 }
 
-// ----------------------------------------------------
-// PASO 2: TRABAJADORES (ESPECIALISTAS)
-// ----------------------------------------------------
+// Paso 2: Trabajadores
 async function cargarTrabajadores() {
   try {
     const res = await apiFetch(`${API_BASE}/trabajadores`);
@@ -228,7 +214,6 @@ function seleccionarTrabajador(id) {
 
   trabajadorSeleccionado = t;
 
-  // Actualizar tarjetas activas
   document.querySelectorAll('#gridTrabajadores .selectable-card').forEach(c => c.classList.remove('selected'));
   const card = document.getElementById(`card-trabajador-${id}`);
   if (card) card.classList.add('selected');
@@ -236,7 +221,6 @@ function seleccionarTrabajador(id) {
   const nom = t.usuario ? `${t.usuario.nombre} ${t.usuario.apellidoP || ''}`.trim() : `Especialista #${t.id}`;
   resumenTrabajadorTexto.textContent = nom;
 
-  // Desbloquear Paso 3
   panelPaso3.style.opacity = '1';
   panelPaso3.style.pointerEvents = 'auto';
   stepIndicator2.classList.add('completed');
@@ -245,9 +229,7 @@ function seleccionarTrabajador(id) {
   cargarHorariosDisponibles();
 }
 
-// ----------------------------------------------------
-// PASO 3: HORARIOS DISPONIBLES (DISPONIBILIDAD LIVE)
-// ----------------------------------------------------
+// Paso 3: Horarios disponibles
 async function cargarHorariosDisponibles() {
   if (!trabajadorSeleccionado) return;
   const fecha = reservaFechaInput.value;
@@ -326,7 +308,6 @@ function seleccionarHorario(horaIni, horaFin, idx) {
 
   resumenHoraTexto.textContent = `${horaIni} - ${horaFin}`;
 
-  // Desbloquear Paso 4
   panelPaso4.style.opacity = '1';
   panelPaso4.style.pointerEvents = 'auto';
   stepIndicator3.classList.add('completed');
@@ -335,9 +316,7 @@ function seleccionarHorario(horaIni, horaFin, idx) {
   panelPaso4.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ----------------------------------------------------
-// PASO 4: CONFIRMACIÓN Y AGENDAMIENTO (REQUISITO 20)
-// ----------------------------------------------------
+// Paso 4: Confirmación y agendamiento
 async function ejecutarReservaFinal() {
   if (!servicioSeleccionado) {
     mostrarAlerta('Por favor selecciona un tratamiento primero (Paso 1)', true);
@@ -359,9 +338,7 @@ async function ejecutarReservaFinal() {
     let clienteId = null;
     const user = typeof getAuthUser === 'function' ? getAuthUser() : null;
 
-    // Caso A: Usuario YA está autenticado (Requisito 20: "si esta registrado agendarlo nomas")
     if (user && typeof isAuthenticated === 'function' && isAuthenticated()) {
-      // Obtener el perfil cliente para este usuario
       const resClientes = await apiFetch(`${API_BASE}/clientes`);
       if (resClientes.ok) {
         const clientes = await resClientes.json();
@@ -371,7 +348,6 @@ async function ejecutarReservaFinal() {
         }
       }
 
-      // Si por alguna razón no tiene perfil de cliente, crearlo o sincronizarlo
       if (!clienteId) {
         const resNuevoCli = await apiFetch(`${API_BASE}/clientes`, {
           method: 'POST',
@@ -382,15 +358,12 @@ async function ejecutarReservaFinal() {
           const cliData = await resNuevoCli.json();
           clienteId = cliData.id;
         } else {
-          // Tomar el primer cliente disponible como fallback seguro
           const resCliAll = await apiFetch(`${API_BASE}/clientes`);
           const allC = await resCliAll.json();
           if (allC.length > 0) clienteId = allC[0].id;
         }
       }
-    } 
-    // Caso B: Usuario NO está registrado (Requisito 20: "colocar el formulario de registro")
-    else {
+    } else {
       const nombre = document.getElementById('inNombre').value.trim();
       const apellidoP = document.getElementById('inApellido').value.trim();
       const correo = document.getElementById('inCorreo').value.trim().toLowerCase();
@@ -404,10 +377,8 @@ async function ejecutarReservaFinal() {
         return;
       }
 
-      // Registrar al usuario cliente en auth
       const authData = await register(nombre, apellidoP, correo, password, telefono);
 
-      // Obtener el ID de cliente sincronizado
       const resClientes = await apiFetch(`${API_BASE}/clientes`);
       if (resClientes.ok) {
         const clientes = await resClientes.json();
@@ -418,7 +389,6 @@ async function ejecutarReservaFinal() {
       }
 
       if (!clienteId) {
-        // Fallback: consultar el cliente recién creado
         const resCliByU = await apiFetch(`${API_BASE}/clientes/usuario/${authData.id}`);
         if (resCliByU.ok) {
           const cliData = await resCliByU.json();
@@ -431,11 +401,9 @@ async function ejecutarReservaFinal() {
       throw new Error('No se pudo asociar el perfil de cliente para el agendamiento.');
     }
 
-    // FechaHora de inicio de la cita
     const fechaHoraInicio = `${fechaSeleccionada}T${horarioSeleccionado.inicio}:00`;
     const notas = inNotasCliente.value.trim() || null;
 
-    // Llamar a la API para persistir la cita con estado PENDIENTE para confirmación del trabajador (Requisito 23)
     const payload = {
       clienteId: Number(clienteId),
       trabajadorId: Number(trabajadorSeleccionado.id),
@@ -461,7 +429,6 @@ async function ejecutarReservaFinal() {
       return;
     }
 
-    // ¡Éxito! Mostrar comprobante de reserva
     confCodigo.textContent = citaData.codigoReserva || 'RES-2026-NICOLET';
     confServicio.textContent = servicioSeleccionado.nombre;
     const nomTrabajador = trabajadorSeleccionado.usuario ? 

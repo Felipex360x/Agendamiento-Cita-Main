@@ -78,7 +78,7 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas de autenticación y documentación
+                // Rutas públicas
                 .requestMatchers("/api/v2/nicolet/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/servicios/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/trabajadores/**").permitAll()
@@ -86,7 +86,7 @@ public class SecurityConfig {
                 .requestMatchers("/doc/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // Toda otra petición a la API requiere autenticación JWT
+                // Rutas protegidas
                 .requestMatchers("/api/v2/nicolet/**").authenticated()
                 .anyRequest().permitAll()
             );

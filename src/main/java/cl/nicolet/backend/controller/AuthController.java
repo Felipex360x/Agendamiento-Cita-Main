@@ -71,7 +71,6 @@ public class AuthController {
         String correo = loginRequest.getCorreo() != null ? loginRequest.getCorreo().trim().toLowerCase() : "";
         String clientIp = obtenerIpCliente(request);
 
-        // 1. Verificación de tasa de intentos (Rate Limiting anti-fuerza bruta)
         boolean esTestAdmin = LoginAttemptService.isTestAdmin(correo);
         if (!esTestAdmin && (loginAttemptService.isBlocked(correo) || loginAttemptService.isBlocked(clientIp))) {
             log.warn("Bloqueo de seguridad: Demasiados intentos fallidos para correo={} o ip={}", correo, clientIp);
@@ -94,7 +93,6 @@ public class AuthController {
                         )
                 );
             } catch (BadCredentialsException bce) {
-                // Migración transparente de contraseña legacy en texto plano si coincide exactamente
                 var usuarioOpt = usuarioRepository.findByCorreoIgnoreCase(correo);
                 if (usuarioOpt.isPresent()) {
                     var u = usuarioOpt.get();
@@ -120,7 +118,6 @@ public class AuthController {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             String jwt = jwtUtils.generarToken(userDetails);
 
-            // Restablecer contador de intentos fallidos tras login exitoso
             loginAttemptService.loginSucceeded(correo);
             loginAttemptService.loginSucceeded(clientIp);
 
@@ -143,7 +140,6 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {
-            // Registrar intento fallido
             loginAttemptService.loginFailed(correo);
             loginAttemptService.loginFailed(clientIp);
             int intentosRestantes = loginAttemptService.getRemainingAttempts(correo);
@@ -225,14 +221,12 @@ public class AuthController {
         nuevoUsuario.setTipoUsuario(tipoCliente);
         Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
 
-        // Crear perfil de cliente automático para agendamiento inmediato
         Cliente nuevoCliente = new Cliente();
         nuevoCliente.setUsuario(usuarioGuardado);
         nuevoCliente.setTelefono(request.getTelefono() != null && !request.getTelefono().isBlank() ? request.getTelefono().trim() : null);
         nuevoCliente.setActivo(true);
         clienteRepository.save(nuevoCliente);
 
-        // Autenticar automáticamente y generar token de bienvenida
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(correo, request.getPassword())
         );

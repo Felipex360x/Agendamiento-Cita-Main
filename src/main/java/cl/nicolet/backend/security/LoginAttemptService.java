@@ -5,20 +5,12 @@ import org.springframework.stereotype.Service;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Servicio para mitigar ataques de fuerza bruta y denegación de servicio (DoS)
- * en el inicio de sesión mediante bloqueo temporal tras múltiples intentos fallidos.
- * Incluye cuentas de prueba administrativas exentas de bloqueo para desarrollo y QA.
- */
 @Service
 public class LoginAttemptService {
 
     public static final int MAX_ATTEMPTS = 5;
-    public static final long BLOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutos de bloqueo
+    public static final long BLOCK_DURATION_MS = 15 * 60 * 1000;
 
-    /**
-     * Cuentas de administrador de prueba siempre garantizadas y exentas de bloqueo.
-     */
     public static final Set<String> TEST_ADMIN_EMAILS = Set.of(
             "admin.test@nicolet.cl",
             "admin@nicolet.cl"
@@ -57,7 +49,6 @@ public class LoginAttemptService {
         if (key == null || key.isBlank()) return;
         String normalizedKey = key.toLowerCase().trim();
 
-        // Las cuentas de test admin y la dirección IP loopback local no acumulan fallos
         if (isTestAdmin(normalizedKey) || isLoopbackAddress(normalizedKey)) {
             return;
         }
@@ -76,7 +67,6 @@ public class LoginAttemptService {
         if (key == null || key.isBlank()) return false;
         String normalizedKey = key.toLowerCase().trim();
 
-        // El administrador de prueba y la IP local de desarrollo nunca quedan bloqueados
         if (isTestAdmin(normalizedKey) || isLoopbackAddress(normalizedKey)) {
             return false;
         }

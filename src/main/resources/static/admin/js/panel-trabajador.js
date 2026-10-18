@@ -1,7 +1,3 @@
-// ========================================================
-// Nicolett Studio Fantasy - Portal Exclusivo de Trabajadores
-// ========================================================
-
 var API_BASE = window.API_BASE || '/api/v2/nicolet';
 const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));
 
@@ -10,7 +6,6 @@ let trabajadorActual = null;
 let listaTodosTrabajadores = [];
 let citasDelTrabajador = [];
 
-// Elementos DOM
 const statusBadge = document.getElementById('statusBadge');
 const statusText = document.getElementById('statusText');
 const alertMessage = document.getElementById('alertMessage');
@@ -82,7 +77,7 @@ async function verificarConexion() {
   }
 }
 
-// Control de Acceso: Solo Trabajadores y Administradores (Requisito 22)
+// Verificar que el usuario sea trabajador o administrador
 function verificarAccesoTrabajador() {
   if (!usuarioActual) {
     window.location.href = 'login.html?redirect=panel-trabajador.html';
@@ -107,7 +102,6 @@ function verificarAccesoTrabajador() {
 
 async function cargarDatosIniciales() {
   try {
-    // 1. Cargar lista de trabajadores
     const resTrab = await apiFetch(`${API_BASE}/trabajadores`);
     if (!resTrab.ok) throw new Error('Error al cargar trabajadores');
     listaTodosTrabajadores = await resTrab.json();
@@ -115,11 +109,9 @@ async function cargarDatosIniciales() {
     const rol = (usuarioActual.rol || '').toUpperCase();
     const esAdmin = rol.includes('ADMIN');
 
-    // Identificar qué trabajador corresponde al usuario logueado
     trabajadorActual = listaTodosTrabajadores.find(t => t.usuario && t.usuario.id === usuarioActual.id);
 
     if (!trabajadorActual) {
-      // Si es admin pero no tiene perfil directo de trabajador, usar el primer especialista y mostrar selector
       if (esAdmin && listaTodosTrabajadores.length > 0) {
         trabajadorActual = listaTodosTrabajadores[0];
       }
@@ -184,7 +176,6 @@ async function cargarCitasTrabajador() {
     const confirmadas = citasDelTrabajador.filter(c => c.estado === 'CONFIRMADA' || c.estado === 'EN_ATENCION');
     const completadas = citasDelTrabajador.filter(c => c.estado === 'COMPLETADA');
 
-    // Actualizar KPIs y Contadores
     kpiPendientes.textContent = pendientes.length;
     kpiConfirmadas.textContent = confirmadas.length;
     kpiCompletadas.textContent = completadas.length;
@@ -202,10 +193,6 @@ async function cargarCitasTrabajador() {
   }
 }
 
-// ----------------------------------------------------
-// VISTA 1: CITAS PENDIENTES (REQUISITO 23)
-// El trabajador tiene que confirmar la cita con el cliente
-// ----------------------------------------------------
 function renderizarCitasPendientes(pendientes) {
   if (!pendientes || pendientes.length === 0) {
     contenedorTarjetasPendientes.innerHTML = `
@@ -246,7 +233,6 @@ function renderizarCitasPendientes(pendientes) {
         </div>
 
         <div class="grid g2" style="gap: 16px; margin-bottom: 16px; align-items: start;">
-          <!-- Datos de la Clienta -->
           <div>
             <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 700;">Datos de la Clienta</div>
             <div style="font-size: 15px; font-weight: 700; color: var(--fg); margin-top: 2px;">${cliNom}</div>
@@ -254,7 +240,6 @@ function renderizarCitasPendientes(pendientes) {
             <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">✉ Correo: ${cliCorreo}</div>
           </div>
 
-          <!-- Datos de la Atención -->
           <div>
             <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 700;">Tratamiento Solicitado</div>
             <div style="font-size: 15px; font-weight: 700; color: var(--primary); margin-top: 2px;">${servicioNom}</div>
@@ -263,7 +248,6 @@ function renderizarCitasPendientes(pendientes) {
           </div>
         </div>
 
-        <!-- Botones de Acción para el Trabajador (Requisito 23) -->
         <div class="row between" style="padding-top: 14px; border-top: 1px solid var(--border);">
           <div style="font-size: 11px; color: var(--muted);">
             ¿Te comunicaste con la clienta o verificaste tu turno?
@@ -282,7 +266,6 @@ function renderizarCitasPendientes(pendientes) {
   }).join('');
 }
 
-// Acción: Confirmar Cita por el Trabajador (Requisito 23)
 async function confirmarCitaTrabajador(id) {
   try {
     const res = await apiFetch(`${API_BASE}/citas/${id}/estado`, {
@@ -307,7 +290,6 @@ async function confirmarCitaTrabajador(id) {
   }
 }
 
-// Acción: Cancelar Cita
 async function cancelarCitaTrabajador(id) {
   const motivo = prompt('Por favor ingresa el motivo del rechazo o cancelación de la cita:') || 'Cancelada por el especialista';
   try {
@@ -333,7 +315,6 @@ async function cancelarCitaTrabajador(id) {
   }
 }
 
-// Acción: Cambiar estado a EN_ATENCION o COMPLETADA
 async function cambiarEstadoGeneral(id, nuevoEstado) {
   try {
     const res = await apiFetch(`${API_BASE}/citas/${id}/estado`, {
@@ -358,9 +339,6 @@ async function cambiarEstadoGeneral(id, nuevoEstado) {
   }
 }
 
-// ----------------------------------------------------
-// VISTA 2: CITAS CONFIRMADAS
-// ----------------------------------------------------
 function renderizarCitasConfirmadas(confirmadas) {
   if (!confirmadas || confirmadas.length === 0) {
     tablaConfirmadasBody.innerHTML = `
@@ -413,9 +391,6 @@ function renderizarCitasConfirmadas(confirmadas) {
   }).join('');
 }
 
-// ----------------------------------------------------
-// VISTA 3: TODAS LAS CITAS
-// ----------------------------------------------------
 function renderizarTodasLasCitas(citas) {
   if (!citas || citas.length === 0) {
     tablaTodasBody.innerHTML = `
@@ -450,7 +425,6 @@ function renderizarTodasLasCitas(citas) {
   }).join('');
 }
 
-// Alternar Pestañas del Portal
 function cambiarTabPortal(tab) {
   tabPendientes.classList.remove('active');
   tabConfirmadas.classList.remove('active');

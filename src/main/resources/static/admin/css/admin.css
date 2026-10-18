@@ -588,10 +588,7 @@ label.lbl {
   border-left: 4px solid var(--danger);
 }
 
-/* ========================================================
-   Estilos específicos de módulos de administración
-   (Migrados desde etiquetas <style> internas)
-   ======================================================== */
+/* Estilos de módulos de administración */
 
 /* Grupo de botones de acción en tablas */
 .btn-action-group {

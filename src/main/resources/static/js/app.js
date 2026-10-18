@@ -1,5 +1,4 @@
-/* Nicolett Studio Fantasy - lógica compartida (mockup, datos en localStorage).
-   Para conectar con Spring Boot, reemplaza las funciones de "API" por fetch('/api/...'). */
+// Datos y vistas del portal público
 const SERVICES=[
  {id:'cabello',name:'Corte & styling',category:'Cabello',description:'Un corte que te representa, un acabado que enamora.',duration:60,price:25000,image:'img/hair.jpg'},
  {id:'color',name:'Color & balayage',category:'Coloración',description:'Luz, dimensión y el tono perfecto para ti.',duration:120,price:65000,image:'img/hair.jpg'},
@@ -28,7 +27,7 @@ function renderShell(){
 }
 const serviceCard=s=>`<article class="card"><img src="${s.image}" alt="${s.name}" loading="lazy"><div class="body"><span class="eyebrow">${s.category}</span><h3>${s.name}</h3><p class="small">${s.description}</p><div class="row between" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)"><span>Desde <strong>${money(s.price)}</strong> · <span class="small">${s.duration} min</span></span><a class="btn sm outline" href="reservar.html?servicio=${s.id}">Reservar</a></div></div></article>`;
 
-/* ---------- Páginas ---------- */
+// Páginas
 const pages={
  home(){ $('#services').innerHTML=SERVICES.slice(0,3).map(serviceCard).join('') },
  servicios(){ $('#services').innerHTML=SERVICES.map(serviceCard).join('') },

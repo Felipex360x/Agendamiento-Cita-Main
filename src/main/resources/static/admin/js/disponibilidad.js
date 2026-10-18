@@ -1,8 +1,3 @@
-// ========================================================
-// Nicolett Studio Fantasy - Simulador de Disponibilidad
-// Conectado con Especialistas / Profesionales (Trabajadores)
-// ========================================================
-
 var API_BASE = window.API_BASE || '/api/v2/nicolet';
 const apiFetch = (url, opts) => (window.authenticatedFetch ? window.authenticatedFetch(url, opts) : fetch(url, opts));
 
@@ -10,7 +5,6 @@ let listaTrabajadores = [];
 let listaServicios = [];
 let slotSeleccionado = null;
 
-// Elementos DOM
 const statusBadge = document.getElementById('statusBadge');
 const statusText = document.getElementById('statusText');
 const alertMessage = document.getElementById('alertMessage');

@@ -87,30 +87,25 @@ Agendamiento-Cita-Main/
 
 ## Módulos del Panel de Administración (`/admin`)
 
-El espacio administrativo dentro de `src/main/resources/static/admin/` fue reestructurado y expandido para cumplir de forma estricta con todas las directrices operativas del negocio:
+El panel administrativo se encuentra en `src/main/resources/static/admin/`:
 
-### Aislamiento y Navegación Interna
-- **Regla de Conectividad Estricta:** Todas las vistas HTML dentro de `static/admin/` se conectan **exclusivamente entre sí** a través del `navbar` unificado y sus botones internos. Se eliminaron todos los enlaces directos hacia páginas externas (`../index.html`, `../servicios.html`, etc.).
-- El isotipo/marca `nicolett. STUDIO FANTASY • ADMIN` en la cabecera actúa como enlace raíz al panel de citas (`citas.html`).
-- El pie de página administrativo mantiene la identidad corporativa y enlaces estrictamente contextuales.
+### Navegación y Estilos
+- Todas las vistas dentro de `static/admin/` se conectan entre sí mediante la barra de navegación superior.
+- Los estilos del panel están centralizados en `static/admin/css/admin.css`.
 
-### Centralización de Estilos en `admin.css`
-- **Eliminación Total de CSS Inline:** Se extrajeron todas las etiquetas `<style>` internas de los archivos HTML administrativos (`citas.html`, `usuarios.html`, `login.html`, etc.).
-- Todo el diseño (grillas horarias, chips de estados, selectores de tratamientos, tarjetas de especialistas, modales y banners) se centralizó de manera modular en `static/admin/css/admin.css`.
+### Vistas del Panel
 
-### Descripción de Vistas Administrativas
-
-| Archivo HTML | Controlador JS | Funcionalidad y Reglas de Negocio Implementadas |
+| Archivo HTML | Controlador JS | Descripción |
 |---|---|---|
-| **`citas.html`** | `js/citas.js` | **Gestión Central de Citas:** Permite programar nuevas atenciones, cambiar estados (`COMPLETADA`, `CANCELADA`) y auditar la base de datos.<br>*(Requisito Cumplido)*: Despliega en vivo dos paneles con los usuarios registrados con rol **Trabajador** y **Cliente**, sincronizados automáticamente desde la API. |
-| **`reserva-cliente.html`** | `js/reserva-cliente.js` | **Agendamiento Guiado para Clientes:** Flujo interactivo de 4 pasos:<br>1. Selección de tratamiento/servicio del catálogo.<br>2. Selección de especialista/trabajador.<br>3. Selección de fecha y bloque horario en tiempo real (solo bloques libres).<br>4. Si el cliente está autenticado agenda directamente; si no lo está, despliega formulario de registro inline, crea la cuenta y agenda la cita con estado `PENDIENTE`. |
-| **`servicios.html`** | `js/servicios.js` | **Catálogo y Creación de Servicios:** Permite registrar nuevos tratamientos (`POST /servicios`), editar tarifa y duración, y dar de baja lógica.<br>*(Requisito Cumplido)*: Al crear un servicio, notifica con enlace directo y lo deja disponible de inmediato en todos los selectores de agendamiento. |
-| **`disponibilidad.html`** | `js/disponibilidad.js` | **Simulador de Disponibilidad:** Conectado directamente a los trabajadores registrados (`/trabajadores`) y al motor de cálculo de jornada (`/disponibilidad`). Muestra bloques libres (verdes), descansos (amarillos) y horas ocupadas (grises). Permite seleccionar un bloque libre y pasar directo a agendar. |
-| **`panel-trabajador.html`** | `js/panel-trabajador.js` | **Portal Exclusivo de Trabajadores:** Protegido con control de acceso por rol (restringe a clientes). Identifica al profesional en sesión y despliega sus citas asignadas.<br>*(Requisito Cumplido)*: Permite al trabajador **confirmar la cita con la clienta** (`PATCH /citas/{id}/estado` a `CONFIRMADA`), iniciar atención o cancelar. |
-| **`historial.html`** | `js/historial.js` | **Historial de Tratamientos por Trabajador:** Permite filtrar por especialista para auditar todos los tratamientos realizados, clientas únicas atendidas e ingresos generados.<br>*(Requisito Cumplido)*: Modal de **Ficha Técnica de la Clienta** con el historial cronológico de todas las sesiones atendidas por ese profesional. |
-| **`usuarios.html`** | `js/index.js` | **Gestión de Cuentas y Roles:** CRUD completo de usuarios con asignación de roles (`ADMINISTRADOR`, `CLIENTE`, `PROFESIONAL`). Sincroniza automáticamente los perfiles de `Cliente` y `Trabajador` en base de datos. |
-| **`login.html`** | `js/auth.js` | **Acceso y Registro Unificado:** Autenticación JWT con protección ante fuerza bruta y cuentas de prueba rápidas preconfiguradas. |
-| **`pruebas.html`** | - | Redirección transparente hacia el nuevo simulador oficial de disponibilidad (`disponibilidad.html`). |
+| **`citas.html`** | `js/citas.js` | **Gestión de Citas:** Permite agendar atenciones, cambiar estados (`COMPLETADA`, `CANCELADA`) y ver los listados de trabajadores y clientes registrados. |
+| **`reserva-cliente.html`** | `js/reserva-cliente.js` | **Agendamiento para Clientes:** Flujo de 4 pasos (servicio, especialista, fecha/hora y confirmación o registro de cliente). |
+| **`servicios.html`** | `js/servicios.js` | **Catálogo de Servicios:** Permite crear, editar y desactivar servicios del catálogo. |
+| **`disponibilidad.html`** | `js/disponibilidad.js` | **Simulador de Disponibilidad:** Consulta los bloques libres, descansos y horas ocupadas por profesional y fecha. |
+| **`panel-trabajador.html`** | `js/panel-trabajador.js` | **Portal de Trabajadores:** Muestra las citas asignadas al profesional para confirmarlas, iniciarlas o finalizarlas. |
+| **`historial.html`** | `js/historial.js` | **Historial de Tratamientos:** Filtra atenciones por especialista y muestra la ficha de sesiones previas de cada clienta. |
+| **`usuarios.html`** | `js/index.js` | **Gestión de Usuarios:** CRUD de usuarios y asignación de roles (`ADMINISTRADOR`, `CLIENTE`, `PROFESIONAL`). |
+| **`login.html`** | `js/auth.js` | **Acceso y Registro:** Inicio de sesión con JWT y registro de cuentas. |
+| **`pruebas.html`** | - | Redirección hacia `disponibilidad.html`. |
 
 ---
 

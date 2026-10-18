@@ -47,14 +47,12 @@ public class DisponibilidadService {
     public List<BloqueHorarioDTO> calcularDisponibilidad(Long trabajadorId, LocalDate fecha, Long servicioId) {
         log.info("Calculando disponibilidad para trabajadorId={}, fecha={}, servicioId={}", trabajadorId, fecha, servicioId);
 
-        // 1. Validar Trabajador
         Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Trabajador no encontrado: " + trabajadorId));
         if (!Boolean.TRUE.equals(trabajador.getActivo())) {
             throw new IllegalArgumentException("El trabajador se encuentra inactivo");
         }
 
-        // 2. Determinar duración del servicio
         int duracionMinutos = 45;
         if (servicioId != null) {
             Servicio servicio = servicioRepository.findById(servicioId)
@@ -65,7 +63,6 @@ public class DisponibilidadService {
             duracionMinutos = servicio.getDuracionMinutos();
         }
 
-        // 3. Obtener jornada del profesional para el día de la semana (1 = Lunes, ..., 7 = Domingo)
         int diaSemana = fecha.getDayOfWeek().getValue();
         Optional<HorarioDisponibilidad> horarioOpt = horarioDisponibilidadRepository
                 .findByTrabajadorIdAndDiaSemanaAndActivoTrue(trabajadorId, diaSemana);
@@ -77,7 +74,6 @@ public class DisponibilidadService {
 
         HorarioDisponibilidad horario = horarioOpt.get();
 
-        // 4. Obtener citas agendadas activas en esa fecha
         LocalDateTime inicioDia = fecha.atTime(horario.getHoraInicio());
         LocalDateTime finDia = fecha.atTime(horario.getHoraFin());
         List<Cita> citasDelDia = citaRepository.findByTrabajadorAndRangoFechas(trabajadorId, inicioDia, finDia)
@@ -85,11 +81,10 @@ public class DisponibilidadService {
                 .filter(c -> c.getEstado() != EstadoCita.CANCELADA)
                 .collect(Collectors.toList());
 
-        // 5. Generar bloques horarios (usando LocalDateTime para evitar wrap-around de medianoche / bucle infinito)
         List<BloqueHorarioDTO> bloques = new ArrayList<>();
         LocalDateTime cursorDT = fecha.atTime(horario.getHoraInicio());
         LocalDateTime limiteFinDT = fecha.atTime(horario.getHoraFin());
-        int pasoMinutos = 30; // Intervalo de 30 minutos para opciones de inicio
+        int pasoMinutos = 30;
         LocalTime ahora = LocalTime.now();
         boolean esHoy = fecha.isEqual(LocalDate.now());
 
@@ -100,13 +95,11 @@ public class DisponibilidadService {
             boolean disponible = true;
             String motivo = null;
 
-            // Validación A: Hora pasada si la consulta es para hoy
             if (esHoy && cursor.isBefore(ahora.plusMinutes(5))) {
                 disponible = false;
                 motivo = "HORA_PASADA";
             }
 
-            // Validación B: Cruce con horario de descanso / colación
             if (disponible && horario.getHoraInicioDescanso() != null && horario.getHoraFinDescanso() != null) {
                 boolean solapaDescanso = cursor.isBefore(horario.getHoraFinDescanso()) &&
                                          slotFin.isAfter(horario.getHoraInicioDescanso());
@@ -116,7 +109,6 @@ public class DisponibilidadService {
                 }
             }
 
-            // Validación C: Solapamiento con citas existentes
             if (disponible) {
                 LocalDateTime slotInicioDateTime = cursorDT;
 
