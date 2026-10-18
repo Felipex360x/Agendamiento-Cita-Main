@@ -159,6 +159,8 @@ public class CitaService {
 
         if (dto.getNuevoEstado() == EstadoCita.CANCELADA) {
             c.setMotivoCancelacion(dto.getMotivoONotas());
+        } else if (dto.getMotivoONotas() != null && !dto.getMotivoONotas().isBlank()) {
+            c.setNotasTrabajador(dto.getMotivoONotas());
         }
 
         c.setEstado(dto.getNuevoEstado());

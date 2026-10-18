@@ -79,7 +79,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (tIdParam && fParam) {
     await cargarHorariosDisponibles();
     if (hParam) {
-      seleccionarHorario(hParam, '');
+      const chips = Array.from(document.querySelectorAll('#gridHorariosDisponibles .slot-chip.disponible'));
+      const matchingChip = chips.find(chip => chip.textContent.includes(hParam));
+      if (matchingChip) {
+        matchingChip.click();
+      } else {
+        seleccionarHorario(hParam, hParam);
+      }
     }
   }
 });

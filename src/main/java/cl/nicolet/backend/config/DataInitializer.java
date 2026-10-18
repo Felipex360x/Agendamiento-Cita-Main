@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -48,6 +49,7 @@ public class DataInitializer implements CommandLineRunner {
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public void run(String... args) {
         log.info("Verificando datos iniciales del sistema...");
 

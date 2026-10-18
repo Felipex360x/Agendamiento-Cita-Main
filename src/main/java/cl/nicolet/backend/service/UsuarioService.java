@@ -22,6 +22,7 @@ import cl.nicolet.backend.model.Cliente;
 import cl.nicolet.backend.model.HorarioDisponibilidad;
 import cl.nicolet.backend.model.Servicio;
 import cl.nicolet.backend.model.Trabajador;
+import cl.nicolet.backend.repository.CitaRepository;
 import cl.nicolet.backend.repository.ClienteRepository;
 import cl.nicolet.backend.repository.HorarioDisponibilidadRepository;
 import cl.nicolet.backend.repository.ServicioRepository;
@@ -58,6 +59,9 @@ public class UsuarioService {
     private HorarioDisponibilidadRepository horarioDisponibilidadRepository;
 
     @Autowired(required = false)
+    private CitaRepository citaRepository;
+
+    @Autowired(required = false)
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public List<UsuarioDTO> findAll(){
@@ -74,10 +78,14 @@ public class UsuarioService {
 
     public UsuarioDTO crear(UsuarioCreateDTO dto){
         Log.info("creando al usuario correo={}", dto.getCorreo());
+        String correo = dto.getCorreo() != null ? dto.getCorreo().trim().toLowerCase() : "";
+        if (!correo.isBlank() && usuarioRepository.existsByCorreoIgnoreCase(correo)) {
+            throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado: " + correo);
+        }
+
         Usuario u = new Usuario();
         u.setNombre(dto.getNombre());
         u.setApellidoP(dto.getApellidoP());
-        String correo = dto.getCorreo() != null ? dto.getCorreo().trim().toLowerCase() : "";
         u.setCorreo(correo);
 
         String pass = dto.getPassword();
@@ -106,9 +114,15 @@ public class UsuarioService {
     public UsuarioDTO actualizar(Long id, UsuarioCreateDTO dto){
         Log.info("actualizando usuario id={}", id);
         Usuario u = usuarioRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado: " + id));
+
+        String nuevoCorreo = dto.getCorreo() != null ? dto.getCorreo().trim().toLowerCase() : "";
+        if (!nuevoCorreo.isBlank() && !nuevoCorreo.equalsIgnoreCase(u.getCorreo()) && usuarioRepository.existsByCorreoIgnoreCase(nuevoCorreo)) {
+            throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado: " + nuevoCorreo);
+        }
+
         u.setNombre(dto.getNombre());
         u.setApellidoP(dto.getApellidoP());
-        u.setCorreo(dto.getCorreo());
+        u.setCorreo(nuevoCorreo);
 
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             String pass = dto.getPassword();
@@ -181,12 +195,24 @@ public class UsuarioService {
         if (clienteRepository != null) {
             clienteRepository.findByUsuarioId(id).ifPresent(c -> {
                 Log.info("Eliminando perfil de cliente asociado al usuario id={}", id);
+                if (citaRepository != null) {
+                    citaRepository.deleteAll(citaRepository.findByClienteId(c.getId()));
+                }
                 clienteRepository.delete(c);
             });
         }
         if (trabajadorRepository != null) {
             trabajadorRepository.findByUsuarioId(id).ifPresent(t -> {
                 Log.info("Eliminando perfil de trabajador asociado al usuario id={}", id);
+                if (citaRepository != null) {
+                    citaRepository.deleteAll(citaRepository.findByTrabajadorId(t.getId()));
+                }
+                if (horarioDisponibilidadRepository != null) {
+                    horarioDisponibilidadRepository.deleteAll(horarioDisponibilidadRepository.findByTrabajadorId(t.getId()));
+                }
+                if (t.getServicios() != null) {
+                    t.getServicios().clear();
+                }
                 trabajadorRepository.delete(t);
             });
         }

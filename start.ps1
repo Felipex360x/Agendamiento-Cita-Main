@@ -17,4 +17,4 @@ if ($conns) {
 }
 
 Write-Host "Puerto 8080 disponible. Iniciando Spring Boot..." -ForegroundColor Green
-& ".\mvnw.cmd" spring-boot:run
+& ".\mvnw.cmd" clean spring-boot:run

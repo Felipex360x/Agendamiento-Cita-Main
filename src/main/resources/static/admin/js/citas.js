@@ -44,12 +44,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   await cargarDatosFormulario();
   await cargarCitas();
 
-  // Soporte para preselección de servicio desde URL (ej: citas.html?servicioId=2)
+  // Soporte para preselección desde URL (ej: citas.html?servicioId=2&trabajadorId=1&fechaHora=2026-10-20T10:00:00)
   const params = new URLSearchParams(window.location.search);
   const sIdParam = params.get('servicioId');
+  const tIdParam = params.get('trabajadorId');
+  const fechaHoraParam = params.get('fechaHora');
+
   if (sIdParam && servicioSelect) {
     servicioSelect.value = sIdParam;
     actualizarInfoServicio();
+  }
+  if (tIdParam && trabajadorSelect) {
+    trabajadorSelect.value = tIdParam;
+  }
+  if (fechaHoraParam && fechaHoraInicioInput) {
+    fechaHoraInicioInput.value = fechaHoraParam.slice(0, 16);
   }
 
   // Event listener en select de servicio para mostrar detalles
@@ -401,7 +410,14 @@ async function guardarNuevoCliente(e) {
   const telefono = document.getElementById('nuevoClienteTelefono').value.trim();
 
   try {
-    // Crear el usuario con rol CLIENTE (id: 2)
+    let tipoClienteId = 2;
+    const resTipos = await apiFetch(`${API_BASE}/tipos-usuario`);
+    if (resTipos.ok) {
+      const tipos = await resTipos.json();
+      const rolCli = tipos.find(t => t.nombre && t.nombre.toUpperCase().includes('CLIENTE'));
+      if (rolCli) tipoClienteId = rolCli.id;
+    }
+
     const resUser = await apiFetch(`${API_BASE}/usuarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -410,14 +426,30 @@ async function guardarNuevoCliente(e) {
         apellidoP,
         correo,
         password: 'cliente_password_123',
-        tipoUsuarioId: 2
+        tipoUsuarioId: tipoClienteId
       })
     });
 
+    const userData = await resUser.json().catch(() => ({}));
     if (!resUser.ok) {
-      const err = await resUser.json();
-      mostrarAlerta(`Error creando cliente: ${err.error || 'Correo ya existe o datos inválidos'}`, true);
+      mostrarAlerta(`Error creando cliente: ${userData.error || 'Correo ya existe o datos inválidos'}`, true);
       return;
+    }
+
+    // Actualizar el teléfono en el perfil de cliente sincronizado
+    if (telefono && userData.id) {
+      const resCli = await apiFetch(`${API_BASE}/clientes/usuario/${userData.id}`);
+      if (resCli.ok) {
+        const cliPerfil = await resCli.json();
+        await apiFetch(`${API_BASE}/clientes/${cliPerfil.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usuarioId: userData.id,
+            telefono
+          })
+        });
+      }
     }
 
     cerrarModalCliente();
@@ -451,7 +483,18 @@ async function guardarNuevoTrabajador(e) {
   const cargo = document.getElementById('nuevoTrabajadorCargo').value.trim();
 
   try {
-    // Crear el usuario con rol PROFESIONAL (id: 3)
+    let tipoProId = 3;
+    const resTipos = await apiFetch(`${API_BASE}/tipos-usuario`);
+    if (resTipos.ok) {
+      const tipos = await resTipos.json();
+      const rolPro = tipos.find(t => t.nombre && (
+        t.nombre.toUpperCase().includes('PROFESIONAL') ||
+        t.nombre.toUpperCase().includes('TRABAJADOR') ||
+        t.nombre.toUpperCase().includes('ESPECIALISTA')
+      ));
+      if (rolPro) tipoProId = rolPro.id;
+    }
+
     const resUser = await apiFetch(`${API_BASE}/usuarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -460,14 +503,30 @@ async function guardarNuevoTrabajador(e) {
         apellidoP,
         correo,
         password: 'pro_password_123',
-        tipoUsuarioId: 3
+        tipoUsuarioId: tipoProId
       })
     });
 
+    const userData = await resUser.json().catch(() => ({}));
     if (!resUser.ok) {
-      const err = await resUser.json();
-      mostrarAlerta(`Error creando profesional: ${err.error || 'Correo ya existe o datos inválidos'}`, true);
+      mostrarAlerta(`Error creando profesional: ${userData.error || 'Correo ya existe o datos inválidos'}`, true);
       return;
+    }
+
+    // Actualizar la especialidad/cargo en el perfil de trabajador sincronizado
+    if (cargo && userData.id) {
+      const resTrab = await apiFetch(`${API_BASE}/trabajadores/usuario/${userData.id}`);
+      if (resTrab.ok) {
+        const trabPerfil = await resTrab.json();
+        await apiFetch(`${API_BASE}/trabajadores/${trabPerfil.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usuarioId: userData.id,
+            cargoEspecialidad: cargo
+          })
+        });
+      }
     }
 
     cerrarModalTrabajador();
