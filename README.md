@@ -149,29 +149,49 @@ Tanto `db/init.sql` como `DataInitializer.java` pueblan y sincronizan automátic
    ```bash
    java -version
    ```
-2. **Base de Datos (MySQL 8.0 o Docker Desktop):**
-   Puerto `3306` disponible para MySQL.
+2. **Base de Datos (MySQL 8.0, MariaDB 10.x/11.x/13.x o Docker Desktop):**
+   Puerto `3306` disponible.
+   > **Nota de compatibilidad:** El backend incluye configuración automática para dialecto MariaDB/MySQL en `application.properties`, garantizando compatibilidad nativa con servicios locales de MariaDB o MySQL sin errores de metadatos JDBC.
 
 ---
 
 ## Guía de Instalación y Ejecución
 
-### 1. Iniciar la Base de Datos con Docker
-```bash
-docker compose up -d
-```
-- Contenedor MySQL 8.0 en puerto `3306` (Base de datos: `universidad_backend`).
-- Panel phpMyAdmin en `http://localhost:8081` (Usuario: `desarrollador` / Contraseña: `password_seguro_123`).
+### 1. Iniciar la Base de Datos
+* **Opción con Docker (Recomendada si no tienes MySQL/MariaDB instalado):**
+  ```bash
+  docker compose up -d
+  ```
+  - Contenedor MySQL 8.0 en puerto `3306` (Base de datos: `universidad_backend`).
+  - Panel phpMyAdmin en `http://localhost:8081` (Usuario: `desarrollador` / Contraseña: `password_seguro_123`).
+
+* **Opción con Servicio Local (MySQL / MariaDB):**
+  - Asegurarse de que el servicio esté corriendo en el puerto `3306` con la base de datos `universidad_backend`.
 
 ### 2. Iniciar el Backend Spring Boot
-En Windows PowerShell:
-```powershell
-.\start.ps1
-```
-O directamente con Maven Wrapper:
-```powershell
-.\mvnw.cmd spring-boot:run
-```
+Elige el método según tu entorno:
+
+* **Opción 1: Archivo Batch (Recomendada para Windows / CMD):**
+  Libera automáticamente el puerto 8080 si está ocupado y arranca el servidor:
+  ```cmd
+  .\start.cmd
+  ```
+
+* **Opción 2: Maven Wrapper directo:**
+  En PowerShell / CMD:
+  ```powershell
+  .\mvnw.cmd spring-boot:run
+  ```
+  En Linux / macOS:
+  ```bash
+  ./mvnw spring-boot:run
+  ```
+
+* **Opción 3: PowerShell con Bypass de directiva de ejecución:**
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\start.ps1
+  ```
+
 El servidor quedará activo en `http://localhost:8080`.
 
 ### 3. Acceso a las Aplicaciones
@@ -225,7 +245,7 @@ Disponible con el servidor iniciado en:
 | **Requerimientos Implementados** | **14 / 33 (42.4%)** | Seguridad, Disponibilidad, Servicios, Citas, Portal Trabajador, Historial, Clientes |
 | **En Proceso / Arquitectura Validada** | **6 / 33 (18.2%)** | Nivel 2: Pasarela Webpay Plus REST v1.2 y abonos |
 | **Planificados en Roadmap** | **13 / 33 (39.4%)** | Inventario de insumos, fidelización automática y conciliación bancaria |
-| **Pruebas Automatizadas Backend** | **94 Tests (100% Pass)** | Tests unitarios, de integración, repositorios, controladores y seguridad |
+| **Pruebas Automatizadas Backend** | **101 Tests (100% Pass)** | Tests unitarios, de integración, repositorios, controladores, estrés y seguridad |
 
 ### Requerimientos Funcionales (RF01 - RF21)
 
@@ -329,7 +349,7 @@ A continuación se detalla la lista de requerimientos funcionales, no funcionale
 
 ## Pruebas Automatizadas
 
-El proyecto cuenta con **94 pruebas automatizadas** que validan la capa de datos, lógica de negocio de agendamiento, cálculo de disponibilidad horaria, catálogo de servicios, perfiles de usuarios y seguridad con Spring Security y JWT:
+El proyecto cuenta con **101 pruebas automatizadas** que validan la capa de datos, lógica de negocio de agendamiento, cálculo de disponibilidad horaria, catálogo de servicios, perfiles de usuarios, suites de estrés concurrente y seguridad integral con Spring Security y JWT:
 
 ```powershell
 .\mvnw.cmd test
@@ -338,8 +358,19 @@ El proyecto cuenta con **94 pruebas automatizadas** que validan la capa de datos
 Resultado de ejecución verificado:
 ```text
 [INFO] Results:
-[INFO] Tests run: 94, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] Tests run: 101, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
 ```
+
+### Cobertura de Suites Principales:
+- **`QaStressAndSecurityIntegrationTest` (7 tests):** Pruebas de concurrencia, estrés, protección anti-fuerza bruta y seguridad de endpoints.
+- **`LoginSecurityIntegrationTest`:** Flujos de login, mitigación de enumeración de usuarios y emisión/expiración de tokens JWT.
+- **`CitaServiceTest` & `CitaControllerTest`:** Reglas de negocio de citas, ciclo de estados y validación antisolapamiento.
+- **`DisponibilidadServiceTest` & `DisponibilidadControllerTest`:** Cálculo dinámico de bloques de atención y descansos según agenda.
+- **`ServicioServiceTest` & `ServicioControllerTest`:** Catálogo de servicios y bajas lógicas.
+- **`UsuarioServiceTest` & `UsuarioControllerTest`:** CRUD de cuentas y sanitización de credenciales.
+
