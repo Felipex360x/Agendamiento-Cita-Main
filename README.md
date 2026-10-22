@@ -241,10 +241,10 @@ Disponible con el servidor iniciado en:
 
 | Métrica | Valor | Detalle |
 |---|---|---|
-| **Total de Requerimientos** | **33** | 21 Funcionales (RF) + 12 No Funcionales (RNF) |
-| **Requerimientos Implementados** | **14 / 33 (42.4%)** | Seguridad, Disponibilidad, Servicios, Citas, Portal Trabajador, Historial, Clientes |
-| **En Proceso / Arquitectura Validada** | **6 / 33 (18.2%)** | Nivel 2: Pasarela Webpay Plus REST v1.2 y abonos |
-| **Planificados en Roadmap** | **13 / 33 (39.4%)** | Inventario de insumos, fidelización automática y conciliación bancaria |
+| **Total de Requerimientos** | **29** | 17 Funcionales (RF) + 12 No Funcionales (RNF) |
+| **Requerimientos Implementados** | **14 / 29 (48.3%)** | Seguridad, Disponibilidad, Servicios, Citas, Portal Trabajador, Historial, Clientes |
+| **En Proceso / Arquitectura Validada** | **6 / 29 (20.7%)** | Pasarela dual (Webpay Plus y Transferencia), portal pÃºblico y roles |
+| **Planificados en Roadmap** | **9 / 29 (31.0%)** | Correos condicionados a $5.000, dashboard con grÃ¡ficos, auditorÃ­a y respaldo |
 | **Pruebas Automatizadas Backend** | **101 Tests (100% Pass)** | Tests unitarios, de integración, repositorios, controladores, estrés y seguridad |
 
 ### Requerimientos Funcionales (RF01 - RF21)
@@ -256,17 +256,13 @@ Disponible con el servidor iniciado en:
 | **RF03** | **Control de Acceso por Roles** (ADMIN, CLIENTE, PROFESIONAL) | Nivel 1 - T1.3 | **Implementado** | `SecurityConfig.java`, restricción en `panel-trabajador.html` y filtros JWT |
 | **RF04** | **Consulta de Bloques Horarios Disponibles** en vivo | Nivel 2 - T2.1 | **Implementado** | `DisponibilidadService.java`, `disponibilidad.html`, `reserva-cliente.html` |
 | **RF05** | **Selección de Servicio y Profesional** antes de agendar | Nivel 2 - T2.1 | **Implementado** | Flujo guiado en `reserva-cliente.html` y selectores en `citas.html` |
-| **RF06** | **Pago de Reserva / Abono Mínimo ($5.000 CLP)** vía Webpay | Nivel 2 - T2.3 | Arquitectura Lista | DDL `pago`, SDK `transbank-sdk-java:6.2.1` |
+| **RF06** | **Pago de Reserva / Abono MÃ­nimo ($5.000 CLP)** vÃ­a Webpay o Transferencia | Nivel 2 - T2.3 | Arquitectura Lista | DDL `pago`, SDK `transbank-sdk-java:6.2.1` y soporte transferencia |
 | **RF07** | **Ciclo Transaccional de Cita** (`PENDIENTE` a `CONFIRMADA`) | Nivel 2 - T2.5 | **Implementado** | Citas se crean en `PENDIENTE` en `reserva-cliente.html`; trabajador confirma en `panel-trabajador.html` |
 | **RF08** | **Vista "Mi Agenda" por Profesional** | Nivel 3 - T3.4 | **Implementado** | `panel-trabajador.html` lista citas asignadas al especialista en sesión |
 | **RF09** | **Gestión de Estados de Atención** (`EN_ATENCION`, `COMPLETADA`) | Nivel 3 - T3.4 | **Implementado** | Botones de transición de estado en `panel-trabajador.html` y `citas.html` |
 | **RF10** | **Ficha Técnica Única de Cliente** | Nivel 4 - T4.1 | **Implementado** | Modal de seguimiento en `historial.html` con expediente de sesiones previas |
 | **RF11** | **Registro de Observaciones Técnicas** en atenciones | Nivel 4 - T4.2 | **Implementado** | Campo `notasTrabajador` y visualización en `historial.html` |
 | **RF12** | **Consulta de Historial Estético** por especialista | Nivel 4 - T4.2 | **Implementado** | Vista centralizada en `historial.html` agrupada por trabajador y clienta |
-| **RF13** | **Catálogo de Insumos y Productos** (CRUD) | Nivel 3 - T3.1 | Roadmap | Entidad `producto_insumo`, unidad de medida y stock mínimo |
-| **RF14** | **Deducción Automática de Stock** por Servicio Realizado | Nivel 3 - T3.2 | Roadmap | Tabla intermedia `servicio_insumo` |
-| **RF15** | **Alertas de Stock Crítico** por debajo del umbral | Nivel 3 - T3.3 | Roadmap | Endpoint `GET /productos/alertas-stock` |
-| **RF16** | **Control de Movimientos de Inventario** | Nivel 3 - T3.1 | Roadmap | Tabla `movimiento_stock` vinculada a citas |
 | **RF17** | **Reporte de Clientas Atendidas por Profesional** | Nivel 5 - T5.1 | **Implementado** | KPIs de clientas únicas, tratamientos y ventas acumuladas en `historial.html` |
 | **RF18** | **Dashboard Gerencial y Métricas** | Nivel 5 - T5.1 | **Implementado Base** | KPIs de citas, ingresos estimados y catálogo en `citas.html` y `historial.html` |
 | **RF19** | **Expediente Histórico del Cliente** | Nivel 4 - T4.2 | **Implementado** | Modal interactivo en `historial.html` con todas las atenciones previas de la clienta |
@@ -309,18 +305,19 @@ A continuación se detalla la lista de requerimientos funcionales, no funcionale
 * **RNF07 - Cumplimiento Normativo PCI-DSS:**
   * Redirección segura 3D Secure / Webpay Plus sin capturar ni almacenar números de tarjeta bancaria en el backend del estudio.
 
-### 2. Módulo de Gestión de Inventario e Insumos (Nivel 3)
-* **RF13 - Catálogo y CRUD de Insumos/Productos:**
-  * Tabla `producto_insumo` con campos: nombre, categoría, unidad de medida (ml, gr, unidades), stock actual y stock mínimo.
-  * Interfaz administrativa `static/admin/inventario.html` para consultar, crear y actualizar existencias.
-* **RF14 - Deducción Automática de Stock por Servicio Realizado:**
-  * Tabla asociativa `servicio_insumo` que define la "receta técnica" de insumos consumidos por cada tratamiento.
-  * Descuento automático de existencias en el inventario cuando una cita cambia al estado `COMPLETADA`.
-* **RF15 - Alertas Visuales de Stock Crítico:**
-  * Endpoint `GET /api/v2/nicolet/productos/alertas-stock` que liste insumos con existencia menor o igual al umbral mínimo.
-  * Badges y avisos de color ámbar/rojo en el panel administrativo.
-* **RF16 - Kardex y Trazabilidad de Movimientos:**
-  * Tabla `movimiento_stock` para registrar entradas (compras), salidas automáticas (servicios prestados) y mermas manuales con usuario y fecha.
+### 2. GestiÃ³n Operativa de Usuarios, Especialistas y Roles
+* **RF03.1 - Reglas Estrictas de Registro y CreaciÃ³n:**
+  * Auto-registro pÃºblico limitado Ãºnicamente al rol `CLIENTE`.
+  * CreaciÃ³n de perfiles de trabajadores (`PROFESIONAL`) permitida exclusivamente al Administrador o a otro Trabajador autorizado.
+  * AsignaciÃ³n de correo corporativo especial para trabajadores por parte del Administrador.
+* **RF03.2 - Baja LÃ³gica con Indicador Visual en Gris:**
+  * No eliminar fÃ­sicamente usuarios ni trabajadores de la base de datos. Implementar columna de estado (1=Activo, 2=Desactivado) y presentar la fila en color gris atenuado con opciÃ³n de reactivaciÃ³n.
+* **RF03.3 - Perfil de Trabajador con Ajuste de ColaciÃ³n / Almuerzo:**
+  * Pantalla o modal de perfil donde el trabajador puede actualizar sus horas de descanso/almuerzo (`hora_inicio_descanso` y `hora_fin_descanso`).
+* **RF03.4 - CancelaciÃ³n de Cita con Motivo Obligatorio:**
+  * Exigir un motivo fundamentado obligatorio antes de confirmar la cancelaciÃ³n de una cita para auditorÃ­a interna y liberaciÃ³n de cupo.
+* **RF03.5 - Vista Restringida de GestiÃ³n de Citas para Trabajadores:**
+  * El trabajador puede dar de alta clientes nuevos (validando unicidad de correo) y listar a los clientes que Ã©l ingresÃ³, sin acceder a la agenda global del estudio.
 
 ### 3. Ficha Técnica y Notificaciones (Nivel 4)
 * **RF20 - Notificaciones Automáticas por Correo Electrónico:**
@@ -336,14 +333,13 @@ A continuación se detalla la lista de requerimientos funcionales, no funcionale
   * Job programado con Spring (`@Scheduled`) para detectar clientas sin atenciones en los últimos 60 o 90 días.
   * Generación de alertas en el panel para campañas de re-contacto y promociones personalizadas.
 * **RNF09 - Auditoría Integral de Operaciones:**
-  * Tabla de bitácora `auditoria_operacion` para trazabilidad de cancelaciones de citas, modificaciones de precios y ajustes manuales de inventario (con usuario, IP y timestamp).
+  * Tabla de bitácora `auditoria_operacion` para trazabilidad de cancelaciones de citas, modificaciones de precios y ajustes de tarifas o estados (con usuario, IP y timestamp).
 * **RNF12 - Respaldo Periódico Automatizado de Base de Datos:**
   * Script automatizado con `mysqldump` programado en el servidor para resguardo continuo de la base de datos MySQL.
 
 ### 5. Integraciones Frontend Pendientes en la Web
 * **Enlace Público de Agendamiento:** Conectar el botón *"Reservar Cita"* de la página principal del salón (`static/index.html`) directamente con el asistente guiado de reserva de clientes (`static/admin/reserva-cliente.html` o widget embebido).
 * **Botón de Descarga de Voucher:** Incorporar botón de descarga de PDF en el comprobante final de agendamiento.
-* **Pantalla de Inventario:** Crear el archivo `static/admin/inventario.html` con su respectivo `inventario.js` enlazado a la barra de navegación administrativa.
 
 ---
 
