@@ -36,3 +36,13 @@ build/
 correri.txt
 correjir*
 
+# Frontend React / Vite
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Local Cloudflare Tunnel executable
+cloudflared.exe
+

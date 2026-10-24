@@ -61,7 +61,7 @@ const pages={
         $('#summary').innerHTML=`<p class="eyebrow">Tu momento en Nicolett</p><p style="margin-top:12px">${svc()?.name||'—'}</p><p class="small">${sp()?.name||'Especialista por elegir'}<br>${st.date||'Fecha'} · ${st.time||'Hora'}</p><hr style="border:0;border-top:1px solid var(--border);margin:14px 0"><div class="row between"><span class="small">Abono</span><strong>${money(DEPOSIT)}</strong></div>`;
       });
     };
-    fetch(`/api/v2/nicolet/disponibilidad?trabajadorId=${workerId}&fecha=${st.date}&servicioId=${sId}`)
+    fetch(`${window.VITE_API_BASE_URL || '/api/v2/nicolet'}/disponibilidad?trabajadorId=${workerId}&fecha=${st.date}&servicioId=${sId}`)
      .then(r => r.ok ? r.json() : Promise.reject())
      .then(bloques => {
        if(!bloques || bloques.length===0){

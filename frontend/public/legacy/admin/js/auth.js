@@ -1,6 +1,7 @@
 function getApiBaseUrl() {
   if (typeof window !== 'undefined') {
-    if (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8080')) {
+    if (window.VITE_API_BASE_URL) return window.VITE_API_BASE_URL.replace(/\/$/, '');
+    if (window.location.protocol === 'file:') {
       return 'http://localhost:8080/api/v2/nicolet';
     }
   }

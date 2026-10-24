@@ -144,7 +144,15 @@
   <script src="js/auth.js"></script>
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const redirectParam = urlParams.get('redirect') || 'citas.html';
+    function getSafeRedirectUrl(param) {
+      if (!param || typeof param !== 'string') return 'citas.html';
+      var trimmed = param.trim();
+      if (/^(?:[a-z0-9+.-]+:|\/\/)/i.test(trimmed)) return 'citas.html';
+      var clean = trimmed.split('?')[0].split('#')[0].replace(/^\/+/, '').replace(/^admin\//, '');
+      var allowed = ['citas.html', 'disponibilidad.html', 'historial.html', 'panel-trabajador.html', 'pruebas.html', 'reserva-cliente.html', 'servicios.html', 'usuarios.html', 'index.html', 'agenda.html', 'dashboard.html', 'clientas.html', 'reservar.html', 'equipo.html'];
+      return allowed.indexOf(clean) !== -1 ? trimmed : 'citas.html';
+    }
+    const redirectParam = getSafeRedirectUrl(urlParams.get('redirect'));
     const autoRedirect = urlParams.get('autoredirect') === 'true';
 
     // Manejo de sesión previa
