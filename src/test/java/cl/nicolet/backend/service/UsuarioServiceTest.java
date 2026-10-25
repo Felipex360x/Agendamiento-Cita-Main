@@ -121,21 +121,26 @@ class UsuarioServiceTest {
     }
 
     @Test
-    @DisplayName("eliminar - debe lanzar excepción si el usuario no existe")
-    void debeLanzarExcepcionAlEliminarUsuarioInexistente() {
-        when(usuarioRepository.existsById(999L)).thenReturn(false);
+    @DisplayName("desactivar - debe lanzar excepción si el usuario no existe")
+    void debeLanzarExcepcionAlDesactivarUsuarioInexistente() {
+        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(RecursoNoEncontradoException.class, () -> usuarioService.eliminar(999L));
-        verify(usuarioRepository, never()).deleteById(any());
+        assertThrows(RecursoNoEncontradoException.class, () -> usuarioService.desactivar(999L, "Solicitud administrativa"));
+        verify(usuarioRepository, never()).save(any(Usuario.class));
     }
 
     @Test
-    @DisplayName("eliminar - debe eliminar el usuario cuando existe")
-    void debeEliminarUsuarioExistente() {
-        when(usuarioRepository.existsById(1L)).thenReturn(true);
+    @DisplayName("desactivar - guarda el motivo y conserva el usuario")
+    void debeDesactivarUsuarioExistenteConMotivo() {
+        Usuario usuario = new Usuario(1L, "Martina", "Contreras", "mar@gmail.com", "123412");
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        usuarioService.eliminar(1L);
+        UsuarioDTO resultado = usuarioService.desactivar(1L, " Solicitud administrativa ");
 
-        verify(usuarioRepository, times(1)).deleteById(1L);
+        assertEquals(Usuario.ESTADO_DESACTIVADO, resultado.getEstado());
+        assertEquals("Solicitud administrativa", resultado.getMotivoDesactivacion());
+        verify(usuarioRepository, times(1)).save(usuario);
+        verify(usuarioRepository, never()).deleteById(any());
     }
 }

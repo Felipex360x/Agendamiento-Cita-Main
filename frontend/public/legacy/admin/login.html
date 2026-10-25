@@ -107,30 +107,6 @@
         </button>
       </form>
 
-      <!-- Acceso Rápido para Desarrollo y Pruebas -->
-      <div class="quick-box" id="quickBox">
-        <div class="quick-title">Cuentas de Prueba Preconfiguradas</div>
-
-        <button type="button" class="btn-quick" 
-                style="width: 100%; margin-bottom: 8px; background: var(--secondary); border-color: var(--primary); color: var(--primary); font-weight: 700; padding: 8px;"
-                onclick="llenarCredenciales('admin.test@nicolet.cl', 'AdminTest123!')">
-          Admin de Test (Acceso Garantizado)
-        </button>
-
-        <div class="quick-grid">
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('admin@nicolet.cl', 'Admin123!')">Admin</button>
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('camila.silva@estudio.cl', 'pro2026')">Especialista</button>
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('martina.contreras@gmail.com', '123412')">Martina</button>
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('maximo.rojas@estudio.cl', 'password_seguro_123')">Máximo</button>
-        </div>
-
-        <div class="quick-grid" style="margin-top: 6px; grid-template-columns: repeat(3, 1fr);">
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('marit@gmail.com', '123456')">Marit (123456)</button>
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('gale@gmail.com', '123456')">Gale (123456)</button>
-          <button type="button" class="btn-quick" onclick="llenarCredenciales('prueba1235@gmail.com', '123456')">Prueba (123456)</button>
-        </div>
-      </div>
-
     </div>
   </main>
 
@@ -178,7 +154,6 @@
       const formRegistro = document.getElementById('formRegistro');
       const tabBtnLogin = document.getElementById('tabBtnLogin');
       const tabBtnRegistro = document.getElementById('tabBtnRegistro');
-      const quickBox = document.getElementById('quickBox');
       const errorAlert = document.getElementById('errorAlert');
       const successAlert = document.getElementById('successAlert');
 
@@ -190,24 +165,12 @@
         formRegistro.style.display = 'none';
         tabBtnLogin.classList.add('active');
         tabBtnRegistro.classList.remove('active');
-        quickBox.style.display = 'block';
       } else {
         formLogin.style.display = 'none';
         formRegistro.style.display = 'block';
         tabBtnLogin.classList.remove('active');
         tabBtnRegistro.classList.add('active');
-        quickBox.style.display = 'none';
       }
-    }
-
-    function llenarCredenciales(correo, pass) {
-      cambiarTab('login');
-      const correoInput = document.getElementById('loginCorreo');
-      const passInput = document.getElementById('loginPassword');
-      correoInput.value = correo;
-      passInput.value = pass;
-      document.getElementById('errorAlert').style.display = 'none';
-      passInput.focus();
     }
 
     // Envío Login

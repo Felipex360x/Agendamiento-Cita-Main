@@ -7,6 +7,7 @@ import cl.nicolet.backend.model.EstadoCita;
 import cl.nicolet.backend.model.HorarioDisponibilidad;
 import cl.nicolet.backend.model.Servicio;
 import cl.nicolet.backend.model.Trabajador;
+import cl.nicolet.backend.model.Usuario;
 import cl.nicolet.backend.repository.CitaRepository;
 import cl.nicolet.backend.repository.HorarioDisponibilidadRepository;
 import cl.nicolet.backend.repository.ServicioRepository;
@@ -51,6 +52,9 @@ public class DisponibilidadService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Trabajador no encontrado: " + trabajadorId));
         if (!Boolean.TRUE.equals(trabajador.getActivo())) {
             throw new IllegalArgumentException("El trabajador se encuentra inactivo");
+        }
+        if (trabajador.getUsuario() != null && trabajador.getUsuario().getEstado() != Usuario.ESTADO_ACTIVO) {
+            throw new IllegalArgumentException("La cuenta del trabajador se encuentra desactivada");
         }
 
         int duracionMinutos = 45;

@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -17,20 +16,14 @@ public class JwtUtils {
 
     private static final Logger log = LoggerFactory.getLogger(JwtUtils.class);
 
-    @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
+    @Value("${jwt.secret}")
     private String jwtSecret;
 
     @Value("${jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes;
-        try {
-            keyBytes = Decoders.BASE64.decode(jwtSecret);
-        } catch (Exception e) {
-            keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        }
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
     public String generarToken(UserDetailsImpl userDetails) {
@@ -76,16 +69,9 @@ public class JwtUtils {
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (MalformedJwtException e) {
-            log.error("Token JWT malformado: {}", e.getMessage());
-        } catch (ExpiredJwtException e) {
-            log.warn("Token JWT expirado: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            log.error("Token JWT no soportado: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.error("Cadena de claims JWT vacía: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Error al validar token JWT: {}", e.getMessage());
+        } catch (JwtException | IllegalArgumentException e) {
+            // Invalid bearer tokens are expected input; do not log attacker-controlled token data.
+            log.debug("Token JWT rechazado ({})", e.getClass().getSimpleName());
         }
         return false;
     }

@@ -54,6 +54,13 @@ Si prefieres ejecutar cada parte por separado, inicia primero MySQL y luego Spri
 
 ```powershell
 docker compose up -d mysql_usuario
+$env:DB_USERNAME = 'desarrollador'
+$env:DB_PASSWORD = 'password_seguro_123'
+$jwtBytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($jwtBytes)
+$rng.Dispose()
+$env:JWT_SECRET = [Convert]::ToBase64String($jwtBytes)
 .\mvnw.cmd spring-boot:run
 ```
 

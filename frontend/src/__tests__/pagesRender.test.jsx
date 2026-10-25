@@ -1,0 +1,112 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { AuthProvider } from '../auth/AuthContext.jsx';
+import App from '../App.jsx';
+import WorkerPortalPage from '../pages/WorkerPortalPage.jsx';
+import { StaffAgendaPage, StaffClientsPage, StaffDashboardPage } from '../pages/StaffPages.jsx';
+import AdminAppointmentsPage from '../pages/AdminAppointmentsPage.jsx';
+import AdminServicesPage from '../pages/AdminServicesPage.jsx';
+import AdminUsersPage from '../pages/AdminUsersPage.jsx';
+import AdminAvailabilityPage from '../pages/AdminAvailabilityPage.jsx';
+import AdminHistoryPage from '../pages/AdminHistoryPage.jsx';
+import AdminDiagnosticsPage from '../pages/AdminDiagnosticsPage.jsx';
+import BookingPage from '../pages/BookingPage.jsx';
+import ClientProfilePage from '../pages/ClientProfilePage.jsx';
+import { HomePage, LoginPage, ServicesPage, TeamPage } from '../pages/PublicPages.jsx';
+
+describe('Renderizado de Páginas y Enrutamiento React', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+    delete window.location;
+    window.location = {
+      pathname: '/',
+      search: '',
+      origin: 'http://localhost:3000',
+      replace: vi.fn(),
+      assign: vi.fn(),
+    };
+  });
+
+  it('debe renderizar HomePage sin errores', () => {
+    expect(() => render(<AuthProvider><HomePage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar LoginPage sin errores', () => {
+    expect(() => render(<AuthProvider><LoginPage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar ServicesPage sin errores', () => {
+    expect(() => render(<AuthProvider><ServicesPage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar TeamPage sin errores', () => {
+    expect(() => render(<AuthProvider><TeamPage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar BookingPage sin errores', () => {
+    expect(() => render(<AuthProvider><BookingPage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar AdminAppointmentsPage sin sesión redirigiendo sin colapsar', () => {
+    expect(() => render(<AuthProvider><AdminAppointmentsPage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar StaffAgendaPage sin sesión sin lanzar TypeError de null user', () => {
+    expect(() => render(<AuthProvider><StaffAgendaPage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar WorkerPortalPage sin sesión sin lanzar TypeError de null user', () => {
+    expect(() => render(<AuthProvider><WorkerPortalPage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar StaffDashboardPage y StaffClientsPage sin colapsar', () => {
+    expect(() => render(<AuthProvider><StaffDashboardPage /></AuthProvider>)).not.toThrow();
+    expect(() => render(<AuthProvider><StaffClientsPage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar paneles de administración sin colapsar', () => {
+    expect(() => render(<AuthProvider><AdminServicesPage /></AuthProvider>)).not.toThrow();
+    expect(() => render(<AuthProvider><AdminUsersPage /></AuthProvider>)).not.toThrow();
+    expect(() => render(<AuthProvider><AdminAvailabilityPage /></AuthProvider>)).not.toThrow();
+    expect(() => render(<AuthProvider><AdminHistoryPage /></AuthProvider>)).not.toThrow();
+    expect(() => render(<AuthProvider><AdminDiagnosticsPage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar ClientProfilePage sin sesión sin colapsar', () => {
+    expect(() => render(<AuthProvider><ClientProfilePage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe despachar las distintas rutas en App sin errores', () => {
+    window.location.pathname = '/';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/servicios';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/equipo';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/reservar';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/mi-perfil';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/agenda';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/dashboard';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/clientas';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/admin/citas';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/admin/panel-trabajador';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+  });
+});

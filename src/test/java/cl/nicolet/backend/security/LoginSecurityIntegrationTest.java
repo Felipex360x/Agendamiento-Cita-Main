@@ -227,9 +227,9 @@ public class LoginSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Usuario admin de prueba puede ingresar aunque haya intentos fallidos previos")
-    void testAdminTestSuperaBloqueoPorFuerzaBruta() throws Exception {
-        LoginRequestDTO ataque = new LoginRequestDTO("maximo.rojas@estudio.cl", "clave_falsa");
+    @DisplayName("El administrador también queda bloqueado tras intentos fallidos")
+    void testAdministradorNoOmiteBloqueoPorFuerzaBruta() throws Exception {
+        LoginRequestDTO ataque = new LoginRequestDTO("admin.test@nicolet.cl", "clave_falsa");
 
         for (int i = 0; i < 5; i++) {
             mockMvc.perform(post("/api/v2/nicolet/auth/login")
@@ -244,6 +244,12 @@ public class LoginSecurityIntegrationTest {
                 .andExpect(status().isTooManyRequests());
 
         LoginRequestDTO adminTest = new LoginRequestDTO("admin.test@nicolet.cl", "AdminTest123!");
+        mockMvc.perform(post("/api/v2/nicolet/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(adminTest)))
+                .andExpect(status().isTooManyRequests());
+
+        loginAttemptService.reset();
         mockMvc.perform(post("/api/v2/nicolet/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(adminTest)))

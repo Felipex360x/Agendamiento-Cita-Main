@@ -9,6 +9,8 @@ public class UsuarioDTO {
     private String apellidoP;
     private String correo;
     private TipoUsuarioDTO tipoUsuario;
+    private int estado = 1;
+    private String motivoDesactivacion;
 
     public UsuarioDTO() {
     }
@@ -22,11 +24,21 @@ public class UsuarioDTO {
     }
 
     public UsuarioDTO(Long id, String nombre, String apellidoP, String correo, TipoUsuarioDTO tipoUsuario) {
+        this(id, nombre, apellidoP, correo, tipoUsuario, 1);
+    }
+
+    public UsuarioDTO(Long id, String nombre, String apellidoP, String correo, TipoUsuarioDTO tipoUsuario, int estado) {
         this.id = id;
         this.nombre = nombre;
         this.apellidoP = apellidoP;
         this.correo = correo;
         this.tipoUsuario = tipoUsuario;
+        this.estado = estado;
+    }
+
+    public UsuarioDTO(Long id, String nombre, String apellidoP, String correo, TipoUsuarioDTO tipoUsuario, int estado, String motivoDesactivacion) {
+        this(id, nombre, apellidoP, correo, tipoUsuario, estado);
+        this.motivoDesactivacion = motivoDesactivacion;
     }
 
     public Long getId() {
@@ -69,6 +81,22 @@ public class UsuarioDTO {
         this.tipoUsuario = tipoUsuario;
     }
 
+    public int getEstado() {
+        return estado;
+    }
+
+    public void setEstado(int estado) {
+        this.estado = estado;
+    }
+
+    public String getMotivoDesactivacion() {
+        return motivoDesactivacion;
+    }
+
+    public void setMotivoDesactivacion(String motivoDesactivacion) {
+        this.motivoDesactivacion = motivoDesactivacion;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -77,11 +105,13 @@ public class UsuarioDTO {
                 && Objects.equals(nombre, that.nombre)
                 && Objects.equals(apellidoP, that.apellidoP)
                 && Objects.equals(correo, that.correo)
-                && Objects.equals(tipoUsuario, that.tipoUsuario);
+                && Objects.equals(tipoUsuario, that.tipoUsuario)
+                && Objects.equals(motivoDesactivacion, that.motivoDesactivacion)
+                && estado == that.estado;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, nombre, apellidoP, correo, tipoUsuario);
+        return Objects.hash(id, nombre, apellidoP, correo, tipoUsuario, estado, motivoDesactivacion);
     }
 }

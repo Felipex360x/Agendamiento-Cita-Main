@@ -54,7 +54,7 @@ class AuthControllerTest {
     private cl.nicolet.backend.repository.TipoUsuarioRepository tipoUsuarioRepository;
 
     @MockBean
-    private cl.nicolet.backend.repository.ClienteRepository clienteRepository;
+    private cl.nicolet.backend.service.PerfilUsuarioService perfilUsuarioService;
 
     @MockBean
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
@@ -123,11 +123,6 @@ class AuthControllerTest {
         usuarioGuardado.setCorreo("paula.vargas@estudio.cl");
         usuarioGuardado.setTipoUsuario(rolCliente);
         when(usuarioRepository.save(any(cl.nicolet.backend.model.Usuario.class))).thenReturn(usuarioGuardado);
-
-        cl.nicolet.backend.model.Cliente clienteGuardado = new cl.nicolet.backend.model.Cliente();
-        clienteGuardado.setId(5L);
-        clienteGuardado.setUsuario(usuarioGuardado);
-        when(clienteRepository.save(any(cl.nicolet.backend.model.Cliente.class))).thenReturn(clienteGuardado);
 
         UserDetailsImpl userDetails = new UserDetailsImpl(
                 10L, "Paula", "Vargas", "paula.vargas@estudio.cl", "encoded_pass",

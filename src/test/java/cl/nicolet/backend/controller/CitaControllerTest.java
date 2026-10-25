@@ -106,7 +106,7 @@ class CitaControllerTest {
         res.setId(1L);
         res.setEstado(EstadoCita.COMPLETADA);
 
-        when(citaService.cambiarEstado(eq(1L), any(CambioEstadoCitaDTO.class))).thenReturn(res);
+        when(citaService.cambiarEstado(eq(1L), any(CambioEstadoCitaDTO.class), eq(true))).thenReturn(res);
 
         mockMvc.perform(patch("/api/v2/nicolet/citas/1/estado")
                         .contentType(MediaType.APPLICATION_JSON)

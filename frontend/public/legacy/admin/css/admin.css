@@ -593,6 +593,8 @@ label.lbl {
 /* Grupo de botones de acción en tablas */
 .btn-action-group {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 4px;
   align-items: center;
 }

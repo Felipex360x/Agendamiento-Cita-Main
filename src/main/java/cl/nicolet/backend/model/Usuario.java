@@ -7,11 +7,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 import java.util.Objects;
 
 @Entity
 @Table(name = "usuario")
 public class Usuario {
+
+    public static final int ESTADO_ACTIVO = 1;
+    public static final int ESTADO_DESACTIVADO = 2;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +24,12 @@ public class Usuario {
     private String apellidoP;
     private String correo;
     private String password;
+
+    @Column(name = "estado", nullable = false, columnDefinition = "TINYINT NOT NULL DEFAULT 1")
+    private int estado = ESTADO_ACTIVO;
+
+    @Column(name = "motivo_desactivacion", columnDefinition = "TEXT")
+    private String motivoDesactivacion;
 
     // conexion con la tabla de tipo usuario
     @ManyToOne
@@ -86,6 +96,25 @@ public class Usuario {
         this.password = password;
     }
 
+    public int getEstado() {
+        return estado;
+    }
+
+    public void setEstado(int estado) {
+        if (estado != ESTADO_ACTIVO && estado != ESTADO_DESACTIVADO) {
+            throw new IllegalArgumentException("El estado de usuario debe ser 1 (activo) o 2 (desactivado)");
+        }
+        this.estado = estado;
+    }
+
+    public String getMotivoDesactivacion() {
+        return motivoDesactivacion;
+    }
+
+    public void setMotivoDesactivacion(String motivoDesactivacion) {
+        this.motivoDesactivacion = motivoDesactivacion;
+    }
+
     public TipoUsuario getTipoUsuario() {
         return tipoUsuario;
     }
@@ -103,12 +132,14 @@ public class Usuario {
                 && Objects.equals(apellidoP, that.apellidoP)
                 && Objects.equals(correo, that.correo)
                 && Objects.equals(password, that.password)
+                && Objects.equals(motivoDesactivacion, that.motivoDesactivacion)
+                && estado == that.estado
                 && Objects.equals(tipoUsuario, that.tipoUsuario);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, nombre, apellidoP, correo, password, tipoUsuario);
+        return Objects.hash(id, nombre, apellidoP, correo, password, estado, motivoDesactivacion, tipoUsuario);
     }
 
     @Override

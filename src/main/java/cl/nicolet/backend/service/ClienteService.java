@@ -2,6 +2,7 @@ package cl.nicolet.backend.service;
 
 import cl.nicolet.backend.dto.ClienteCreateDTO;
 import cl.nicolet.backend.dto.ClienteDTO;
+import cl.nicolet.backend.dto.ClientePerfilUpdateDTO;
 import cl.nicolet.backend.dto.TipoUsuarioDTO;
 import cl.nicolet.backend.dto.UsuarioDTO;
 import cl.nicolet.backend.exception.RecursoNoEncontradoException;
@@ -33,24 +34,7 @@ public class ClienteService {
 
     public List<ClienteDTO> findAll() {
         log.info("Consultando todos los clientes");
-        sincronizarUsuariosClientes();
         return clienteRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
-    }
-
-    private void sincronizarUsuariosClientes() {
-        if (usuarioRepository == null || clienteRepository == null) return;
-        List<Usuario> usuarios = usuarioRepository.findAll();
-        for (Usuario u : usuarios) {
-            if (u.getTipoUsuario() != null && u.getTipoUsuario().getNombre() != null &&
-               u.getTipoUsuario().getNombre().toUpperCase().contains("CLIENTE")) {
-                if (!clienteRepository.existsByUsuarioId(u.getId())) {
-                    Cliente c = new Cliente();
-                    c.setUsuario(u);
-                    c.setActivo(true);
-                    clienteRepository.save(c);
-                }
-            }
-        }
     }
 
     public ClienteDTO findById(Long id) {
@@ -65,6 +49,39 @@ public class ClienteService {
         Cliente c = clienteRepository.findByUsuarioId(usuarioId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado para usuario: " + usuarioId));
         return toDTO(c);
+    }
+
+    public boolean esPropietario(Long clienteId, Long usuarioId) {
+        return clienteRepository.findById(clienteId)
+                .map(cliente -> cliente.getUsuario() != null && cliente.getUsuario().getId().equals(usuarioId))
+                .orElse(false);
+    }
+
+    public ClienteDTO actualizarPerfil(Long clienteId, ClientePerfilUpdateDTO dto) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado: " + clienteId));
+        Usuario usuario = cliente.getUsuario();
+        String correo = dto.getCorreo().trim().toLowerCase();
+        if (!correo.equalsIgnoreCase(usuario.getCorreo()) && usuarioRepository.existsByCorreoIgnoreCase(correo)) {
+            throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado: " + correo);
+        }
+
+        String rut = dto.getRutDni() == null || dto.getRutDni().isBlank() ? null : dto.getRutDni().trim();
+        if (rut != null) {
+            clienteRepository.findByRutDni(rut)
+                    .filter(existente -> !existente.getId().equals(clienteId))
+                    .ifPresent(existente -> { throw new IllegalArgumentException("El RUT/DNI ya se encuentra registrado: " + rut); });
+        }
+
+        usuario.setNombre(dto.getNombre().trim());
+        usuario.setApellidoP(dto.getApellidoP().trim());
+        usuario.setCorreo(correo);
+        cliente.setTelefono(dto.getTelefono() == null || dto.getTelefono().isBlank() ? null : dto.getTelefono().trim());
+        cliente.setRutDni(rut);
+        cliente.setFechaNacimiento(dto.getFechaNacimiento());
+        cliente.setNotasPreferencias(dto.getNotasPreferencias());
+        usuarioRepository.save(usuario);
+        return toDTO(clienteRepository.save(cliente));
     }
 
     public ClienteDTO crear(ClienteCreateDTO dto) {

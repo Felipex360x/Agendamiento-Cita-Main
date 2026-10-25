@@ -23,18 +23,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import cl.nicolet.backend.dto.RegistroRequestDTO;
-import cl.nicolet.backend.model.Cliente;
 import cl.nicolet.backend.model.TipoUsuario;
 import cl.nicolet.backend.model.Usuario;
-import cl.nicolet.backend.repository.ClienteRepository;
 import cl.nicolet.backend.repository.TipoUsuarioRepository;
+import cl.nicolet.backend.service.PerfilUsuarioService;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v2/nicolet/auth")
 @Tag(name = "Autenticación", description = "Endpoints de inicio de sesión, registro y verificación de tokens JWT")
-@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
@@ -55,7 +53,7 @@ public class AuthController {
     private TipoUsuarioRepository tipoUsuarioRepository;
 
     @Autowired
-    private ClienteRepository clienteRepository;
+    private PerfilUsuarioService perfilUsuarioService;
 
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
@@ -71,9 +69,10 @@ public class AuthController {
         String correo = loginRequest.getCorreo() != null ? loginRequest.getCorreo().trim().toLowerCase() : "";
         String clientIp = obtenerIpCliente(request);
 
-        boolean esTestAdmin = LoginAttemptService.isTestAdmin(correo);
-        if (!esTestAdmin && (loginAttemptService.isBlocked(correo) || loginAttemptService.isBlocked(clientIp))) {
-            log.warn("Bloqueo de seguridad: Demasiados intentos fallidos para correo={} o ip={}", correo, clientIp);
+        String accountKey = "account:" + correo;
+        String ipKey = "ip:" + clientIp;
+        if (loginAttemptService.isBlocked(accountKey) || loginAttemptService.isBlocked(ipKey)) {
+            log.warn("Bloqueo temporal de autenticación por intentos fallidos");
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
                     "status", HttpStatus.TOO_MANY_REQUESTS.value(),
                     "error", "Too Many Requests",
@@ -118,8 +117,8 @@ public class AuthController {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             String jwt = jwtUtils.generarToken(userDetails);
 
-            loginAttemptService.loginSucceeded(correo);
-            loginAttemptService.loginSucceeded(clientIp);
+            loginAttemptService.loginSucceeded(accountKey);
+            loginAttemptService.loginSucceeded(ipKey);
 
             String rol = userDetails.getAuthorities().stream()
                     .findFirst()
@@ -140,9 +139,9 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {
-            loginAttemptService.loginFailed(correo);
-            loginAttemptService.loginFailed(clientIp);
-            int intentosRestantes = loginAttemptService.getRemainingAttempts(correo);
+            loginAttemptService.loginFailed(accountKey);
+            loginAttemptService.loginFailed(ipKey);
+            int intentosRestantes = loginAttemptService.getRemainingAttempts(accountKey);
 
             log.warn("Credenciales incorrectas para correo: {}. Intentos restantes: {}", correo, intentosRestantes);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
@@ -221,11 +220,10 @@ public class AuthController {
         nuevoUsuario.setTipoUsuario(tipoCliente);
         Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
 
-        Cliente nuevoCliente = new Cliente();
-        nuevoCliente.setUsuario(usuarioGuardado);
-        nuevoCliente.setTelefono(request.getTelefono() != null && !request.getTelefono().isBlank() ? request.getTelefono().trim() : null);
-        nuevoCliente.setActivo(true);
-        clienteRepository.save(nuevoCliente);
+        String telefono = request.getTelefono() != null && !request.getTelefono().isBlank()
+                ? request.getTelefono().trim()
+                : null;
+        perfilUsuarioService.crearPerfilCliente(usuarioGuardado, telefono);
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(correo, request.getPassword())
@@ -250,10 +248,7 @@ public class AuthController {
 
     private String obtenerIpCliente(HttpServletRequest request) {
         if (request == null) return "unknown";
-        String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader != null && !xfHeader.isBlank()) {
-            return xfHeader.split(",")[0].trim();
-        }
+        // Forwarded headers are client-controlled unless a trusted proxy is configured.
         return request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown";
     }
 }

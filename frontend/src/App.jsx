@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react';
+import { HomePage, LoginPage, ServicesPage, TeamPage } from './pages/PublicPages.jsx';
+import BookingPage from './pages/BookingPage.jsx';
+import AdminAppointmentsPage from './pages/AdminAppointmentsPage.jsx';
+import AdminServicesPage from './pages/AdminServicesPage.jsx';
+import AdminUsersPage from './pages/AdminUsersPage.jsx';
+import AdminAvailabilityPage from './pages/AdminAvailabilityPage.jsx';
+import AdminHistoryPage from './pages/AdminHistoryPage.jsx';
+import WorkerPortalPage from './pages/WorkerPortalPage.jsx';
+import WorkerSchedulePage from './pages/WorkerSchedulePage.jsx';
+import AdminDiagnosticsPage from './pages/AdminDiagnosticsPage.jsx';
+import { StaffAgendaPage, StaffClientsPage, StaffDashboardPage } from './pages/StaffPages.jsx';
+import ClientProfilePage from './pages/ClientProfilePage.jsx';
 
-export const PUBLIC_PAGES = new Set(['index.html', 'reservar.html', 'servicios.html', 'equipo.html', 'agenda.html', 'dashboard.html', 'clientas.html']);
-export const ADMIN_PAGES = new Set(['citas.html', 'disponibilidad.html', 'historial.html', 'login.html', 'panel-trabajador.html', 'pruebas.html', 'reserva-cliente.html', 'servicios.html', 'usuarios.html']);
+export const PUBLIC_PAGES = new Set(['index.html', 'reservar.html', 'servicios.html', 'equipo.html', 'agenda.html', 'dashboard.html', 'clientas.html', 'mi-perfil.html']);
+export const ADMIN_PAGES = new Set(['citas.html', 'disponibilidad.html', 'historial.html', 'login.html', 'mi-horario.html', 'panel-trabajador.html', 'pruebas.html', 'reserva-cliente.html', 'servicios.html', 'usuarios.html']);
 
 export function getLegacyPath(pathname) {
   const clean = pathname.replace(/^\/+/, '');
@@ -37,100 +49,32 @@ export function assetUrl(value, sourceUrl) {
 }
 
 /**
- * Temporarily hosts the existing screens inside the React application while
- * preserving their DOM behavior. The original markup, CSS and scripts live
- * under frontend/public/legacy and can be converted to React screen by screen.
+ * Retained for compatibility while direct legacy asset URLs are phased out.
+ * Application routes below now render React pages directly.
  */
-function LegacyPage() {
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-    const scripts = [];
-    const styles = [];
-    const root = document.getElementById('legacy-root');
-    window.VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-    const legacyPath = getLegacyPath(window.location.pathname);
-    const sourceUrl = new URL(`/legacy/${legacyPath}`, window.location.origin).href;
-    const previousTitle = document.title;
-    const initialBodyAttrs = Array.from(document.body.attributes).map((a) => ({ name: a.name, value: a.value }));
-    document.body.dataset.page = '';
-
-    async function mount() {
-      try {
-        const response = await fetch(sourceUrl);
-        if (!response.ok) throw new Error(`No se pudo cargar ${legacyPath} (HTTP ${response.status})`);
-        const markup = await response.text();
-        if (cancelled) return;
-        const parsed = new DOMParser().parseFromString(markup, 'text/html');
-        document.title = parsed.title || 'Nicolet Estudio';
-        for (const key of parsed.body.attributes) document.body.setAttribute(key.name, key.value);
-
-        parsed.head.querySelectorAll('link[rel="stylesheet"]').forEach((original) => {
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = assetUrl(original.getAttribute('href'), sourceUrl);
-          document.head.appendChild(link);
-          styles.push(link);
-        });
-
-        const scriptNodes = [...parsed.body.querySelectorAll('script')];
-        scriptNodes.forEach((node) => node.remove());
-        parsed.body.querySelectorAll('img[src], source[src], video[poster]').forEach((element) => {
-          for (const attribute of ['src', 'poster']) {
-            const value = element.getAttribute(attribute);
-            if (value) element.setAttribute(attribute, assetUrl(value, sourceUrl));
-          }
-        });
-        root.innerHTML = parsed.body.innerHTML;
-
-        for (const original of scriptNodes) {
-          if (cancelled) return;
-          await new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            if (original.src) {
-              script.src = assetUrl(original.getAttribute('src'), sourceUrl);
-              script.async = false;
-              script.onload = resolve;
-              script.onerror = () => reject(new Error(`No se pudo cargar ${original.getAttribute('src')}`));
-            } else {
-              script.textContent = original.textContent;
-              resolve();
-            }
-            document.body.appendChild(script);
-            scripts.push(script);
-          });
-        }
-        // The original scripts register DOMContentLoaded listeners. React mounts
-        // after that browser event, so replay it after restoring the legacy DOM.
-        document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
-      } catch (loadError) {
-        if (!cancelled) setError(loadError.message);
-      }
-    }
-
-    mount();
-    return () => {
-      cancelled = true;
-      scripts.forEach((script) => script.remove());
-      styles.forEach((style) => style.remove());
-      root.replaceChildren();
-
-      // Restaurar atributos originales del body para evitar fugas entre navegaciones (DEF-05)
-      while (document.body.attributes.length > 0) {
-        document.body.removeAttribute(document.body.attributes[0].name);
-      }
-      for (const attr of initialBodyAttrs) {
-        document.body.setAttribute(attr.name, attr.value);
-      }
-      document.title = previousTitle;
-    };
-  }, []);
-
-  if (error) return <main style={{ margin: '4rem auto', maxWidth: 700, fontFamily: 'sans-serif' }}><h1>No se pudo abrir esta página</h1><p>{error}</p></main>;
-  return <div id="legacy-root" />;
+export function LegacyPage() {
+  return <main className="site-page-section"><h1>Esta vista antigua ya no está disponible</h1><a href="/">Volver al inicio</a></main>;
 }
 
 export default function App() {
-  return <LegacyPage />;
+  const page = getLegacyPath(window.location.pathname);
+
+  if (page === 'index.html') return <HomePage />;
+  if (page === 'servicios.html') return <ServicesPage />;
+  if (page === 'equipo.html') return <TeamPage />;
+  if (page === 'mi-perfil.html') return <ClientProfilePage />;
+  if (page === 'agenda.html') return <StaffAgendaPage />;
+  if (page === 'dashboard.html') return <StaffDashboardPage />;
+  if (page === 'clientas.html') return <StaffClientsPage />;
+  if (page === 'reservar.html' || page === 'admin/reserva-cliente.html') return <BookingPage />;
+  if (page === 'admin/login.html') return <LoginPage />;
+  if (page === 'admin/citas.html') return <AdminAppointmentsPage />;
+  if (page === 'admin/servicios.html') return <AdminServicesPage />;
+  if (page === 'admin/usuarios.html') return <AdminUsersPage />;
+  if (page === 'admin/disponibilidad.html') return <AdminAvailabilityPage />;
+  if (page === 'admin/historial.html') return <AdminHistoryPage />;
+  if (page === 'admin/panel-trabajador.html') return <WorkerPortalPage />;
+  if (page === 'admin/mi-horario.html') return <WorkerSchedulePage />;
+  if (page === 'admin/pruebas.html') return <AdminDiagnosticsPage />;
+  return <main className="site-page-section"><h1>Página no encontrada</h1><a href="/">Volver al inicio</a></main>;
 }

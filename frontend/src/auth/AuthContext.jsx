@@ -37,8 +37,7 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (correo, password) => {
-    const session = await api.login(correo, password);
+  const saveSession = (session) => {
     localStorage.setItem(TOKEN_KEY, session.token);
     const profile = {
       id: session.id,
@@ -52,7 +51,20 @@ export function AuthProvider({ children }) {
     return profile;
   };
 
-  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading]);
+  const login = async (correo, password) => saveSession(await api.login(correo, password));
+  const register = async (nombre, apellidoP, correo, password, telefono = '') =>
+    saveSession(await api.register(nombre, apellidoP, correo, password, telefono));
+
+  const updateProfile = (changes) => {
+    setUser((current) => {
+      if (!current) return current;
+      const updated = { ...current, ...changes };
+      localStorage.setItem(USER_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const value = useMemo(() => ({ user, loading, login, register, logout, updateProfile }), [user, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

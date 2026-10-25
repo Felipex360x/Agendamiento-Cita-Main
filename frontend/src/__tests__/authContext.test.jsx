@@ -199,21 +199,23 @@ describe('Módulo de Autenticación React: AuthContext.jsx', () => {
       expect(rendersAuthProvider).toBe(true);
     });
 
-    it('QA-DEFECT-06: AuthProvider o useAuth NO están integrados en frontend/src/App.jsx', () => {
-      const appPath = path.resolve(__dirname, '../App.jsx');
-      const appSource = fs.readFileSync(appPath, 'utf8');
+    it('las páginas públicas migradas usan el contexto de sesión React', () => {
+      const pagesPath = path.resolve(__dirname, '../pages/PublicPages.jsx');
+      const pagesSource = fs.readFileSync(pagesPath, 'utf8');
 
-      const usesAuthInApp = appSource.includes('useAuth') || appSource.includes('AuthProvider');
-      expect(usesAuthInApp).toBe(false);
+      expect(pagesSource).toContain('useAuth');
+      expect(pagesSource).toContain('api.servicios');
+      expect(pagesSource).toContain('api.trabajadores');
     });
 
-    it('QA-DEFECT-07: LegacyPage no comparte estado de sesión reactiva con AuthContext', () => {
-      // LegacyPage inyecta HTML y scripts de forma imperativa sin consultar el contexto React
+    it('las pantallas antiguas no cargan ni analizan HTML dinámico', () => {
       const appPath = path.resolve(__dirname, '../App.jsx');
       const appSource = fs.readFileSync(appPath, 'utf8');
 
-      expect(appSource).not.toContain('AuthContext');
-      expect(appSource).not.toContain('client.js');
+      expect(appSource).toContain('export function LegacyPage()');
+      expect(appSource).not.toContain('DOMParser');
+      expect(appSource).not.toContain('innerHTML');
+      expect(appSource).toContain("page === 'index.html'");
     });
   });
 });

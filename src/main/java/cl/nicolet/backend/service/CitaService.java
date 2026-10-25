@@ -10,6 +10,7 @@ import cl.nicolet.backend.model.EstadoCita;
 import cl.nicolet.backend.model.HorarioDisponibilidad;
 import cl.nicolet.backend.model.Servicio;
 import cl.nicolet.backend.model.Trabajador;
+import cl.nicolet.backend.model.Usuario;
 import cl.nicolet.backend.repository.CitaRepository;
 import cl.nicolet.backend.repository.ClienteRepository;
 import cl.nicolet.backend.repository.HorarioDisponibilidadRepository;
@@ -59,6 +60,44 @@ public class CitaService {
     @Autowired
     private ServicioService servicioService;
 
+    public boolean esClientePropio(Long clienteId, Long usuarioId) {
+        return clienteRepository.findById(clienteId)
+                .map(cliente -> cliente.getUsuario() != null && cliente.getUsuario().getId().equals(usuarioId))
+                .orElse(false);
+    }
+
+    public boolean esTrabajadorPropio(Long trabajadorId, Long usuarioId) {
+        return trabajadorRepository.findByUsuarioId(usuarioId)
+                .map(trabajador -> trabajador.getId().equals(trabajadorId))
+                .orElse(false);
+    }
+
+    public boolean esParticipante(Long citaId, Long usuarioId) {
+        return citaRepository.findById(citaId).map(cita ->
+                (cita.getCliente().getUsuario() != null && cita.getCliente().getUsuario().getId().equals(usuarioId))
+                        || (cita.getTrabajador().getUsuario() != null && cita.getTrabajador().getUsuario().getId().equals(usuarioId)))
+                .orElse(false);
+    }
+
+    public boolean esParticipantePorCodigo(String codigo, Long usuarioId) {
+        return citaRepository.findByCodigoReserva(codigo).map(cita ->
+                (cita.getCliente().getUsuario() != null && cita.getCliente().getUsuario().getId().equals(usuarioId))
+                        || (cita.getTrabajador().getUsuario() != null && cita.getTrabajador().getUsuario().getId().equals(usuarioId)))
+                .orElse(false);
+    }
+
+    public boolean puedeCambiarEstado(Long citaId, Long usuarioId, EstadoCita nuevoEstado) {
+        return citaRepository.findById(citaId).map(cita -> {
+            if (cita.getTrabajador().getUsuario() != null
+                    && cita.getTrabajador().getUsuario().getId().equals(usuarioId)) {
+                return nuevoEstado == EstadoCita.CONFIRMADA
+                        || nuevoEstado == EstadoCita.COMPLETADA
+                        || nuevoEstado == EstadoCita.CANCELADA;
+            }
+            return false;
+        }).orElse(false);
+    }
+
     public List<CitaDTO> findAll() {
         log.info("Consultando todas las citas");
         return citaRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
@@ -97,11 +136,17 @@ public class CitaService {
         if (!Boolean.TRUE.equals(cliente.getActivo())) {
             throw new IllegalArgumentException("El cliente se encuentra inactivo");
         }
+        if (cliente.getUsuario() != null && cliente.getUsuario().getEstado() != Usuario.ESTADO_ACTIVO) {
+            throw new IllegalArgumentException("La cuenta del cliente se encuentra desactivada");
+        }
 
         Trabajador trabajador = trabajadorRepository.findById(dto.getTrabajadorId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Trabajador no encontrado: " + dto.getTrabajadorId()));
         if (!Boolean.TRUE.equals(trabajador.getActivo())) {
             throw new IllegalArgumentException("El trabajador se encuentra inactivo");
+        }
+        if (trabajador.getUsuario() != null && trabajador.getUsuario().getEstado() != Usuario.ESTADO_ACTIVO) {
+            throw new IllegalArgumentException("La cuenta del trabajador se encuentra desactivada");
         }
 
         Servicio servicio = servicioRepository.findById(dto.getServicioId())
@@ -130,7 +175,8 @@ public class CitaService {
         cita.setServicio(servicio);
         cita.setFechaHoraInicio(inicio);
         cita.setFechaHoraFin(fin);
-        cita.setEstado(dto.getEstado() != null ? dto.getEstado() : EstadoCita.CONFIRMADA);
+        // El estado inicial lo define el servidor; nunca se acepta desde el payload del cliente.
+        cita.setEstado(EstadoCita.PENDIENTE);
         cita.setPrecioFinal(servicio.getPrecio());
         cita.setNotasCliente(dto.getNotasCliente());
 
@@ -141,6 +187,10 @@ public class CitaService {
     }
 
     public CitaDTO cambiarEstado(Long id, CambioEstadoCitaDTO dto) {
+        return cambiarEstado(id, dto, false);
+    }
+
+    public CitaDTO cambiarEstado(Long id, CambioEstadoCitaDTO dto, boolean requiereDetalleFinalizacion) {
         log.info("Cambiando estado de cita id={} a {}", id, dto.getNuevoEstado());
         Cita c = citaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cita no encontrada: " + id));
@@ -150,9 +200,15 @@ public class CitaService {
         }
 
         if (dto.getNuevoEstado() == EstadoCita.CANCELADA) {
-            c.setMotivoCancelacion(dto.getMotivoONotas());
+            if (dto.getMotivoONotas() == null || dto.getMotivoONotas().isBlank()) {
+                throw new IllegalArgumentException("Debes indicar el motivo para cancelar la cita");
+            }
+            c.setMotivoCancelacion(dto.getMotivoONotas().trim());
+        } else if (dto.getNuevoEstado() == EstadoCita.COMPLETADA && requiereDetalleFinalizacion
+                && (dto.getMotivoONotas() == null || dto.getMotivoONotas().isBlank())) {
+            throw new IllegalArgumentException("Debes describir el trabajo realizado antes de completar la cita");
         } else if (dto.getMotivoONotas() != null && !dto.getMotivoONotas().isBlank()) {
-            c.setNotasTrabajador(dto.getMotivoONotas());
+            c.setNotasTrabajador(dto.getMotivoONotas().trim());
         }
 
         c.setEstado(dto.getNuevoEstado());

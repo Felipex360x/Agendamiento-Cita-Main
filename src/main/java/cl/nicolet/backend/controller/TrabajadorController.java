@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,11 +18,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
 @Tag(name = "Trabajadores", description = "Operaciones de gestión del personal / profesionales")
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/v2/nicolet/trabajadores")
 public class TrabajadorController {
@@ -40,12 +39,14 @@ public class TrabajadorController {
 
     @Operation(summary = "Buscar Trabajador por ID")
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or @trabajadorService.esPropietario(#p0, principal.id)")
     public ResponseEntity<TrabajadorDTO> getById(@Parameter(description = "ID del trabajador") @PathVariable Long id) {
         return ResponseEntity.ok(trabajadorService.findById(id));
     }
 
     @Operation(summary = "Buscar Trabajador por ID de Usuario")
     @GetMapping("/usuario/{usuarioId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or principal.id == #p0")
     public ResponseEntity<TrabajadorDTO> getByUsuarioId(@Parameter(description = "ID del usuario asociado") @PathVariable Long usuarioId) {
         return ResponseEntity.ok(trabajadorService.findByUsuarioId(usuarioId));
     }
@@ -53,12 +54,14 @@ public class TrabajadorController {
     @Operation(summary = "Crear Perfil de Trabajador")
     @ApiResponse(responseCode = "201", description = "Perfil de trabajador creado")
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<TrabajadorDTO> crear(@Valid @RequestBody TrabajadorCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(trabajadorService.crear(dto));
     }
 
     @Operation(summary = "Actualizar Perfil de Trabajador")
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<TrabajadorDTO> actualizar(@PathVariable Long id, @Valid @RequestBody TrabajadorCreateDTO dto) {
         return ResponseEntity.ok(trabajadorService.actualizar(id, dto));
     }

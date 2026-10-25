@@ -6,6 +6,7 @@ import cl.nicolet.backend.model.EstadoCita;
 import cl.nicolet.backend.model.HorarioDisponibilidad;
 import cl.nicolet.backend.model.Servicio;
 import cl.nicolet.backend.model.Trabajador;
+import cl.nicolet.backend.model.Usuario;
 import cl.nicolet.backend.repository.CitaRepository;
 import cl.nicolet.backend.repository.HorarioDisponibilidadRepository;
 import cl.nicolet.backend.repository.ServicioRepository;
@@ -53,6 +54,7 @@ class DisponibilidadServiceTest {
         Trabajador trabajador = new Trabajador();
         trabajador.setId(1L);
         trabajador.setActivo(true);
+        trabajador.setUsuario(new Usuario());
 
         LocalDate domingo = LocalDate.now().plusDays(7);
         while (domingo.getDayOfWeek().getValue() != 7) {
@@ -74,6 +76,7 @@ class DisponibilidadServiceTest {
         Trabajador trabajador = new Trabajador();
         trabajador.setId(1L);
         trabajador.setActivo(false);
+        trabajador.setUsuario(new Usuario());
 
         when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
 
@@ -87,6 +90,7 @@ class DisponibilidadServiceTest {
         Trabajador trabajador = new Trabajador();
         trabajador.setId(1L);
         trabajador.setActivo(true);
+        trabajador.setUsuario(new Usuario());
 
         Servicio servicio = new Servicio(1L, "Corte", "Desc", 60, new BigDecimal("15000"), true);
 
@@ -127,6 +131,7 @@ class DisponibilidadServiceTest {
         Trabajador trabajador = new Trabajador();
         trabajador.setId(1L);
         trabajador.setActivo(true);
+        trabajador.setUsuario(new Usuario());
 
         Servicio servicio = new Servicio(1L, "Manicura", "Desc", 60, new BigDecimal("20000"), true);
 

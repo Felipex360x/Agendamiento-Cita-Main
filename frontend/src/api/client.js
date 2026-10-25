@@ -45,7 +45,40 @@ export const api = {
   login: (correo, password) => apiRequest('/auth/login', {
     method: 'POST', body: JSON.stringify({ correo, password }),
   }),
+  register: (nombre, apellidoP, correo, password, telefono = '') => apiRequest('/auth/register', {
+    method: 'POST', body: JSON.stringify({ nombre, apellidoP, correo, password, telefono }),
+  }),
   me: () => apiRequest('/auth/me'),
   servicios: () => apiRequest('/servicios'),
   trabajadores: () => apiRequest('/trabajadores'),
+  trabajadorPorUsuario: (usuarioId) => apiRequest(`/trabajadores/usuario/${usuarioId}`),
+  horarioTrabajador: (trabajadorId) => apiRequest(`/horarios/trabajador/${trabajadorId}`),
+  actualizarHorarioTrabajador: (trabajadorId, horario) => apiRequest(`/horarios/trabajador/${trabajadorId}`, { method: 'PUT', body: JSON.stringify(horario) }),
+  disponibilidad: (trabajadorId, fecha, servicioId) => {
+    const query = new URLSearchParams({ trabajadorId, fecha });
+    if (servicioId) query.set('servicioId', servicioId);
+    return apiRequest(`/disponibilidad?${query}`);
+  },
+  clientePorUsuario: (usuarioId) => apiRequest(`/clientes/usuario/${usuarioId}`),
+  actualizarPerfilCliente: (id, perfil) => apiRequest(`/clientes/${id}/perfil`, { method: 'PUT', body: JSON.stringify(perfil) }),
+  crearCita: (cita) => apiRequest('/citas', { method: 'POST', body: JSON.stringify(cita) }),
+  citas: () => apiRequest('/citas'),
+  citasDeTrabajador: (trabajadorId) => apiRequest(`/citas/trabajador/${trabajadorId}`),
+  citasDeCliente: (clienteId) => apiRequest(`/citas/cliente/${clienteId}`),
+  cambiarEstadoCita: (id, nuevoEstado, motivoONotas) => apiRequest(`/citas/${id}/estado`, {
+    method: 'PATCH', body: JSON.stringify({ nuevoEstado, motivoONotas }),
+  }),
+  clientes: () => apiRequest('/clientes'),
+  crearCliente: (cliente) => apiRequest('/clientes', { method: 'POST', body: JSON.stringify(cliente) }),
+  serviciosAdmin: () => apiRequest('/servicios'),
+  crearServicio: (servicio) => apiRequest('/servicios', { method: 'POST', body: JSON.stringify(servicio) }),
+  actualizarServicio: (id, servicio) => apiRequest(`/servicios/${id}`, { method: 'PUT', body: JSON.stringify(servicio) }),
+  eliminarServicio: (id) => apiRequest(`/servicios/${id}`, { method: 'DELETE' }),
+  usuarios: () => apiRequest('/usuarios'),
+  usuario: (id) => apiRequest(`/usuarios/${id}`),
+  crearUsuario: (usuario) => apiRequest('/usuarios', { method: 'POST', body: JSON.stringify(usuario) }),
+  actualizarUsuario: (id, usuario) => apiRequest(`/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(usuario) }),
+  desactivarUsuario: (id, motivo) => apiRequest(`/usuarios/${id}/desactivar`, { method: 'PATCH', body: JSON.stringify({ motivo }) }),
+  activarUsuario: (id) => apiRequest(`/usuarios/${id}/activar`, { method: 'PATCH' }),
+  tiposUsuario: () => apiRequest('/tipos-usuario'),
 };

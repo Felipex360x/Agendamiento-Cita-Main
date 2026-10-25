@@ -5,6 +5,7 @@ import cl.nicolet.backend.model.EstadoCita;
 import cl.nicolet.backend.repository.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,7 +83,40 @@ public class QaStressAndSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Crear, editar roles y eliminar usuarios con perfiles y citas")
+    @DisplayName("El directorio público de trabajadores no expone datos personales ni financieros")
+    void testDirectorioPublicoOmiteDatosSensibles() throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/v2/nicolet/trabajadores"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode trabajadores = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(trabajadores.isArray()).isTrue();
+        assertThat(trabajadores.isEmpty()).isFalse();
+        JsonNode trabajador = trabajadores.get(0);
+        assertThat(trabajador.hasNonNull("rutDni")).isFalse();
+        assertThat(trabajador.hasNonNull("telefono")).isFalse();
+        assertThat(trabajador.hasNonNull("comisionPorcentaje")).isFalse();
+        assertThat(trabajador.path("usuario").hasNonNull("correo")).isFalse();
+    }
+
+    @Test
+    @DisplayName("CORS acepta el frontend local y rechaza orígenes externos no configurados")
+    void testCorsRechazaOrigenNoAutorizado() throws Exception {
+        mockMvc.perform(options("/api/v2/nicolet/clientes")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:5173"));
+
+        mockMvc.perform(options("/api/v2/nicolet/clientes")
+                        .header(HttpHeaders.ORIGIN, "https://attacker.example")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Crear, editar roles y desactivar usuarios con perfiles y citas")
     void testCicloCaoticoUsuariosRolesYEliminacionEnCascada() throws Exception {
         Long rolClienteId = tipoUsuarioRepository.findByNombreIgnoreCase("CLIENTE").orElseThrow().getId();
         Long rolProId = tipoUsuarioRepository.findByNombreIgnoreCase("PROFESIONAL").orElseThrow().getId();
@@ -190,8 +225,15 @@ public class QaStressAndSecurityIntegrationTest {
         for (Long uId : usuariosCreados) {
             mockMvc.perform(delete("/api/v2/nicolet/usuarios/" + uId)
                             .header("Authorization", "Bearer " + adminToken))
-                    .andExpect(status().isNoContent());
-            assertThat(usuarioRepository.findById(uId)).isEmpty();
+                    .andExpect(status().isMethodNotAllowed());
+
+            mockMvc.perform(patch("/api/v2/nicolet/usuarios/" + uId + "/desactivar")
+                            .header("Authorization", "Bearer " + adminToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"motivo\":\"Desactivación de prueba de seguridad\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.estado").value(2));
+            assertThat(usuarioRepository.findById(uId)).isPresent();
         }
     }
 
@@ -387,13 +429,16 @@ public class QaStressAndSecurityIntegrationTest {
         Long servicioId = servicioRepository.findByNombreIgnoreCase("Manicura Rusa con Esmaltado Permanente").orElseThrow().getId();
         LocalDate proximoMiercoles = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.WEDNESDAY));
 
-        CitaCreateDTO citaValida = new CitaCreateDTO(c1Id, trabajadorId, servicioId, proximoMiercoles.atTime(9, 0), "Cita válida 09:00");
+        CitaCreateDTO citaValida = new CitaCreateDTO(
+                c1Id, trabajadorId, servicioId, proximoMiercoles.atTime(9, 0), "Cita válida 09:00");
+        ObjectNode citaManipulada = objectMapper.valueToTree(citaValida);
+        citaManipulada.put("estado", "COMPLETADA");
         MvcResult citaRes = mockMvc.perform(post("/api/v2/nicolet/citas")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(citaValida)))
+                        .content(objectMapper.writeValueAsString(citaManipulada)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.estado").value("CONFIRMADA"))
+                .andExpect(jsonPath("$.estado").value("PENDIENTE"))
                 .andReturn();
         Long citaId = objectMapper.readTree(citaRes.getResponse().getContentAsString()).get("id").asLong();
 
@@ -481,13 +526,14 @@ public class QaStressAndSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Bloquear IP tras intentos fallidos y mantener acceso a cuenta admin de prueba")
-    void testFuerzaBrutaXForwardedForYExencionAdminTest() throws Exception {
+    @DisplayName("Limitar fuerza bruta sin confiar en X-Forwarded-For ni eximir administradores")
+    void testFuerzaBrutaNoPuedeEvitarseConHeadersNiCuentasAdmin() throws Exception {
         String ipAtacante = "198.51.100.77";
         LoginRequestDTO ataque = new LoginRequestDTO("martina.contreras@gmail.com", "ClaveErronea123");
 
         for (int i = 1; i <= 5; i++) {
             mockMvc.perform(post("/api/v2/nicolet/auth/login")
+                            .with(servletRequest -> { servletRequest.setRemoteAddr(ipAtacante); return servletRequest; })
                             .header("X-Forwarded-For", ipAtacante)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(ataque)))
@@ -496,18 +542,27 @@ public class QaStressAndSecurityIntegrationTest {
 
         LoginRequestDTO otroUsuarioDesdeMismaIp = new LoginRequestDTO("camila.silva@estudio.cl", "pro2026");
         mockMvc.perform(post("/api/v2/nicolet/auth/login")
+                        .with(servletRequest -> { servletRequest.setRemoteAddr(ipAtacante); return servletRequest; })
                         .header("X-Forwarded-For", ipAtacante)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(otroUsuarioDesdeMismaIp)))
                 .andExpect(status().isTooManyRequests());
 
+        // A forged X-Forwarded-For value must not transfer another source's IP block.
+        mockMvc.perform(post("/api/v2/nicolet/auth/login")
+                        .with(servletRequest -> { servletRequest.setRemoteAddr("192.0.2.20"); return servletRequest; })
+                        .header("X-Forwarded-For", ipAtacante)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(otroUsuarioDesdeMismaIp)))
+                .andExpect(status().isOk());
+
         LoginRequestDTO adminLogin = new LoginRequestDTO("admin.test@nicolet.cl", "AdminTest123!");
         mockMvc.perform(post("/api/v2/nicolet/auth/login")
+                        .with(servletRequest -> { servletRequest.setRemoteAddr(ipAtacante); return servletRequest; })
                         .header("X-Forwarded-For", ipAtacante)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(adminLogin)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rol").value("ADMINISTRADOR"));
+                .andExpect(status().isTooManyRequests());
     }
 
     @Test

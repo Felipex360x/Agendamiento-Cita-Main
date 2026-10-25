@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,11 +19,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
 @Tag(name = "Citas", description = "Operaciones del núcleo de agendamiento de citas")
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/v2/nicolet/citas")
 public class CitaController {
@@ -35,30 +35,35 @@ public class CitaController {
     @Operation(summary = "Listar todas las Citas registradas")
     @ApiResponse(responseCode = "200", description = "Lista de citas obtenida")
     @GetMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<CitaDTO>> getAll() {
         return ResponseEntity.ok(citaService.findAll());
     }
 
     @Operation(summary = "Buscar Cita por ID")
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or @citaService.esParticipante(#p0, principal.id)")
     public ResponseEntity<CitaDTO> getById(@Parameter(description = "ID de la cita") @PathVariable Long id) {
         return ResponseEntity.ok(citaService.findById(id));
     }
 
     @Operation(summary = "Buscar Cita por Código de Reserva")
     @GetMapping("/codigo/{codigoReserva}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or @citaService.esParticipantePorCodigo(#p0, principal.id)")
     public ResponseEntity<CitaDTO> getByCodigo(@Parameter(description = "Código de reserva único (ej: RES-2026-XXXX)") @PathVariable String codigoReserva) {
         return ResponseEntity.ok(citaService.findByCodigo(codigoReserva));
     }
 
     @Operation(summary = "Listar Citas de un Trabajador")
     @GetMapping("/trabajador/{trabajadorId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or @citaService.esTrabajadorPropio(#p0, principal.id)")
     public ResponseEntity<List<CitaDTO>> getByTrabajador(@PathVariable Long trabajadorId) {
         return ResponseEntity.ok(citaService.findByTrabajador(trabajadorId));
     }
 
     @Operation(summary = "Listar Citas de un Cliente")
     @GetMapping("/cliente/{clienteId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or @clienteService.esPropietario(#p0, principal.id)")
     public ResponseEntity<List<CitaDTO>> getByCliente(@PathVariable Long clienteId) {
         return ResponseEntity.ok(citaService.findByCliente(clienteId));
     }
@@ -66,16 +71,21 @@ public class CitaController {
     @Operation(summary = "Agendar una nueva Cita")
     @ApiResponse(responseCode = "201", description = "Cita agendada exitosamente")
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR') or @citaService.esClientePropio(#p0.clienteId, principal.id)")
     public ResponseEntity<CitaDTO> agendar(@Valid @RequestBody CitaCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(citaService.agendar(dto));
     }
 
     @Operation(summary = "Cambiar Estado de una Cita (Confirmar, Cancelar, etc.)")
     @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or @citaService.puedeCambiarEstado(#p0, principal.id, #p1.nuevoEstado)")
     public ResponseEntity<CitaDTO> cambiarEstado(
             @PathVariable Long id,
-            @Valid @RequestBody CambioEstadoCitaDTO dto
+            @Valid @RequestBody CambioEstadoCitaDTO dto,
+            Authentication authentication
     ) {
-        return ResponseEntity.ok(citaService.cambiarEstado(id, dto));
+        boolean esAdministrador = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMINISTRADOR".equals(authority.getAuthority()));
+        return ResponseEntity.ok(citaService.cambiarEstado(id, dto, !esAdministrador));
     }
 }

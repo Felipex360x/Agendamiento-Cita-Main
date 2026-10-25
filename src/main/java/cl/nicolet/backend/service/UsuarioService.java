@@ -1,6 +1,5 @@
 package cl.nicolet.backend.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,21 +17,7 @@ import cl.nicolet.backend.dto.TipoUsuarioDTO;
 import cl.nicolet.backend.dto.UsuarioCreateDTO;
 import cl.nicolet.backend.dto.UsuarioDTO;
 import cl.nicolet.backend.exception.RecursoNoEncontradoException;
-import cl.nicolet.backend.model.Cliente;
-import cl.nicolet.backend.model.HorarioDisponibilidad;
-import cl.nicolet.backend.model.Servicio;
-import cl.nicolet.backend.model.Trabajador;
-import cl.nicolet.backend.repository.CitaRepository;
-import cl.nicolet.backend.repository.ClienteRepository;
-import cl.nicolet.backend.repository.HorarioDisponibilidadRepository;
-import cl.nicolet.backend.repository.ServicioRepository;
-import cl.nicolet.backend.repository.TrabajadorRepository;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalTime;
-import java.util.HashSet;
-import java.util.List;
 
 @Service
 @Transactional
@@ -46,23 +31,13 @@ public class UsuarioService {
     @Autowired(required = false)
     private TipoUsuarioRepository tipoUsuarioRepository;
 
-    @Autowired(required = false)
-    private ClienteRepository clienteRepository;
 
-    @Autowired(required = false)
-    private TrabajadorRepository trabajadorRepository;
-
-    @Autowired(required = false)
-    private ServicioRepository servicioRepository;
-
-    @Autowired(required = false)
-    private HorarioDisponibilidadRepository horarioDisponibilidadRepository;
-
-    @Autowired(required = false)
-    private CitaRepository citaRepository;
 
     @Autowired(required = false)
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private PerfilUsuarioService perfilUsuarioService;
 
     public List<UsuarioDTO> findAll(){
         Log.info("Consultando a todos los usuarios");
@@ -109,7 +84,9 @@ public class UsuarioService {
         Usuario guardar = usuarioRepository.save(u);
         Log.info("usuario creado id={}", guardar.getId());
 
-        sincronizarPerfil(guardar);
+        if (guardar.getTipoUsuario() != null) {
+            perfilUsuarioService.sincronizarPerfil(guardar);
+        }
 
         return toDTO(guardar);
     }
@@ -145,115 +122,34 @@ public class UsuarioService {
         }
 
         Usuario guardado = usuarioRepository.save(u);
-        sincronizarPerfil(guardado);
+        if (guardado.getTipoUsuario() != null) {
+            perfilUsuarioService.sincronizarPerfil(guardado);
+        }
         return toDTO(guardado);
     }
 
-    private void sincronizarPerfil(Usuario u) {
-        if (u.getTipoUsuario() == null) return;
-        String rol = u.getTipoUsuario().getNombre();
-        boolean esCliente = rol != null && rol.toUpperCase().contains("CLIENTE");
-        boolean esProfesional = rol != null && (rol.toUpperCase().contains("PROFESIONAL") || rol.toUpperCase().contains("TRABAJADOR") || rol.toUpperCase().contains("ESPECIALISTA"));
-
-        if (esCliente && clienteRepository != null) {
-            clienteRepository.findByUsuarioId(u.getId()).ifPresentOrElse(c -> {
-                if (!Boolean.TRUE.equals(c.getActivo())) {
-                    c.setActivo(true);
-                    clienteRepository.save(c);
-                }
-            }, () -> {
-                Log.info("Auto-creando perfil de Cliente para usuario id={}", u.getId());
-                Cliente c = new Cliente();
-                c.setUsuario(u);
-                c.setActivo(true);
-                clienteRepository.save(c);
-            });
-            if (trabajadorRepository != null) {
-                trabajadorRepository.findByUsuarioId(u.getId()).ifPresent(t -> {
-                    if (Boolean.TRUE.equals(t.getActivo())) {
-                        t.setActivo(false);
-                        trabajadorRepository.save(t);
-                    }
-                });
-            }
-        } else if (esProfesional && trabajadorRepository != null) {
-            trabajadorRepository.findByUsuarioId(u.getId()).ifPresentOrElse(t -> {
-                if (!Boolean.TRUE.equals(t.getActivo())) {
-                    t.setActivo(true);
-                    trabajadorRepository.save(t);
-                }
-            }, () -> {
-                Log.info("Auto-creando perfil de Trabajador para usuario id={}", u.getId());
-                Trabajador t = new Trabajador();
-                t.setUsuario(u);
-                t.setCargoEspecialidad("Especialista General");
-                t.setActivo(true);
-                t.setComisionPorcentaje(BigDecimal.ZERO);
-
-                if (servicioRepository != null) {
-                    List<Servicio> servicios = servicioRepository.findByActivoTrue();
-                    t.setServicios(new HashSet<>(servicios));
-                }
-
-                Trabajador tGuardado = trabajadorRepository.save(t);
-
-                if (horarioDisponibilidadRepository != null) {
-                    for (int dia = 1; dia <= 5; dia++) {
-                        HorarioDisponibilidad h = new HorarioDisponibilidad();
-                        h.setTrabajador(tGuardado);
-                        h.setDiaSemana(dia);
-                        h.setHoraInicio(LocalTime.of(9, 0));
-                        h.setHoraFin(LocalTime.of(18, 0));
-                        h.setHoraInicioDescanso(LocalTime.of(13, 0));
-                        h.setHoraFinDescanso(LocalTime.of(14, 0));
-                        h.setActivo(true);
-                        horarioDisponibilidadRepository.save(h);
-                    }
-                }
-            });
-        } else {
-            if (trabajadorRepository != null) {
-                trabajadorRepository.findByUsuarioId(u.getId()).ifPresent(t -> {
-                    if (Boolean.TRUE.equals(t.getActivo())) {
-                        t.setActivo(false);
-                        trabajadorRepository.save(t);
-                    }
-                });
-            }
+    public UsuarioDTO desactivar(Long id, String motivo) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado: " + id));
+        String motivoLimpio = motivo == null ? "" : motivo.trim();
+        if (motivoLimpio.isBlank()) {
+            throw new IllegalArgumentException("Debes indicar el motivo de desactivación");
         }
+        usuario.setEstado(Usuario.ESTADO_DESACTIVADO);
+        usuario.setMotivoDesactivacion(motivoLimpio);
+        Usuario guardado = usuarioRepository.save(usuario);
+        Log.info("Usuario id={} desactivado; se conservaron perfiles y registros asociados", id);
+        return toDTO(guardado);
     }
 
-    public void eliminar(Long id) {
-        Log.info("Eliminando Usuario id={}", id);
-        if (!usuarioRepository.existsById(id)) {
-            throw new RecursoNoEncontradoException("Usuario no encontrado: " + id);
-        }
-        if (clienteRepository != null) {
-            clienteRepository.findByUsuarioId(id).ifPresent(c -> {
-                Log.info("Eliminando perfil de cliente asociado al usuario id={}", id);
-                if (citaRepository != null) {
-                    citaRepository.deleteAll(citaRepository.findByClienteId(c.getId()));
-                }
-                clienteRepository.delete(c);
-            });
-        }
-        if (trabajadorRepository != null) {
-            trabajadorRepository.findByUsuarioId(id).ifPresent(t -> {
-                Log.info("Eliminando perfil de trabajador asociado al usuario id={}", id);
-                if (citaRepository != null) {
-                    citaRepository.deleteAll(citaRepository.findByTrabajadorId(t.getId()));
-                }
-                if (horarioDisponibilidadRepository != null) {
-                    horarioDisponibilidadRepository.deleteAll(horarioDisponibilidadRepository.findByTrabajadorId(t.getId()));
-                }
-                if (t.getServicios() != null) {
-                    t.getServicios().clear();
-                }
-                trabajadorRepository.delete(t);
-            });
-        }
-        usuarioRepository.deleteById(id);
-        Log.info("Usuario id={} eliminado", id);
+    public UsuarioDTO activar(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado: " + id));
+        usuario.setEstado(Usuario.ESTADO_ACTIVO);
+        usuario.setMotivoDesactivacion(null);
+        Usuario guardado = usuarioRepository.save(usuario);
+        Log.info("Usuario id={} reactivado", id);
+        return toDTO(guardado);
     }
 
     private UsuarioDTO toDTO(Usuario u) {
@@ -270,16 +166,10 @@ public class UsuarioService {
             u.getNombre(),
             u.getApellidoP(),
             u.getCorreo(),
-            tipoDTO
+            tipoDTO,
+            u.getEstado(),
+            u.getMotivoDesactivacion()
         );
-    }
-
-    public List<String> validarUsuarioManual(UsuarioCreateDTO dto){
-        List<String> errores = new ArrayList<>();
-        if(usuarioRepository.existsByCorreoIgnoreCase(dto.getCorreo())){
-            errores.add("el correo ya esta registrado");
-        }
-        return errores;
     }
 
 }

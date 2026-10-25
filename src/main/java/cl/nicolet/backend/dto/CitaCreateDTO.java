@@ -1,6 +1,5 @@
 package cl.nicolet.backend.dto;
 
-import cl.nicolet.backend.model.EstadoCita;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
@@ -28,9 +27,6 @@ public class CitaCreateDTO {
     @Schema(description = "Notas adicionales ingresadas por el cliente", example = "Primera sesión")
     private String notasCliente;
 
-    @Schema(description = "Estado inicial de la cita (opcional, por defecto CONFIRMADA)", example = "PENDIENTE")
-    private EstadoCita estado;
-
     public CitaCreateDTO() {
     }
 
@@ -40,15 +36,6 @@ public class CitaCreateDTO {
         this.servicioId = servicioId;
         this.fechaHoraInicio = fechaHoraInicio;
         this.notasCliente = notasCliente;
-    }
-
-    public CitaCreateDTO(Long clienteId, Long trabajadorId, Long servicioId, LocalDateTime fechaHoraInicio, String notasCliente, EstadoCita estado) {
-        this.clienteId = clienteId;
-        this.trabajadorId = trabajadorId;
-        this.servicioId = servicioId;
-        this.fechaHoraInicio = fechaHoraInicio;
-        this.notasCliente = notasCliente;
-        this.estado = estado;
     }
 
     public Long getClienteId() {
@@ -91,14 +78,6 @@ public class CitaCreateDTO {
         this.notasCliente = notasCliente;
     }
 
-    public EstadoCita getEstado() {
-        return estado;
-    }
-
-    public void setEstado(EstadoCita estado) {
-        this.estado = estado;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -107,12 +86,11 @@ public class CitaCreateDTO {
                 && Objects.equals(trabajadorId, that.trabajadorId)
                 && Objects.equals(servicioId, that.servicioId)
                 && Objects.equals(fechaHoraInicio, that.fechaHoraInicio)
-                && Objects.equals(notasCliente, that.notasCliente)
-                && estado == that.estado;
+                && Objects.equals(notasCliente, that.notasCliente);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clienteId, trabajadorId, servicioId, fechaHoraInicio, notasCliente, estado);
+        return Objects.hash(clienteId, trabajadorId, servicioId, fechaHoraInicio, notasCliente);
     }
 }

@@ -2,110 +2,94 @@ package cl.nicolet.backend.security;
 
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
 public class LoginAttemptService {
 
     public static final int MAX_ATTEMPTS = 5;
     public static final long BLOCK_DURATION_MS = 15 * 60 * 1000;
+    private static final int MAX_TRACKED_KEYS = 10_000;
 
-    public static final Set<String> TEST_ADMIN_EMAILS = Set.of(
-            "admin.test@nicolet.cl",
-            "admin@nicolet.cl"
-    );
+    private static final class AttemptInfo {
+        private int attempts;
+        private long lastAttemptTime;
 
-    public static boolean isTestAdmin(String email) {
-        if (email == null) return false;
-        return TEST_ADMIN_EMAILS.contains(email.toLowerCase().trim());
-    }
-
-    public static boolean isLoopbackAddress(String ip) {
-        if (ip == null) return false;
-        String trimmed = ip.trim();
-        return "127.0.0.1".equals(trimmed) || "0:0:0:0:0:0:0:1".equals(trimmed) || "::1".equals(trimmed) || "localhost".equalsIgnoreCase(trimmed);
-    }
-
-    private static class AttemptInfo {
-        final int attempts;
-        final long lastAttemptTime;
-
-        AttemptInfo(int attempts, long lastAttemptTime) {
+        private AttemptInfo(int attempts, long lastAttemptTime) {
             this.attempts = attempts;
             this.lastAttemptTime = lastAttemptTime;
         }
     }
 
-    private final ConcurrentHashMap<String, AttemptInfo> attemptsCache = new ConcurrentHashMap<>();
+    // LRU cap prevents arbitrary emails/IPs from growing this process-local store without limit.
+    private final LinkedHashMap<String, AttemptInfo> attemptsCache = new LinkedHashMap<>(256, 0.75f, true);
 
-    public void loginSucceeded(String key) {
-        if (key != null && !key.isBlank()) {
-            attemptsCache.remove(key.toLowerCase().trim());
+    public synchronized void loginSucceeded(String key) {
+        String normalizedKey = normalize(key);
+        if (normalizedKey != null) {
+            attemptsCache.remove(normalizedKey);
         }
     }
 
-    public void loginFailed(String key) {
-        if (key == null || key.isBlank()) return;
-        String normalizedKey = key.toLowerCase().trim();
-
-        if (isTestAdmin(normalizedKey) || isLoopbackAddress(normalizedKey)) {
-            return;
-        }
+    public synchronized void loginFailed(String key) {
+        String normalizedKey = normalize(key);
+        if (normalizedKey == null) return;
 
         long now = System.currentTimeMillis();
-        attemptsCache.compute(normalizedKey, (k, info) -> {
-            if (info == null || (now - info.lastAttemptTime) > BLOCK_DURATION_MS) {
-                return new AttemptInfo(1, now);
-            } else {
-                return new AttemptInfo(info.attempts + 1, now);
-            }
-        });
+        AttemptInfo info = attemptsCache.get(normalizedKey);
+        if (info == null || isExpired(info, now)) {
+            attemptsCache.put(normalizedKey, new AttemptInfo(1, now));
+        } else {
+            info.attempts++;
+            info.lastAttemptTime = now;
+        }
+
+        while (attemptsCache.size() > MAX_TRACKED_KEYS) {
+            Iterator<Map.Entry<String, AttemptInfo>> oldest = attemptsCache.entrySet().iterator();
+            if (!oldest.hasNext()) break;
+            oldest.next();
+            oldest.remove();
+        }
     }
 
-    public boolean isBlocked(String key) {
-        if (key == null || key.isBlank()) return false;
-        String normalizedKey = key.toLowerCase().trim();
-
-        if (isTestAdmin(normalizedKey) || isLoopbackAddress(normalizedKey)) {
-            return false;
-        }
+    public synchronized boolean isBlocked(String key) {
+        String normalizedKey = normalize(key);
+        if (normalizedKey == null) return false;
 
         AttemptInfo info = attemptsCache.get(normalizedKey);
-        if (info == null) {
-            return false;
-        }
-
-        long now = System.currentTimeMillis();
-        if ((now - info.lastAttemptTime) > BLOCK_DURATION_MS) {
+        if (info == null) return false;
+        if (isExpired(info, System.currentTimeMillis())) {
             attemptsCache.remove(normalizedKey);
             return false;
         }
-
         return info.attempts >= MAX_ATTEMPTS;
     }
 
-    public int getRemainingAttempts(String key) {
-        if (key == null || key.isBlank()) return MAX_ATTEMPTS;
-        String normalizedKey = key.toLowerCase().trim();
-
-        if (isTestAdmin(normalizedKey)) {
-            return MAX_ATTEMPTS;
-        }
+    public synchronized int getRemainingAttempts(String key) {
+        String normalizedKey = normalize(key);
+        if (normalizedKey == null) return MAX_ATTEMPTS;
 
         AttemptInfo info = attemptsCache.get(normalizedKey);
         if (info == null) return MAX_ATTEMPTS;
-
-        long now = System.currentTimeMillis();
-        if ((now - info.lastAttemptTime) > BLOCK_DURATION_MS) {
+        if (isExpired(info, System.currentTimeMillis())) {
             attemptsCache.remove(normalizedKey);
             return MAX_ATTEMPTS;
         }
-
         return Math.max(0, MAX_ATTEMPTS - info.attempts);
     }
 
-    public void reset() {
+    public synchronized void reset() {
         attemptsCache.clear();
+    }
+
+    private String normalize(String key) {
+        if (key == null || key.isBlank()) return null;
+        return key.trim().toLowerCase();
+    }
+
+    private boolean isExpired(AttemptInfo info, long now) {
+        return now - info.lastAttemptTime > BLOCK_DURATION_MS;
     }
 }

@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            log.error("No se pudo establecer la autenticación del usuario en el contexto de seguridad: {}", e.getMessage());
+            log.warn("No se pudo autenticar la solicitud con bearer token ({}).", e.getClass().getSimpleName());
         }
 
         filterChain.doFilter(request, response);

@@ -20,6 +20,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String correo) throws UsernameNotFoundException {
         Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(correo)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con correo: " + correo));
+        if (usuario.getEstado() != Usuario.ESTADO_ACTIVO) {
+            throw new UsernameNotFoundException("Credenciales inválidas");
+        }
 
         return UserDetailsImpl.build(usuario);
     }

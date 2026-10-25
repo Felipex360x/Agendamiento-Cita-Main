@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  // Do not expose stale legacy HTML/JS from public/; the application is React-only.
+  publicDir: false,
   test: {
     globals: true,
     environment: 'jsdom',

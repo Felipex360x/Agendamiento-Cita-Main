@@ -11,6 +11,16 @@ function Stop-LaunchedProcessTree {
 }
 
 try {
+    # Defaults for the local MySQL service defined in docker-compose.yml.
+    if ([string]::IsNullOrWhiteSpace($env:DB_USERNAME)) { $env:DB_USERNAME = 'desarrollador' }
+    if ([string]::IsNullOrWhiteSpace($env:DB_PASSWORD)) { $env:DB_PASSWORD = 'password_seguro_123' }
+    if ([string]::IsNullOrWhiteSpace($env:JWT_SECRET)) {
+        $jwtBytes = New-Object byte[] 32
+        $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+        try { $rng.GetBytes($jwtBytes) } finally { $rng.Dispose() }
+        $env:JWT_SECRET = [Convert]::ToBase64String($jwtBytes)
+    }
+
     if (-not (Test-Path (Join-Path $frontendRoot 'node_modules\vite\bin\vite.js'))) {
         throw 'Faltan dependencias de React. Ejecuta npm install dentro de frontend.'
     }
@@ -30,6 +40,16 @@ try {
         Push-Location $projectRoot
         try { & docker.exe compose up -d mysql_usuario; if ($LASTEXITCODE -ne 0) { throw 'No se pudo iniciar MySQL. Revisa Docker Desktop.' } }
         finally { Pop-Location }
+
+        $dbReady = $false
+        for ($attempt = 0; $attempt -lt 60; $attempt++) {
+            if (Test-NetConnection 127.0.0.1 -Port 3306 -InformationLevel Quiet) {
+                $dbReady = $true
+                break
+            }
+            Start-Sleep -Seconds 1
+        }
+        if (-not $dbReady) { throw 'MySQL no quedo disponible en el puerto 3306. Revisa el estado del contenedor.' }
     }
 
     $cancelHandler = [ConsoleCancelEventHandler]{ param($sender, $eventArgs) $eventArgs.Cancel = $true; $script:stopRequested = $true }
