@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { AuthProvider } from '../auth/AuthContext.jsx';
 import App from '../App.jsx';
 import WorkerPortalPage from '../pages/WorkerPortalPage.jsx';
@@ -14,6 +14,7 @@ import AdminDiagnosticsPage from '../pages/AdminDiagnosticsPage.jsx';
 import BookingPage from '../pages/BookingPage.jsx';
 import ClientProfilePage from '../pages/ClientProfilePage.jsx';
 import { HomePage, LoginPage, ServicesPage, TeamPage } from '../pages/PublicPages.jsx';
+import { SiteHeader } from '../pages/SiteShell.jsx';
 
 describe('Renderizado de Páginas y Enrutamiento React', () => {
   beforeEach(() => {
@@ -31,6 +32,18 @@ describe('Renderizado de Páginas y Enrutamiento React', () => {
 
   it('debe renderizar HomePage sin errores', () => {
     expect(() => render(<AuthProvider><HomePage /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe abrir y cerrar el menú de navegación móvil', () => {
+    render(<AuthProvider><SiteHeader /></AuthProvider>);
+
+    const toggle = screen.getByRole('button', { name: 'Abrir menú' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: 'Cerrar menú' })).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(screen.getByRole('link', { name: 'Servicios' }));
+    expect(screen.getByRole('button', { name: 'Abrir menú' })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('debe renderizar LoginPage sin errores', () => {
