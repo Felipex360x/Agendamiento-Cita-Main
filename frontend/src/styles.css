@@ -1751,24 +1751,6 @@ input:focus, select:focus, textarea:focus {
   color: #8f6749;
 }
 
-.admin-bar-item { margin: 16px 0; }
-.admin-bar-item > div, .admin-list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.admin-bar-item i {
-  display: block;
-  height: 8px;
-  margin-top: 8px;
-  border-radius: 8px;
-  background: #b18a68;
-}
-.admin-list-row {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
-}
 
 .admin-client-layout {
   display: grid;

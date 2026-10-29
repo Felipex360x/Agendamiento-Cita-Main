@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
+import { computeDashboard } from './dashboardStats.js';
+import { DashboardSkeleton, KpiCard, PeriodFilter, RankingList, RevenueChart, StatusBreakdown, formatMoney } from './DashboardWidgets.jsx';
 
 const asDate = (value) => value ? new Date(`${value.slice(0, 10)}T12:00:00`) : null;
 const dateKey = (value) => value instanceof Date ? `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}` : '';
@@ -60,37 +62,63 @@ export function StaffAgendaPage() {
 export function StaffDashboardPage() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
-  const [workers, setWorkers] = useState([]);
-  const [services, setServices] = useState([]);
+  const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
     if (!user?.rol?.toUpperCase().includes('ADMIN')) { setLoading(false); return undefined; }
     let active = true;
-    Promise.all([api.citas(), api.trabajadores(), api.servicios()])
-      .then(([allAppointments, allWorkers, allServices]) => {
-        if (!active) return;
-        setAppointments(allAppointments || []);
-        setWorkers(allWorkers || []);
-        setServices(allServices || []);
-      })
+    setLoading(true);
+    setError('');
+    api.citas()
+      .then((list) => { if (active) setAppointments(list || []); })
       .catch((requestError) => { if (active) setError(requestError.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [user?.id, user?.rol]);
 
-  const confirmed = appointments.filter((appointment) => ['CONFIRMADA', 'COMPLETADA'].includes(appointment.estado));
-  const revenue = confirmed.reduce((total, appointment) => total + Number(appointment.precioFinal || 0), 0);
-  const serviceCounts = services.map((service) => ({ name: service.nombre, count: confirmed.filter((appointment) => appointment.servicio?.id === service.id).length })).sort((a, b) => b.count - a.count);
-  const workerCounts = workers.map((worker) => ({ name: personName(worker), count: confirmed.filter((appointment) => appointment.trabajador?.id === worker.id).length })).sort((a, b) => b.count - a.count);
+  const stats = useMemo(() => computeDashboard(appointments, { days }), [appointments, days]);
+  const { kpis } = stats;
+  const periodText = days ? `Últimos ${days} días` : 'Todo el historial';
+  const recent = useMemo(() => appointments.slice().sort((a, b) => (b.fechaHoraInicio || '').localeCompare(a.fechaHoraInicio || '')).slice(0, 8), [appointments]);
 
   return <AdminShell title="Resumen del estudio" active="/dashboard" roles={['ADMINISTRADOR']}>
     <RequestMessage error={error} />
-    {loading ? <p className="admin-empty" role="status">Cargando resumen…</p> : <>
-      <div className="admin-metrics"><article><small>Citas registradas</small><strong>{appointments.length}</strong></article><article><small>Clientas atendidas</small><strong>{new Set(confirmed.map((appointment) => appointment.cliente?.id)).size}</strong></article><article><small>Ventas registradas</small><strong>{new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(revenue)}</strong></article></div>
-      <div className="admin-two-column"><section className="admin-panel"><h2>Atenciones por profesional</h2>{workerCounts.map((item) => <div key={item.name} className="admin-bar-item"><div><span>{item.name}</span><strong>{item.count}</strong></div><i style={{ width: `${Math.max(4, item.count / Math.max(1, workerCounts[0]?.count || 1) * 100)}%` }} /></div>)}</section><section className="admin-panel"><h2>Servicios más elegidos</h2>{serviceCounts.map((item) => <div key={item.name} className="admin-list-row"><span>{item.name}</span><strong>{item.count}</strong></div>)}</section></div>
-      <section className="admin-panel"><h2>Últimas reservas</h2><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Clienta</th><th>Servicio</th><th>Profesional</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>{appointments.slice().sort((a, b) => b.fechaHoraInicio.localeCompare(a.fechaHoraInicio)).slice(0, 30).map((appointment) => <tr key={appointment.id}><td>{personName(appointment.cliente)}</td><td>{appointment.servicio?.nombre}</td><td>{personName(appointment.trabajador)}</td><td>{appointment.fechaHoraInicio?.replace('T', ' ').slice(0, 16)}</td><td><span className={`admin-status ${appointment.estado?.toLowerCase()}`}>{appointment.estado}</span></td></tr>)}</tbody></table></div></section>
-    </>}
+    {loading ? <DashboardSkeleton /> : !error && <div className="dash">
+      <div className="dash-toolbar">
+        <p>{periodText} · {asDate(stats.range.start)?.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })} – {asDate(stats.range.end)?.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+        <PeriodFilter days={days} onChange={setDays} />
+      </div>
+      <div className="dash-kpis">
+        <KpiCard label="Ingresos" value={formatMoney(kpis.revenue.value)} change={kpis.revenue.change} series={kpis.revenue.series} hint="Solo citas completadas" />
+        <KpiCard label="Citas" value={kpis.appointments.value} change={kpis.appointments.change} series={kpis.appointments.series} hint="Todas las agendadas en el período" />
+        <KpiCard label="Clientas atendidas" value={kpis.clients.value} change={kpis.clients.change} series={kpis.clients.series} hint="Clientas únicas con cita completada" />
+        <KpiCard label="Tasa de cancelación" value={`${String(kpis.cancelRate.value).replace('.', ',')}%`} change={kpis.cancelRate.change} unit="pp" worseWhenUp series={kpis.cancelRate.series} hint="Canceladas sobre el total de citas" />
+      </div>
+      <section className="admin-panel dash-panel">
+        <header className="dash-panel-head"><h2>Ingresos</h2><span>por {stats.granularity === 'day' ? 'día' : stats.granularity === 'week' ? 'semana' : 'mes'}</span></header>
+        <RevenueChart timeline={stats.timeline} granularity={stats.granularity} />
+      </section>
+      <div className="dash-grid-2">
+        <section className="admin-panel dash-panel"><header className="dash-panel-head"><h2>Estado de las citas</h2><span>{stats.total} en total</span></header><StatusBreakdown statuses={stats.statuses} total={stats.total} /></section>
+        <section className="admin-panel dash-panel">
+          <header className="dash-panel-head"><h2>Hoy y mañana</h2><span>{stats.upcoming.length} {stats.upcoming.length === 1 ? 'cita' : 'citas'}</span></header>
+          {stats.upcoming.length ? <ul className="dash-agenda">{stats.upcoming.map((appointment) => <li key={appointment.id}>
+            <time dateTime={appointment.fechaHoraInicio}><strong>{appointment.fechaHoraInicio.slice(11, 16)}</strong><small>{appointment.fechaHoraInicio.slice(0, 10) === dateKey(new Date()) ? 'Hoy' : 'Mañana'}</small></time>
+            <div><span>{personName(appointment.cliente)}</span><small>{appointment.servicio?.nombre || '—'} · {personName(appointment.trabajador)}</small></div>
+            <span className={`admin-status ${appointment.estado?.toLowerCase()}`}>{appointment.estado?.replace('_', ' ')}</span>
+          </li>)}</ul> : <p className="admin-empty">No hay citas para hoy ni mañana.</p>}
+        </section>
+      </div>
+      <div className="dash-grid-2">
+        <section className="admin-panel dash-panel"><header className="dash-panel-head"><h2>Profesionales</h2><span>citas e ingresos</span></header><RankingList items={stats.byWorker} /></section>
+        <section className="admin-panel dash-panel"><header className="dash-panel-head"><h2>Servicios más elegidos</h2><span>citas e ingresos</span></header><RankingList items={stats.byService} /></section>
+      </div>
+      <section className="admin-panel dash-panel">
+        <header className="dash-panel-head"><h2>Últimas reservas</h2><a href="/admin/citas">Ver todas →</a></header>
+        {recent.length ? <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Clienta</th><th>Servicio</th><th>Profesional</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>{recent.map((appointment) => <tr key={appointment.id}><td>{personName(appointment.cliente)}</td><td>{appointment.servicio?.nombre}</td><td>{personName(appointment.trabajador)}</td><td>{appointment.fechaHoraInicio?.replace('T', ' ').slice(0, 16)}</td><td><span className={`admin-status ${appointment.estado?.toLowerCase()}`}>{appointment.estado?.replace('_', ' ')}</span></td></tr>)}</tbody></table></div> : <p className="admin-empty">Aún no hay reservas registradas.</p>}
+      </section>
+    </div>}
   </AdminShell>;
 }
 
