@@ -33,7 +33,7 @@ public class UsuarioService {
 
 
 
-    @Autowired(required = false)
+    @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -67,13 +67,7 @@ public class UsuarioService {
         if (pass == null || pass.isBlank()) {
             throw new IllegalArgumentException("La contraseña es obligatoria para registrar un nuevo usuario");
         }
-        if (pass.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
-            throw new IllegalArgumentException("la contraseña no puede exceder los 72 caracteres");
-        }
-        if (passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$")) {
-            pass = passwordEncoder.encode(pass);
-        }
-        u.setPassword(pass);
+        u.setPassword(codificarPassword(pass));
 
         if (dto.getTipoUsuarioId() != null && tipoUsuarioRepository != null) {
             TipoUsuario tipo = tipoUsuarioRepository.findById(dto.getTipoUsuarioId())
@@ -91,6 +85,17 @@ public class UsuarioService {
         return toDTO(guardar);
     }
 
+    /**
+     * Toda contraseña recibida por la API es texto de entrada y se codifica siempre, aunque empiece por
+     * "$2a$"/"$2b$". El límite de BCrypt (72 bytes UTF-8) se valida antes de codificar.
+     */
+    private String codificarPassword(String entrada) {
+        if (entrada.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new IllegalArgumentException("la contraseña no puede exceder los 72 bytes (UTF-8)");
+        }
+        return passwordEncoder.encode(entrada);
+    }
+
     public UsuarioDTO actualizar(Long id, UsuarioCreateDTO dto){
         Log.info("actualizando usuario id={}", id);
         Usuario u = usuarioRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado: " + id));
@@ -105,24 +110,21 @@ public class UsuarioService {
         u.setCorreo(nuevoCorreo);
 
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            String pass = dto.getPassword();
-            if (pass.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
-                throw new IllegalArgumentException("la contraseña no puede exceder los 72 caracteres");
-            }
-            if (passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$")) {
-                pass = passwordEncoder.encode(pass);
-            }
-            u.setPassword(pass);
+            u.setPassword(codificarPassword(dto.getPassword()));
         }
 
         if (dto.getTipoUsuarioId() != null && tipoUsuarioRepository != null) {
             TipoUsuario tipo = tipoUsuarioRepository.findById(dto.getTipoUsuarioId())
                     .orElseThrow(() -> new RecursoNoEncontradoException("Tipo de usuario no encontrado: " + dto.getTipoUsuarioId()));
             u.setTipoUsuario(tipo);
+        } else if (dto.isTipoUsuarioIdInformado()) {
+            // tipoUsuarioId enviado explícitamente como null: retirada de rol ("Sin rol").
+            // Omitir el campo deja el rol sin cambios.
+            u.setTipoUsuario(null);
         }
 
         Usuario guardado = usuarioRepository.save(u);
-        if (guardado.getTipoUsuario() != null) {
+        if (guardado.getTipoUsuario() != null || dto.isTipoUsuarioIdInformado()) {
             perfilUsuarioService.sincronizarPerfil(guardado);
         }
         return toDTO(guardado);

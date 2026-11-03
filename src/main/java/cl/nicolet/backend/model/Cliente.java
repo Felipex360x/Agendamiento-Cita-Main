@@ -24,9 +24,10 @@ public class Cliente {
     @JoinColumn(name = "usuario_id", nullable = false, unique = true)
     private Usuario usuario;
 
+    @Column(length = 20)
     private String telefono;
 
-    @Column(name = "rut_dni", unique = true)
+    @Column(name = "rut_dni", unique = true, length = 20)
     private String rutDni;
 
     @Column(name = "fecha_nacimiento")

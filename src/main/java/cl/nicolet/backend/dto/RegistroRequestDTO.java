@@ -11,15 +11,18 @@ public class RegistroRequestDTO {
 
     @Schema(description = "Nombre del usuario", example = "Valentina")
     @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
     private String nombre;
 
     @Schema(description = "Apellido paterno del usuario", example = "Pérez")
     @NotBlank(message = "El apellido paterno es obligatorio")
+    @Size(max = 100, message = "El apellido no puede exceder los 100 caracteres")
     private String apellidoP;
 
     @Schema(description = "Correo electrónico único", example = "valentina.perez@gmail.com")
     @NotBlank(message = "El correo electrónico es obligatorio")
     @Email(message = "Formato de correo electrónico inválido")
+    @Size(max = 150, message = "El correo electrónico no puede exceder los 150 caracteres")
     private String correo;
 
     @Schema(description = "Contraseña de la cuenta (máximo 72 caracteres)", example = "ClaveSegura123!")
@@ -28,6 +31,7 @@ public class RegistroRequestDTO {
     private String password;
 
     @Schema(description = "Teléfono de contacto opcional", example = "+56912345678")
+    @Size(max = 20, message = "El teléfono no puede exceder los 20 caracteres")
     private String telefono;
 
     public RegistroRequestDTO() {

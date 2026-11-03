@@ -1,5 +1,13 @@
 package cl.nicolet.backend.dto;
 
+import jakarta.validation.constraints.Digits;
+
+import jakarta.validation.constraints.DecimalMax;
+
+import jakarta.validation.constraints.DecimalMin;
+
+import jakarta.validation.constraints.Size;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,19 +23,26 @@ public class TrabajadorCreateDTO {
     private Long usuarioId;
 
     @Schema(description = "RUT o DNI", example = "18234567-8")
+    @Size(max = 20, message = "El RUT/DNI no puede exceder los 20 caracteres")
     private String rutDni;
 
     @Schema(description = "Teléfono de contacto", example = "+56987654321")
+    @Size(max = 20, message = "El teléfono no puede exceder los 20 caracteres")
     private String telefono;
 
     @Schema(description = "Especialidad o cargo", example = "Especialista en Estilismo y Manicura")
     @NotBlank(message = "La especialidad o cargo es obligatorio")
+    @Size(max = 100, message = "La especialidad no puede exceder los 100 caracteres")
     private String cargoEspecialidad;
 
     @Schema(description = "Biografía o presentación", example = "5 años de experiencia en estética")
+    @Size(max = 2000, message = "La biografía no puede exceder los 2000 caracteres")
     private String biografia;
 
     @Schema(description = "Porcentaje de comisión", example = "30.00")
+    @DecimalMin(value = "0.00", message = "La comisión no puede ser negativa")
+    @DecimalMax(value = "100.00", message = "La comisión no puede superar el 100%")
+    @Digits(integer = 3, fraction = 2, message = "La comisión admite hasta 2 decimales")
     private BigDecimal comisionPorcentaje;
 
     @Schema(description = "IDs de servicios que atiende", example = "[1, 2]")

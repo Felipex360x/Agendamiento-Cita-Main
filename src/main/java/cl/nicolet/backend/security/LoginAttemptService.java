@@ -54,6 +54,35 @@ public class LoginAttemptService {
         }
     }
 
+    /**
+     * Reserva atómicamente un intento para todas las claves: si alguna ya está bloqueada no consume ninguno;
+     * si no, cuenta un intento en cada una ANTES de verificar la contraseña. Así una ráfaga concurrente nunca
+     * puede iniciar más de MAX_ATTEMPTS verificaciones (a diferencia de «comprobar y luego incrementar»).
+     * Un login correcto debe llamar a {@link #loginSucceeded} (cuenta) y {@link #release} (IP).
+     */
+    public synchronized boolean tryAcquire(String... keys) {
+        for (String key : keys) {
+            if (isBlocked(key)) return false;
+        }
+        for (String key : keys) {
+            loginFailed(key); // registra el intento reservado
+        }
+        return true;
+    }
+
+    /** Devuelve un intento reservado (login correcto o error interno que no es un fallo de credenciales). */
+    public synchronized void release(String key) {
+        String normalizedKey = normalize(key);
+        if (normalizedKey == null) return;
+        AttemptInfo info = attemptsCache.get(normalizedKey);
+        if (info == null) return;
+        if (info.attempts <= 1) {
+            attemptsCache.remove(normalizedKey);
+        } else {
+            info.attempts--;
+        }
+    }
+
     public synchronized boolean isBlocked(String key) {
         String normalizedKey = normalize(key);
         if (normalizedKey == null) return false;

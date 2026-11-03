@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import DaySelector, { localDateValue } from '../components/DaySelector.jsx';
+import { businessNowTime } from '../dates.js';
 import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
 
-const localTime = () => {
-  const date = new Date();
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-};
+const localTime = () => businessNowTime();
 
 export default function AdminAppointmentsPage() {
   const [appointments, setAppointments] = useState([]);

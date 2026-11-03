@@ -1,3 +1,4 @@
+import { getSafeRedirect as sharedSafeRedirect } from '../routes.js';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { api } from '../api/client.js';
@@ -102,18 +103,7 @@ function defaultRouteForRole(role) {
 
 function getSafeRedirect(fallback = null) {
   const requested = new URLSearchParams(window.location.search).get('redirect');
-  if (!requested || /^(?:[a-z0-9+.-]+:|\/\/)/i.test(requested.trim())) return fallback;
-  const target = new URL(requested, window.location.origin);
-  const pathname = target.pathname;
-  const suffix = `${target.search}${target.hash}`;
-  const publicPages = new Set(['index.html', 'reservar.html', 'servicios.html', 'equipo.html', 'agenda.html', 'dashboard.html', 'clientas.html', 'mi-perfil.html']);
-  const adminPages = new Set(['citas.html', 'disponibilidad.html', 'historial.html', 'login.html', 'mi-horario.html', 'panel-trabajador.html', 'pruebas.html', 'reserva-cliente.html', 'servicios.html', 'usuarios.html']);
-  const clean = pathname.replace(/^\/+/, '').replace(/\/$/, '');
-  if (clean.startsWith('admin/')) {
-    return adminPages.has(clean.slice('admin/'.length)) ? `/${clean}${suffix}` : fallback;
-  }
-  if (publicPages.has(clean)) return `/${clean}${suffix}`;
-  return adminPages.has(clean) ? `/admin/${clean}${suffix}` : fallback;
+  return sharedSafeRedirect(requested, window.location.origin, fallback);
 }
 
 export function LoginPage() {
