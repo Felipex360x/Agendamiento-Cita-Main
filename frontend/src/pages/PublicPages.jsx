@@ -59,12 +59,12 @@ function CatalogState({ loading, error, empty, children }) {
 
 export function HomePage() {
   const { items, loading, error } = useCatalog('services');
-  useEffect(() => { document.title = 'Nicolett Studio Fantasy'; }, []);
+  useEffect(() => { document.title = 'Nicolett Studio Fantasy: Belleza a tu ritmo y sin barreras'; }, []);
 
   return <><SiteHeader active="inicio" /><main>
     <section className="site-hero">
       <img src={salonImage} alt="Interior de Nicolett Studio Fantasy" />
-      <div className="site-hero-copy"><p className="site-eyebrow">Belleza a tu ritmo y sin barreras</p><h1>Nicolett Studio Fantasy, <em>tu esencia.</em></h1><p>Más que un salón, un espacio para reconectar contigo. Realzamos tu belleza con dedicación, estilo y un cuidado que se siente.</p><div className="site-hero-actions"><a className="site-button" href="/reservar">Reserva tu momento</a><a className="site-button site-button-outline" href="/servicios">Explorar servicios</a></div></div>
+      <div className="site-hero-copy"><p className="site-eyebrow">Belleza a tu ritmo y sin barreras</p><h1>Nicolett Studio Fantasy</h1><p>Más que un salón, un espacio para reconectar contigo. Realzamos tu belleza con dedicación, estilo y un cuidado que se siente.</p><div className="site-hero-actions"><a className="site-button" href="/reservar">Reserva tu momento</a><a className="site-button site-button-outline" href="/servicios">Explorar servicios</a></div></div>
     </section>
     <section className="site-benefits"><div><strong>Belleza a tu medida</strong><span>Cada detalle pensado para ti</span></div><div><strong>Manos expertas, cuidado real</strong><span>Especialistas que escuchan y acompañan</span></div><div><strong>Tu hora, asegurada</strong><span>Reserva en unos pocos pasos</span></div></section>
     <section className="site-section"><div className="site-section-heading"><div><p className="site-eyebrow">Nuestros servicios</p><h2>Elige cómo quieres brillar</h2></div><a href="/servicios">Ver todos →</a></div><CatalogState loading={loading} error={error} empty={!items.length}><ServiceCards services={items.slice(0, 3)} /></CatalogState></section>

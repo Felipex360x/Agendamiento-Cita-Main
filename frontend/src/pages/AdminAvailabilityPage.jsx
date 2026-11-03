@@ -45,7 +45,7 @@ export default function AdminAvailabilityPage() {
     <RequestMessage error={error} />
     <section className="admin-panel"><h2>Consultar agenda</h2><form className="admin-form-grid" onSubmit={search}>
       <label>Profesional<select required value={workerId} onChange={(event) => setWorkerId(event.target.value)}><option value="">Seleccionar</option>{workers.map((item) => <option key={item.id} value={item.id}>{personName(item)}</option>)}</select></label>
-      <DaySelector label="Fecha" value={date} onChange={selectDate} minDate={localDateValue()} />
+      <div className="admin-date-selector"><DaySelector label="Fecha" value={date} onChange={selectDate} minDate={localDateValue()} /></div>
       <label>Servicio<select value={serviceId} onChange={(event) => setServiceId(event.target.value)}><option value="">Duración predeterminada</option>{services.map((item) => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select></label>
       <button className="site-button" type="submit" disabled={catalogLoading || loading}>{loading ? 'Consultando…' : 'Ver disponibilidad'}</button>
     </form></section>

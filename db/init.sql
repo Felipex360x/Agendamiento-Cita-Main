@@ -153,10 +153,10 @@ ON DUPLICATE KEY UPDATE
 INSERT INTO usuario (id, nombre, apellidop, correo, password, tipo_usuario_id) VALUES
 (1, 'Maximo', 'Rojas', 'maximo.rojas@estudio.cl', '$2a$10$LLC9MYDORke3rHMe0Kgtw.N5SWYIvxJ6sTcLdOe07QqaBF7JY4I.O', 1),
 (2, 'Martina', 'Contreras', 'martina.contreras@gmail.com', '$2a$10$ESfiyf6jPxhbBftsI7L30eB.b4OQ4lGu..T/uUkEgcFSb/5FPvc6i', 2),
-(3, 'Nicolet', 'Estudio', 'contacto@nicollet.cl', '$2a$10$zbOC5t69a3Tyqq6EitBxeeJGmJs7EBmKrMpdjuAQ3Ls5UeSK8SbQy', 1),
+(3, 'Nicolett', 'Estudio', 'contacto@nicollet.cl', '$2a$10$zbOC5t69a3Tyqq6EitBxeeJGmJs7EBmKrMpdjuAQ3Ls5UeSK8SbQy', 1),
 (4, 'Camila', 'Silva', 'camila.silva@estudio.cl', '$2a$10$v5QuFdt0FTdUeIqz.DBrAeW7lKkyRC9bIX9soDwDoJqj7tnt8XNKC', 3),
 (5, 'Admin', 'Test', 'admin.test@nicolet.cl', '$2a$10$qY.A5xw1WqcwYfHMDSTske5/yminGDG6UIvqKFi.bObGEie8YUo96', 1),
-(6, 'Administrador', 'Nicolet', 'admin@nicolet.cl', '$2a$10$1GXa.ej0wxNhjxBxvS03SeQf8IuJ4fMC4EWSRZVbtL4XFZJFtrciK', 1),
+(6, 'Administrador', 'Nicolett', 'admin@nicolet.cl', '$2a$10$1GXa.ej0wxNhjxBxvS03SeQf8IuJ4fMC4EWSRZVbtL4XFZJFtrciK', 1),
 (7, 'Martina', 'Soto', 'marit@gmail.com', '$2a$10$3bdkwpatN8B8vOnDRIkZ2u0StAe4ZGK3stZ.ow.OBUvOIkGIMUc7G', 2),
 (8, 'Felipe', 'Galle', 'gale@gmail.com', '$2a$10$3bdkwpatN8B8vOnDRIkZ2u0StAe4ZGK3stZ.ow.OBUvOIkGIMUc7G', 2),
 (9, 'Prueba', 'Admin', 'prueba1235@gmail.com', '$2a$10$3bdkwpatN8B8vOnDRIkZ2u0StAe4ZGK3stZ.ow.OBUvOIkGIMUc7G', 1)
