@@ -51,4 +51,20 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
         @Param("inicio") LocalDateTime inicio,
         @Param("fin") LocalDateTime fin
     );
+
+    /** Citas no canceladas que se superponen con [inicio, fin), aunque comiencen antes del rango. */
+    @Query("SELECT c FROM Cita c WHERE c.trabajador.id = :trabajadorId " +
+           "AND c.estado <> cl.nicolet.backend.model.EstadoCita.CANCELADA " +
+           "AND c.fechaHoraInicio < :fin AND c.fechaHoraFin > :inicio ORDER BY c.fechaHoraInicio ASC")
+    List<Cita> findSolapadasConRango(
+        @Param("trabajadorId") Long trabajadorId,
+        @Param("inicio") LocalDateTime inicio,
+        @Param("fin") LocalDateTime fin
+    );
+
+    /** Citas vigentes (no canceladas ni terminadas) que aún no terminan a la fecha dada. */
+    @Query("SELECT c FROM Cita c WHERE c.trabajador.id = :trabajadorId " +
+           "AND c.estado IN (cl.nicolet.backend.model.EstadoCita.PENDIENTE, cl.nicolet.backend.model.EstadoCita.CONFIRMADA, cl.nicolet.backend.model.EstadoCita.EN_ATENCION) " +
+           "AND c.fechaHoraFin > :desde ORDER BY c.fechaHoraInicio ASC")
+    List<Cita> findVigentesDesde(@Param("trabajadorId") Long trabajadorId, @Param("desde") LocalDateTime desde);
 }

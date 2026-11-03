@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -45,8 +46,15 @@ public class DisponibilidadService {
     @Autowired
     private CitaRepository citaRepository;
 
+    @Autowired
+    private Clock clock;
+
     public List<BloqueHorarioDTO> calcularDisponibilidad(Long trabajadorId, LocalDate fecha, Long servicioId) {
         log.info("Calculando disponibilidad para trabajadorId={}, fecha={}, servicioId={}", trabajadorId, fecha, servicioId);
+
+        if (fecha.isBefore(LocalDate.now(clock))) {
+            throw new IllegalArgumentException("No se puede consultar disponibilidad de una fecha anterior a hoy");
+        }
 
         Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Trabajador no encontrado: " + trabajadorId));
@@ -64,6 +72,9 @@ public class DisponibilidadService {
             if (!Boolean.TRUE.equals(servicio.getActivo())) {
                 throw new IllegalArgumentException("El servicio seleccionado se encuentra inactivo");
             }
+            if (trabajador.getServicios().stream().noneMatch(s -> s.getId().equals(servicio.getId()))) {
+                throw new IllegalArgumentException("El profesional seleccionado no ofrece el servicio solicitado");
+            }
             duracionMinutos = servicio.getDuracionMinutos();
         }
 
@@ -80,7 +91,7 @@ public class DisponibilidadService {
 
         LocalDateTime inicioDia = fecha.atTime(horario.getHoraInicio());
         LocalDateTime finDia = fecha.atTime(horario.getHoraFin());
-        List<Cita> citasDelDia = citaRepository.findByTrabajadorAndRangoFechas(trabajadorId, inicioDia, finDia)
+        List<Cita> citasDelDia = citaRepository.findSolapadasConRango(trabajadorId, inicioDia, finDia)
                 .stream()
                 .filter(c -> c.getEstado() != EstadoCita.CANCELADA)
                 .collect(Collectors.toList());
@@ -89,8 +100,9 @@ public class DisponibilidadService {
         LocalDateTime cursorDT = fecha.atTime(horario.getHoraInicio());
         LocalDateTime limiteFinDT = fecha.atTime(horario.getHoraFin());
         int pasoMinutos = 30;
-        LocalTime ahora = LocalTime.now();
-        boolean esHoy = fecha.isEqual(LocalDate.now());
+        LocalDateTime ahoraNegocio = LocalDateTime.now(clock);
+        LocalTime ahora = ahoraNegocio.toLocalTime();
+        boolean esHoy = fecha.isEqual(ahoraNegocio.toLocalDate());
 
         while (!cursorDT.plusMinutes(duracionMinutos).isAfter(limiteFinDT)) {
             LocalDateTime slotFinDateTime = cursorDT.plusMinutes(duracionMinutos);

@@ -53,7 +53,10 @@ public class AuthController {
     private TipoUsuarioRepository tipoUsuarioRepository;
 
     @Autowired
-    private PerfilUsuarioService perfilUsuarioService;
+    private cl.nicolet.backend.service.AuthService authService;
+
+    @Autowired
+    private cl.nicolet.backend.security.ClientIpResolver clientIpResolver;
 
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
@@ -63,6 +66,9 @@ public class AuthController {
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest, HttpServletRequest request) {
         if (loginRequest.getPassword() != null && loginRequest.getPassword().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", 400, "codigo", "VALIDACION",
+                    "mensaje", "La contraseña no puede exceder los 72 caracteres",
+                    "errores", Map.of("password", "La contraseña no puede exceder los 72 caracteres"),
                     "password", "La contraseña no puede exceder los 72 caracteres"
             ));
         }
@@ -71,7 +77,9 @@ public class AuthController {
 
         String accountKey = "account:" + correo;
         String ipKey = "ip:" + clientIp;
-        if (loginAttemptService.isBlocked(accountKey) || loginAttemptService.isBlocked(ipKey)) {
+        // Reserva atómica del intento (cuenta e IP) antes de verificar la contraseña: evita que una ráfaga
+        // concurrente supere el límite. Un login correcto o un error interno devuelven la reserva.
+        if (!loginAttemptService.tryAcquire(accountKey, ipKey)) {
             log.warn("Bloqueo temporal de autenticación por intentos fallidos");
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
                     "status", HttpStatus.TOO_MANY_REQUESTS.value(),
@@ -115,10 +123,22 @@ public class AuthController {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            if (userDetails.getAuthorities().isEmpty()) {
+                // Credenciales correctas pero cuenta sin rol: no se emite token (no tendría permisos).
+                loginAttemptService.loginSucceeded(accountKey);
+                loginAttemptService.release(ipKey);
+                SecurityContextHolder.clearContext();
+                log.warn("Inicio de sesión rechazado: cuenta id={} sin rol asignado", userDetails.getId());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "status", HttpStatus.FORBIDDEN.value(),
+                        "error", "Forbidden",
+                        "mensaje", "Tu cuenta no tiene un rol asignado. Contacta al administrador."
+                ));
+            }
             String jwt = jwtUtils.generarToken(userDetails);
 
             loginAttemptService.loginSucceeded(accountKey);
-            loginAttemptService.loginSucceeded(ipKey);
+            loginAttemptService.release(ipKey); // un acierto no borra los fallos previos de esa IP
 
             String rol = userDetails.getAuthorities().stream()
                     .findFirst()
@@ -139,8 +159,7 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {
-            loginAttemptService.loginFailed(accountKey);
-            loginAttemptService.loginFailed(ipKey);
+            // El intento ya se contó en tryAcquire.
             int intentosRestantes = loginAttemptService.getRemainingAttempts(accountKey);
 
             log.warn("Credenciales incorrectas para correo: {}. Intentos restantes: {}", correo, intentosRestantes);
@@ -151,6 +170,8 @@ public class AuthController {
                     "intentosRestantes", intentosRestantes
             ));
         } catch (Exception e) {
+            loginAttemptService.release(accountKey); // un error interno no es un fallo de credenciales
+            loginAttemptService.release(ipKey);
             log.error("Error durante el inicio de sesión: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
@@ -174,7 +195,7 @@ public class AuthController {
         String rol = userDetails.getAuthorities().stream()
                     .findFirst()
                     .map(a -> a.getAuthority().replace("ROLE_", ""))
-                    .orElse("CLIENTE");
+                    .orElse("SIN_ROL");
 
         return ResponseEntity.ok(Map.of(
                 "id", userDetails.getId(),
@@ -190,46 +211,17 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegistroRequestDTO request) {
         if (request.getPassword() != null && request.getPassword().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", 400, "codigo", "VALIDACION",
+                    "mensaje", "La contraseña debe tener entre 6 y 72 caracteres",
+                    "errores", Map.of("password", "La contraseña debe tener entre 6 y 72 caracteres"),
                     "password", "La contraseña debe tener entre 6 y 72 caracteres"
             ));
         }
-        String correo = request.getCorreo() != null ? request.getCorreo().trim().toLowerCase() : "";
-        log.info("Solicitud de registro de nuevo usuario con correo: {}", correo);
+        log.info("Solicitud de registro de nuevo usuario");
 
-        if (usuarioRepository.existsByCorreoIgnoreCase(correo) || usuarioRepository.findByCorreoIgnoreCase(correo).isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                    "status", HttpStatus.BAD_REQUEST.value(),
-                    "error", "Bad Request",
-                    "mensaje", "El correo electrónico ya se encuentra registrado."
-            ));
-        }
-
-        TipoUsuario tipoCliente = tipoUsuarioRepository.findByNombreIgnoreCase("CLIENTE")
-                .orElseGet(() -> {
-                    TipoUsuario nuevoTipo = new TipoUsuario();
-                    nuevoTipo.setNombre("CLIENTE");
-                    nuevoTipo.setDescripcion("Cliente que solicita y agenda citas");
-                    return tipoUsuarioRepository.save(nuevoTipo);
-                });
-
-        Usuario nuevoUsuario = new Usuario();
-        nuevoUsuario.setNombre(request.getNombre().trim());
-        nuevoUsuario.setApellidoP(request.getApellidoP().trim());
-        nuevoUsuario.setCorreo(correo);
-        nuevoUsuario.setPassword(passwordEncoder.encode(request.getPassword()));
-        nuevoUsuario.setTipoUsuario(tipoCliente);
-        Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
-
-        String telefono = request.getTelefono() != null && !request.getTelefono().isBlank()
-                ? request.getTelefono().trim()
-                : null;
-        perfilUsuarioService.crearPerfilCliente(usuarioGuardado, telefono);
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(correo, request.getPassword())
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        // Cuenta + perfil de cliente en una sola transacción (AuthService); duplicados -> 409.
+        Usuario usuarioGuardado = authService.registrarCliente(request);
+        UserDetailsImpl userDetails = UserDetailsImpl.build(usuarioGuardado);
         String jwt = jwtUtils.generarToken(userDetails);
 
         AuthResponseDTO response = AuthResponseDTO.builder()
@@ -247,8 +239,6 @@ public class AuthController {
     }
 
     private String obtenerIpCliente(HttpServletRequest request) {
-        if (request == null) return "unknown";
-        // Forwarded headers are client-controlled unless a trusted proxy is configured.
-        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown";
+        return clientIpResolver.resolve(request);
     }
 }

@@ -20,8 +20,11 @@ public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false, length = 100)
     private String nombre;
+    @Column(name = "apellidop", nullable = false, length = 100)
     private String apellidoP;
+    @Column(name = "correo", nullable = false, length = 150)
     private String correo;
     private String password;
 

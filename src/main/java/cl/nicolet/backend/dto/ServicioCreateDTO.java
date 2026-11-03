@@ -1,5 +1,11 @@
 package cl.nicolet.backend.dto;
 
+import jakarta.validation.constraints.Digits;
+
+import jakarta.validation.constraints.Max;
+
+import jakarta.validation.constraints.Size;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -13,19 +19,23 @@ public class ServicioCreateDTO {
 
     @Schema(description = "Nombre del servicio", example = "Corte de Cabello y Peinado")
     @NotBlank(message = "El nombre del servicio no puede estar vacío")
+    @Size(max = 120, message = "El nombre del servicio no puede exceder los 120 caracteres")
     private String nombre;
 
     @Schema(description = "Descripción detallada", example = "Lavado, corte estilizado y secado profesional")
+    @Size(max = 2000, message = "La descripción no puede exceder los 2000 caracteres")
     private String descripcion;
 
     @Schema(description = "Duración estimada en minutos", example = "45")
     @NotNull(message = "La duración en minutos es obligatoria")
     @Min(value = 10, message = "La duración mínima es de 10 minutos")
+    @Max(value = 1440, message = "La duración máxima es de 1440 minutos (24 horas)")
     private Integer duracionMinutos;
 
     @Schema(description = "Precio del servicio", example = "18000.00")
     @NotNull(message = "El precio es obligatorio")
     @DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor a 0")
+    @Digits(integer = 8, fraction = 2, message = "El precio admite hasta 8 enteros y 2 decimales")
     private BigDecimal precio;
 
     public ServicioCreateDTO() {

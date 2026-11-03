@@ -33,13 +33,13 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static UserDetailsImpl build(Usuario usuario) {
-        String rolNombre = "CLIENTE";
+        // Sin rol => sin autoridades (no se asume CLIENTE): la cuenta solo puede usar /auth/**.
+        List<GrantedAuthority> authorities = Collections.emptyList();
         if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().getNombre() != null) {
-            rolNombre = usuario.getTipoUsuario().getNombre().toUpperCase();
+            String rolNombre = usuario.getTipoUsuario().getNombre().toUpperCase();
+            String roleAuthority = rolNombre.startsWith("ROLE_") ? rolNombre : "ROLE_" + rolNombre;
+            authorities = Collections.singletonList(new SimpleGrantedAuthority(roleAuthority));
         }
-
-        String roleAuthority = rolNombre.startsWith("ROLE_") ? rolNombre : "ROLE_" + rolNombre;
-        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(roleAuthority));
 
         return new UserDetailsImpl(
                 usuario.getId(),

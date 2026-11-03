@@ -39,18 +39,20 @@ class UsuarioRepositoryTest {
     @Test
     @DisplayName("findAll - debe retornar todos los Usuarios guardados en la BD")
     void debeRetornarTodosLosUsuarios() {
-        // Given
+        // Given: la BD puede traer filas previas (MySQL compartido); se compara contra el recuento inicial
+        int antes = usuarioRepository.findAll().size();
+        // correos distintos: en la BD real (init.sql) correo es UNIQUE
         usuarioRepository.save(new Usuario(
-            null, "Martina", "Contreras", "Mar.con@gmail.com", "123412"
+            null, "Martina", "Contreras", "martina.repo@gmail.com", "123412"
         ));
         usuarioRepository.save(new Usuario(
-            null, "Javiera", "Contreras", "Mar.con@gmail.com", "123412"
+            null, "Javiera", "Contreras", "javiera.repo@gmail.com", "123412"
         ));
         // When
         List<Usuario> usuarios = usuarioRepository.findAll();
         // Then
         assertNotNull(usuarios);
-        assertEquals(2, usuarios.size());
+        assertEquals(antes + 2, usuarios.size());
     }
 
     @Test

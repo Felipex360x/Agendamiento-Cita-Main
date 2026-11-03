@@ -10,15 +10,18 @@ public class UsuarioCreateDTO {
 
     @Schema(description = "Nombre del Usuario", example = "maximo")
     @NotBlank(message = "el nombre no puede estar vacio")
+    @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
     private String nombre;
 
     @Schema(description = "apellido paterno del Usuario", example = "rojas")
     @NotBlank(message = "el Apellido Paterno no puede estar vacio")
+    @Size(max = 100, message = "El apellido no puede exceder los 100 caracteres")
     private String apellidoP;
 
     @Schema(description = "correo de usuario", example = "maximo@gmail.com")
     @NotBlank(message = "el Correo no puede estar vacio")
     @Email(message = "Formato de correo electrónico inválido")
+    @Size(max = 150, message = "El correo electrónico no puede exceder los 150 caracteres")
     private String correo;
 
     @Schema(description = "contraseña", example = "123124")
@@ -27,6 +30,9 @@ public class UsuarioCreateDTO {
 
     @Schema(description = "ID del tipo de usuario asignado", example = "1")
     private Long tipoUsuarioId;
+
+    @io.swagger.v3.oas.annotations.media.Schema(hidden = true)
+    private boolean tipoUsuarioIdInformado;
 
     public UsuarioCreateDTO() {
     }
@@ -83,8 +89,18 @@ public class UsuarioCreateDTO {
         return tipoUsuarioId;
     }
 
+    /**
+     * Jackson solo invoca este setter cuando la propiedad viene en el JSON (incluso con valor null),
+     * lo que permite distinguir "no enviado" (sin cambio) de "null explícito" (retirar el rol).
+     */
     public void setTipoUsuarioId(Long tipoUsuarioId) {
         this.tipoUsuarioId = tipoUsuarioId;
+        this.tipoUsuarioIdInformado = true;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public boolean isTipoUsuarioIdInformado() {
+        return tipoUsuarioIdInformado || tipoUsuarioId != null;
     }
 
     @Override

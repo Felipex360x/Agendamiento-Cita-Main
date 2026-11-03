@@ -38,10 +38,20 @@ const personLabel = (person) => [person?.usuario?.nombre, person?.usuario?.apell
 const priceOf = (appointment) => Number(appointment.precioFinal || 0);
 const sum = (list, pick) => list.reduce((total, item) => total + pick(item), 0);
 
+/**
+ * Definición única de importes (dashboard e historial). Son valores CALCULADOS desde las citas, no
+ * contabilidad de pagos: una cita completada no prueba que se haya cobrado.
+ * - Ingresos: precio de citas COMPLETADA.
+ * - Valor reservado: precio de citas vigentes aún no realizadas (PENDIENTE, CONFIRMADA, EN_ATENCION).
+ * - Canceladas y NO_ASISTIO no suman en ninguno.
+ */
+export const completedRevenue = (list) => list.filter((item) => item.estado === 'COMPLETADA').reduce((total, item) => total + Number(item.precioFinal || 0), 0);
+export const reservedValue = (list) => list.filter((item) => ['PENDIENTE', 'CONFIRMADA', 'EN_ATENCION'].includes(item.estado)).reduce((total, item) => total + Number(item.precioFinal || 0), 0);
+
 function periodTotals(list) {
   const completed = list.filter((item) => item.estado === 'COMPLETADA');
   return {
-    revenue: sum(completed, priceOf),
+    revenue: completedRevenue(list),
     appointments: list.length,
     clients: new Set(completed.map((item) => item.cliente?.id).filter((id) => id != null)).size,
     cancelRate: list.length ? Math.round((list.filter((item) => item.estado === 'CANCELADA').length / list.length) * 1000) / 10 : 0,

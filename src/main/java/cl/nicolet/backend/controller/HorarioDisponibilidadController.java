@@ -32,6 +32,11 @@ public class HorarioDisponibilidadController {
     @PreAuthorize("hasRole('ADMINISTRADOR') or @trabajadorService.esPropietario(#p0, principal.id)")
     public ResponseEntity<List<HorarioDisponibilidadDTO>> actualizar(@PathVariable Long trabajadorId,
                                                                       @RequestBody List<HorarioDisponibilidadDTO> horarios) {
-        return ResponseEntity.ok(horarioService.actualizar(trabajadorId, horarios));
+        List<HorarioDisponibilidadDTO> guardados = horarioService.actualizar(trabajadorId, horarios);
+        // Las citas existentes no se cancelan ni se mueven al cambiar la jornada; se informa cuántas quedan fuera.
+        return ResponseEntity.ok()
+                .header("X-Citas-Fuera-De-Jornada", String.valueOf(horarioService.contarCitasFueraDeJornada(trabajadorId)))
+                .header("Access-Control-Expose-Headers", "X-Citas-Fuera-De-Jornada")
+                .body(guardados);
     }
 }

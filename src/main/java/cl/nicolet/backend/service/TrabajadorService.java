@@ -52,7 +52,12 @@ public class TrabajadorService {
                 .collect(Collectors.toList());
     }
 
-    private TrabajadorDTO toPublicDTO(Trabajador trabajador) {
+    /**
+     * Resumen del profesional apto para clientes y para respuestas de citas: sin correo, RUT/DNI,
+     * teléfono ni comisión. Decisión: el teléfono NO es un dato público (igual que el directorio).
+     * Los datos administrativos se obtienen en GET /trabajadores/{id} (administrador o propietario).
+     */
+    public TrabajadorDTO toPublicDTO(Trabajador trabajador) {
         Usuario usuario = trabajador.getUsuario();
         TipoUsuarioDTO tipo = usuario.getTipoUsuario() == null ? null : new TipoUsuarioDTO(
                 usuario.getTipoUsuario().getId(),
@@ -123,8 +128,7 @@ public class TrabajadorService {
         t.setActivo(true);
 
         if (dto.getServicioIds() != null && !dto.getServicioIds().isEmpty()) {
-            Set<Servicio> servicios = new HashSet<>(servicioRepository.findAllById(dto.getServicioIds()));
-            t.setServicios(servicios);
+            t.setServicios(resolverServicios(dto.getServicioIds()));
         } else if (servicioRepository != null) {
             t.setServicios(new HashSet<>(servicioRepository.findByActivoTrue()));
         }
@@ -163,12 +167,29 @@ public class TrabajadorService {
             t.setComisionPorcentaje(dto.getComisionPorcentaje());
         }
 
-        if (dto.getServicioIds() != null && !dto.getServicioIds().isEmpty()) {
-            Set<Servicio> servicios = new HashSet<>(servicioRepository.findAllById(dto.getServicioIds()));
-            t.setServicios(servicios);
+        // servicioIds: null = sin cambios; [] = quitar todos; lista = reemplazar (todos los IDs deben existir).
+        if (dto.getServicioIds() != null) {
+            t.setServicios(resolverServicios(dto.getServicioIds()));
         }
 
         return toDTO(trabajadorRepository.save(t));
+    }
+
+    /** Resuelve los IDs a servicios existentes; rechaza elementos null e IDs inexistentes (no los omite). */
+    private Set<Servicio> resolverServicios(Set<Long> ids) {
+        if (ids.isEmpty()) {
+            return new HashSet<>();
+        }
+        if (ids.contains(null)) {
+            throw new IllegalArgumentException("La lista de servicios no puede contener valores vacíos");
+        }
+        List<Servicio> encontrados = servicioRepository.findAllById(ids);
+        if (encontrados.size() != ids.size()) {
+            Set<Long> faltantes = new java.util.TreeSet<>(ids);
+            encontrados.forEach(servicio -> faltantes.remove(servicio.getId()));
+            throw new IllegalArgumentException("Servicios inexistentes: " + faltantes);
+        }
+        return new HashSet<>(encontrados);
     }
 
     public TrabajadorDTO toDTO(Trabajador t) {
