@@ -2,16 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import DaySelector from '../components/DaySelector.jsx';
+import { businessToday } from '../dates.js';
 import { SiteFooter, SiteHeader } from './SiteShell.jsx';
 
 const money = (value) => new Intl.NumberFormat('es-CL', {
   style: 'currency', currency: 'CLP', maximumFractionDigits: 0,
 }).format(Number(value) || 0);
 
-const localDate = () => {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-};
+const localDate = () => businessToday();
+
+const offersService = (worker, serviceId) => (worker?.servicios || []).some((item) => String(item.id) === String(serviceId));
+const isValidDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value || '') && value >= businessToday();
+const isValidTime = (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value || '');
 
 const timeLabel = (time) => (time || '').slice(0, 5);
 const unavailableLabel = (reason) => ({ DESCANSO: 'Colación', OCUPADO: 'Ocupado', HORA_PASADA: 'No disponible' }[reason] || 'No disponible');
@@ -42,7 +44,9 @@ export default function BookingPage() {
   const worker = workers.find((item) => String(item.id) === String(workerId));
   const steps = ['Servicio', 'Especialista', 'Fecha y hora', 'Tus datos'];
   const [step, setStep] = useState(workerId ? 3 : serviceId ? 2 : 1);
-  const loginHref = `/admin/login?redirect=${encodeURIComponent(`/reservar.html${serviceId ? `?servicioId=${serviceId}` : ''}`)}`;
+  // El borrador (servicio, profesional, fecha y hora) viaja en el redirect; al volver se revalida la disponibilidad.
+  const draftQuery = new URLSearchParams(Object.entries({ servicioId: serviceId, trabajadorId: workerId, fecha: date, hora: time }).filter(([, value]) => value)).toString();
+  const loginHref = `/admin/login?redirect=${encodeURIComponent(`/reservar.html${draftQuery ? `?${draftQuery}` : ''}`)}`;
 
   useEffect(() => {
     document.title = 'Reserva tu hora | Nicolett Studio Fantasy';
@@ -52,6 +56,14 @@ export default function BookingPage() {
         if (!active) return;
         setServices(availableServices || []);
         setWorkers(availableWorkers || []);
+        // Enlaces con datos parciales o inválidos: se abre el primer paso incompleto.
+        const requestedService = (availableServices || []).find((item) => String(item.id) === String(serviceId));
+        if (!requestedService) { setServiceId(''); setWorkerId(''); setDate(''); setTime(''); setStep(1); return; }
+        const requestedWorker = (availableWorkers || []).find((item) => String(item.id) === String(workerId));
+        if (!requestedWorker || !offersService(requestedWorker, serviceId)) { setWorkerId(''); setDate(''); setTime(''); setStep(2); return; }
+        if (!isValidDate(date)) { setDate(''); setTime(''); setStep(3); return; }
+        if (!isValidTime(time)) setTime('');
+        setStep(3);
       })
       .catch((requestError) => { if (active) setError(requestError.message); })
       .finally(() => { if (active) setCatalogLoading(false); });
@@ -59,7 +71,8 @@ export default function BookingPage() {
   }, []);
 
   useEffect(() => {
-    if (!serviceId || !workerId || !date) {
+    // No consultar hasta que el catálogo esté cargado y los parámetros de la URL saneados (E19).
+    if (catalogLoading || !serviceId || !workerId || !date) {
       setSlots([]);
       return undefined;
     }
@@ -68,18 +81,30 @@ export default function BookingPage() {
     setSlots([]);
     setError('');
     api.disponibilidad(workerId, date, serviceId)
-      .then((availableSlots) => { if (active) setSlots(availableSlots || []); })
+      .then((availableSlots) => {
+        if (!active) return;
+        setSlots(availableSlots || []);
+        setTime((current) => {
+          if (!current) return current;
+          const still = (availableSlots || []).some((slot) => slot.disponible && timeLabel(slot.horaInicio) === current);
+          if (!still) setError('El horario que habías elegido ya no está disponible. Elige otro.');
+          return still ? current : '';
+        });
+      })
       .catch((requestError) => { if (active) setError(requestError.message); })
       .finally(() => { if (active) setSlotsLoading(false); });
     return () => { active = false; };
-  }, [serviceId, workerId, date]);
+  }, [catalogLoading, serviceId, workerId, date]);
+
+  const compatibleWorkers = workers.filter((item) => !serviceId || offersService(item, serviceId));
 
   function chooseService(id) {
+    const keepWorker = workerId && offersService(workers.find((item) => String(item.id) === String(workerId)), id);
     setServiceId(String(id));
-    setWorkerId('');
-    setDate('');
+    if (!keepWorker) setWorkerId('');
+    setDate(keepWorker ? date : '');
     setTime('');
-    setStep(2);
+    setStep(keepWorker ? 3 : 2);
     setError('');
   }
 
@@ -137,7 +162,7 @@ export default function BookingPage() {
     {catalogLoading && <p className="site-message" role="status">Cargando servicios y especialistas…</p>}
     {!catalogLoading && !booking && <div className="site-booking-layout"><section className="site-booking-main">
       {step === 1 && <section className="site-booking-panel"><h2>1. Elige tu servicio</h2><div className="site-booking-options">{services.map((item) => <button key={item.id} type="button" className={`site-booking-option ${String(item.id) === String(serviceId) ? 'selected' : ''}`} onClick={() => chooseService(item.id)}><span><strong>{item.nombre}</strong><small>{item.duracionMinutos} min</small></span><strong>{money(item.precio)}</strong></button>)}</div></section>}
-      {step === 2 && <section className="site-booking-panel"><h2>2. Elige a tu especialista</h2><div className="site-booking-options">{workers.map((item) => <button key={item.id} type="button" className={`site-booking-option ${String(item.id) === String(workerId) ? 'selected' : ''}`} onClick={() => chooseWorker(item.id)}><span><strong>{workerName(item)}</strong><small>{item.cargoEspecialidad || 'Especialista'}</small></span><span aria-hidden="true">→</span></button>)}</div><button type="button" className="site-text-button" onClick={() => setStep(1)}>Cambiar servicio</button></section>}
+      {step === 2 && <section className="site-booking-panel"><h2>2. Elige a tu especialista</h2><div className="site-booking-options">{!compatibleWorkers.length && <p className="site-message" role="status">Por ahora ningún profesional ofrece este servicio. Elige otro servicio.</p>}{compatibleWorkers.map((item) => <button key={item.id} type="button" className={`site-booking-option ${String(item.id) === String(workerId) ? 'selected' : ''}`} onClick={() => chooseWorker(item.id)}><span><strong>{workerName(item)}</strong><small>{item.cargoEspecialidad || 'Especialista'}</small></span><span aria-hidden="true">→</span></button>)}</div><button type="button" className="site-text-button" onClick={() => setStep(1)}>Cambiar servicio</button></section>}
       {step === 3 && <section className="site-booking-panel"><h2>3. Selecciona fecha y hora</h2><p className="site-muted">{service?.nombre} · {workerName(worker)}</p><DaySelector label="Elige un día" value={date} onChange={(selectedDate) => { setDate(selectedDate); setTime(''); }} minDate={localDate()} />{date && <div className="site-slot-grid">{slotsLoading ? <p role="status">Consultando disponibilidad…</p> : slots.length ? slots.map((slot) => { const available = Boolean(slot.disponible); const label = timeLabel(slot.horaInicio); return <button type="button" key={slot.horaInicio} disabled={!available} title={available ? 'Disponible' : unavailableLabel(slot.motivoNoDisponible)} aria-label={`${label}, ${available ? 'disponible' : unavailableLabel(slot.motivoNoDisponible)}`} className={`${available ? '' : 'unavailable'} ${label === time ? 'selected' : ''}`} onClick={() => available && setTime(label)}>{label}{!available && <small>{unavailableLabel(slot.motivoNoDisponible)}</small>}</button>; }) : !error && <p>No hay horas disponibles para esta fecha. Prueba otro día.</p>}</div>}<div className="site-booking-actions"><button type="button" className="site-button site-button-outline" onClick={() => setStep(2)}>Atrás</button><button type="button" className="site-button" disabled={!date || !time} onClick={() => setStep(4)}>Continuar</button></div></section>}
       {step === 4 && <section className="site-booking-panel"><h2>4. Confirma tus datos</h2>{user && !isClient ? <div className="site-message"><p>La sesión activa no tiene un perfil de cliente para reservar.</p><button type="button" className="site-text-button" onClick={logout}>Cerrar sesión y continuar como cliente</button></div> : <form onSubmit={confirmBooking}>{!user && <><p className="site-muted">Crea tu cuenta para guardar la reserva y administrar tus citas. ¿Ya tienes una cuenta? <a href={loginHref}>Inicia sesión</a>.</p><label>Nombre<input name="nombre" autoComplete="given-name" required /></label><label>Apellido paterno<input name="apellidoP" autoComplete="family-name" required /></label><label>Correo<input name="correo" type="email" autoComplete="email" required /></label><label>Contraseña<input name="password" type="password" minLength={6} maxLength={72} autoComplete="new-password" required /></label><label>Teléfono (opcional)<input name="telefono" type="tel" autoComplete="tel" /></label></>}{user && <p className="site-muted">Reserva para {user.nombre} ({user.correo})</p>}<label>Notas para tu especialista<textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} /></label><div className="site-booking-actions"><button type="button" className="site-button site-button-outline" onClick={() => setStep(3)}>Atrás</button><button type="submit" className="site-button" disabled={busy}>{busy ? 'Agendando…' : 'Confirmar reserva'}</button></div></form>}</section>}
     </section><aside className="site-booking-summary"><p className="site-eyebrow">Resumen</p><h2>{service?.nombre || 'Elige un servicio'}</h2><p>{worker ? workerName(worker) : 'Especialista por elegir'}</p><p>{date || 'Fecha por elegir'} {time && `· ${time}`}</p>{service && <div className="site-booking-total"><span>{service.duracionMinutos} minutos</span><strong>{money(service.precio)}</strong></div>}</aside></div>}

@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 
+import { businessToday } from '../dates.js';
+
+// «Hoy» en la zona horaria del negocio (no la del navegador).
 export function localDateValue() {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return businessToday();
 }
 
 function dateKey(date) {

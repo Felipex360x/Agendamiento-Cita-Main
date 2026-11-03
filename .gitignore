@@ -46,3 +46,5 @@ frontend/.env.*
 # Local Cloudflare Tunnel executable
 cloudflared.exe
 
+
+logs/

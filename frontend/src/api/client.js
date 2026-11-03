@@ -2,12 +2,41 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v2/nicolet';
 const TOKEN_KEY = 'nicolet_jwt_token';
 
 export class ApiError extends Error {
-  constructor(message, status, payload) {
+  constructor(message, status, payload, fieldErrors = {}) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.payload = payload;
+    this.fieldErrors = fieldErrors; // { campo: mensaje } cuando la API devuelve errores de validación
   }
+}
+
+const FIELD_LABELS = {
+  nombre: 'Nombre', apellidoP: 'Apellido', correo: 'Correo', password: 'Contraseña', telefono: 'Teléfono',
+  rutDni: 'RUT/DNI', cargoEspecialidad: 'Especialidad', comisionPorcentaje: 'Comisión', precio: 'Precio',
+  duracionMinutos: 'Duración', descripcion: 'Descripción', motivo: 'Motivo', motivoONotas: 'Motivo o notas',
+  notasCliente: 'Notas', tipoUsuarioId: 'Rol', fechaHoraInicio: 'Fecha y hora',
+};
+
+// Contrato de errores: { status, codigo, mensaje, error, errores?: { campo: mensaje } }.
+// Se aceptan también los formatos anteriores: { campo: mensaje } plano, { message } y { error }.
+export function parseApiError(payload, status) {
+  if (payload && typeof payload === 'object') {
+    let fields = {};
+    if (payload.errores && typeof payload.errores === 'object') {
+      fields = payload.errores;
+    } else if (status === 400 && !payload.mensaje && !payload.message && !payload.error) {
+      fields = Object.fromEntries(Object.entries(payload).filter(([, value]) => typeof value === 'string'));
+    }
+    const entries = Object.entries(fields).filter(([, value]) => typeof value === 'string' && value);
+    const summary = entries.map(([field, value]) => (FIELD_LABELS[field] ? `${FIELD_LABELS[field]}: ${value}` : value)).join(' ');
+    const message = payload.mensaje || payload.message || (typeof payload.error === 'string' ? payload.error : '') || summary;
+    return { message: message || `Error HTTP ${status}`, fieldErrors: Object.fromEntries(entries) };
+  }
+  if (typeof payload === 'string' && payload.trim() && payload.length < 300 && !payload.trim().startsWith('<')) {
+    return { message: payload.trim(), fieldErrors: {} };
+  }
+  return { message: `Error HTTP ${status}`, fieldErrors: {} };
 }
 
 export async function apiRequest(path, options = {}) {
@@ -32,11 +61,11 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (!response.ok) {
-    const message = payload?.mensaje || payload?.message || payload?.error || `Error HTTP ${response.status}`;
+    const { message, fieldErrors } = parseApiError(payload, response.status);
     if (response.status === 401) {
       window.dispatchEvent(new Event('nicolet:unauthorized'));
     }
-    throw new ApiError(message, response.status, payload);
+    throw new ApiError(message, response.status, payload, fieldErrors);
   }
   return payload;
 }

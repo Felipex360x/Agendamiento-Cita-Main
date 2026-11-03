@@ -21,6 +21,12 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        xfwd: true, // añade X-Forwarded-For con la IP del cliente directo (necesario para el límite de intentos)
+      },
+      // Solo la sonda de salud de Spring (no se exponen otros endpoints de actuator).
+      '/actuator/health': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
       },
       '/doc': {
         target: 'http://localhost:8080',

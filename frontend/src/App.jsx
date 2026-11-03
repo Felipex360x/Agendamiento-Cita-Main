@@ -12,32 +12,8 @@ import AdminDiagnosticsPage from './pages/AdminDiagnosticsPage.jsx';
 import { StaffAgendaPage, StaffClientsPage, StaffDashboardPage } from './pages/StaffPages.jsx';
 import ClientProfilePage from './pages/ClientProfilePage.jsx';
 
-export const PUBLIC_PAGES = new Set(['index.html', 'reservar.html', 'servicios.html', 'equipo.html', 'agenda.html', 'dashboard.html', 'clientas.html', 'mi-perfil.html']);
-export const ADMIN_PAGES = new Set(['citas.html', 'disponibilidad.html', 'historial.html', 'login.html', 'mi-horario.html', 'panel-trabajador.html', 'pruebas.html', 'reserva-cliente.html', 'servicios.html', 'usuarios.html']);
-
-export function getLegacyPath(pathname) {
-  const clean = pathname.replace(/^\/+/, '');
-  if (!clean) return 'index.html';
-  if (clean === 'app' || clean === 'app/') return 'admin/citas.html';
-  if (clean === 'admin' || clean === 'admin/') return 'admin/citas.html';
-
-  // Alias y accesos directos críticos (DEF-01, DEF-03)
-  if (clean === 'login' || clean === 'login.html') return 'admin/login.html';
-  if (clean === 'reserva-cliente' || clean === 'reserva-cliente.html') return 'admin/reserva-cliente.html';
-
-  if (clean.startsWith('admin/')) {
-    let page = clean.slice('admin/'.length).split('/')[0];
-    if (page && !page.includes('.')) page = `${page}.html`;
-    return ADMIN_PAGES.has(page) ? `admin/${page}` : 'admin/citas.html';
-  }
-
-  let page = clean.split('/')[0];
-  if (page && !page.includes('.')) {
-    if (PUBLIC_PAGES.has(`${page}.html`)) return `${page}.html`;
-    if (ADMIN_PAGES.has(`${page}.html`)) return `admin/${page}.html`;
-  }
-  return PUBLIC_PAGES.has(page) ? page : 'index.html';
-}
+export { PUBLIC_PAGES, ADMIN_PAGES, getLegacyPath, resolveKnownPage, getSafeRedirect } from './routes.js';
+import { getLegacyPath } from './routes.js';
 
 export function assetUrl(value, sourceUrl) {
   if (!value) return value;

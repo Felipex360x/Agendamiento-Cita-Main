@@ -3,6 +3,7 @@ import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
 import { computeDashboard } from './dashboardStats.js';
+import { businessToday } from '../dates.js';
 import { DashboardSkeleton, KpiCard, PeriodFilter, RankingList, RevenueChart, StatusBreakdown, formatMoney } from './DashboardWidgets.jsx';
 
 const asDate = (value) => value ? new Date(`${value.slice(0, 10)}T12:00:00`) : null;
@@ -24,7 +25,7 @@ export function StaffAgendaPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const administrator = user?.rol?.toUpperCase().includes('ADMIN');
-  const monday = mondayOf(new Date());
+  const monday = mondayOf(new Date(`${businessToday()}T12:00:00`)); // semana actual según la zona del negocio
   monday.setDate(monday.getDate() + weekOffset * 7);
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export function StaffAgendaPage() {
     return () => { active = false; };
   }, [user?.id, administrator]);
 
-  const days = Array.from({ length: 5 }, (_, index) => { const day = new Date(monday); day.setDate(monday.getDate() + index); return day; });
+  const days = Array.from({ length: 7 }, (_, index) => { const day = new Date(monday); day.setDate(monday.getDate() + index); return day; });
   const visible = appointments.filter((appointment) => {
     const day = appointment.fechaHoraInicio?.slice(0, 10);
     const inWeek = days.some((value) => dateKey(value) === day);
@@ -54,7 +55,7 @@ export function StaffAgendaPage() {
 
   return <AdminShell title="Agenda semanal" active="/agenda" roles={['ADMINISTRADOR', 'PROFESIONAL', 'TRABAJADOR', 'ESPECIALISTA']}>
     <RequestMessage error={error} />
-    <section className="admin-panel admin-week-controls"><button type="button" onClick={() => setWeekOffset((offset) => offset - 1)}>← Semana anterior</button><strong>{days[0].toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })} – {days[4].toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}</strong><button type="button" onClick={() => setWeekOffset((offset) => offset + 1)}>Semana siguiente →</button>{administrator && <select aria-label="Filtrar profesional" value={workerId} onChange={(event) => setWorkerId(event.target.value)}><option value="">Todos los profesionales</option>{workers.map((worker) => <option key={worker.id} value={worker.id}>{personName(worker)}</option>)}</select>}</section>
+    <section className="admin-panel admin-week-controls"><button type="button" onClick={() => setWeekOffset((offset) => offset - 1)}>← Semana anterior</button><strong>{days[0].toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })} – {days[6].toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}</strong><button type="button" onClick={() => setWeekOffset((offset) => offset + 1)}>Semana siguiente →</button>{administrator && <select aria-label="Filtrar profesional" value={workerId} onChange={(event) => setWorkerId(event.target.value)}><option value="">Todos los profesionales</option>{workers.map((worker) => <option key={worker.id} value={worker.id}>{personName(worker)}</option>)}</select>}</section>
     <section className="admin-panel"><h2>Reservas de la semana</h2><EmptyState loading={loading} error={error} empty={!visible.length}><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Servicio</th><th>Profesional</th><th>Estado</th></tr></thead><tbody>{visible.map((appointment) => <tr key={appointment.id}><td>{asDate(appointment.fechaHoraInicio)?.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' })}</td><td>{appointment.fechaHoraInicio?.slice(11, 16)}</td><td>{personName(appointment.cliente)}</td><td>{appointment.servicio?.nombre}</td><td>{personName(appointment.trabajador)}</td><td><span className={`admin-status ${appointment.estado?.toLowerCase()}`}>{appointment.estado}</span></td></tr>)}</tbody></table></div></EmptyState></section>
   </AdminShell>;
 }
