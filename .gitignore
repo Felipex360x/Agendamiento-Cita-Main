@@ -36,6 +36,11 @@ build/
 correri.txt
 correjir*
 
+# Variables de entorno locales
+.env
+.env.local
+.env.*.local
+
 # Frontend React / Vite
 frontend/node_modules/
 frontend/dist/

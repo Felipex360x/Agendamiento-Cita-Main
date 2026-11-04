@@ -110,4 +110,7 @@ export const api = {
   desactivarUsuario: (id, motivo) => apiRequest(`/usuarios/${id}/desactivar`, { method: 'PATCH', body: JSON.stringify({ motivo }) }),
   activarUsuario: (id) => apiRequest(`/usuarios/${id}/activar`, { method: 'PATCH' }),
   tiposUsuario: () => apiRequest('/tipos-usuario'),
+  correosBandeja: () => apiRequest('/correos'),
+  probarFlujoCorreos: (datos) => apiRequest('/correos/probar-flujo', { method: 'POST', body: JSON.stringify(datos || {}) }),
+  configurarSmtp: (config) => apiRequest('/correos/configurar-smtp', { method: 'POST', body: JSON.stringify(config) }),
 };

@@ -112,10 +112,22 @@ done
 
 # ---------------------------------------------------------------- variables
 
+if [ -f "$ROOT/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
+  set +a
+  info "Variables cargadas desde .env"
+fi
+
 export DB_HOST="${DB_HOST:-127.0.0.1}"
 export DB_PORT="${DB_PORT:-3306}"
 export DB_USERNAME="${DB_USERNAME:-desarrollador}"      # usuario definido en docker-compose.yml
 export DB_PASSWORD="${DB_PASSWORD:-password_seguro_123}" # ídem; cámbialo si usas otra base
+export MAIL_HOST="${MAIL_HOST:-smtp.gmail.com}"
+export MAIL_PORT="${MAIL_PORT:-587}"
+export MAIL_USERNAME="${MAIL_USERNAME:-nacuna888@gmail.com}"
+export MAIL_PASSWORD="${MAIL_PASSWORD:-}"
 if [ -z "${JWT_SECRET:-}" ]; then
   if command -v openssl >/dev/null; then JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
   else JWT_SECRET="$(head -c 48 /dev/urandom | base64 -w0)"; fi

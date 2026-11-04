@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comprobante de Pago y Reserva | Nicolett Studio Fantasy</title>
+</head>
+<body style="margin:0;padding:0;background-color:#fcf9f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#241c18;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#fcf9f5;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:540px;background-color:#ffffff;border:1px solid #ede4d9;border-radius:28px;box-shadow:0 22px 48px -10px rgba(84,55,30,0.10);overflow:hidden;">
+          <!-- Encabezado de marca -->
+          <tr>
+            <td style="padding:32px 38px 20px;border-bottom:1px solid #ede4d9;background-color:#fbf9f5;text-align:center;">
+              <div style="font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:600;letter-spacing:-1px;color:#241c18;">
+                nicolet<span style="color:#c49972;">.</span>
+              </div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:#847568;margin-top:4px;">
+                STUDIO FANTASY
+              </div>
+            </td>
+          </tr>
+
+          <!-- Cuerpo principal -->
+          <tr>
+            <td style="padding:38px 38px 32px;">
+              <p style="margin:0 0 8px;color:#845938;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">
+                Comprobante de pago y reserva recibida
+              </p>
+              <h1 style="margin:0 0 14px;font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:500;line-height:1.15;color:#241c18;">
+                ¡Gracias por tu pago, {{nombreCliente}}!
+              </h1>
+              <p style="margin:0 0 22px;color:#847568;font-size:15px;line-height:1.65;">
+                Hemos recibido tu pago y agendado tu hora. Tu especialista revisará la solicitud y te enviaremos otro correo apenas quede <strong style="color:#241c18;">confirmada</strong>.
+              </p>
+
+              <!-- Detalle de la Reserva -->
+              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#845938;margin-bottom:8px;">
+                Detalle de tu cita
+              </div>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#fbf8f4;border:1px solid #ede4d9;border-radius:16px;padding:16px 20px;margin-bottom:20px;">
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Código de reserva</td>
+                  <td align="right" style="padding:8px 0;color:#241c18;font-size:14px;font-weight:700;border-bottom:1px solid #ede4d9;">{{codigoReserva}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Servicio</td>
+                  <td align="right" style="padding:8px 0;color:#241c18;font-size:14px;font-weight:600;border-bottom:1px solid #ede4d9;">{{nombreServicio}} ({{duracionMinutos}} min)</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Especialista</td>
+                  <td align="right" style="padding:8px 0;color:#241c18;font-size:14px;font-weight:600;border-bottom:1px solid #ede4d9;">{{nombreTrabajador}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Fecha y hora</td>
+                  <td align="right" style="padding:8px 0;color:#241c18;font-size:14px;font-weight:600;border-bottom:1px solid #ede4d9;">{{fechaCita}} · {{horaCita}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;">Estado de la cita</td>
+                  <td align="right" style="padding:8px 0;">
+                    <span style="display:inline-block;padding:4px 10px;border-radius:999px;background-color:#fff8e1;border:1px solid #ffe082;color:#8a6405;font-size:11px;font-weight:700;">PENDIENTE DE CONFIRMACIÓN</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Voucher de Pago -->
+              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#845938;margin-bottom:8px;">
+                Comprobante de transacción (Webpay)
+              </div>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#ffffff;border:1px dashed #decbb9;border-radius:16px;padding:16px 20px;margin-bottom:26px;">
+                <tr>
+                  <td style="padding:6px 0;color:#847568;font-size:13px;">Comercio</td>
+                  <td align="right" style="padding:6px 0;color:#241c18;font-size:13px;font-weight:600;">Nicolett Studio Fantasy</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#847568;font-size:13px;">Orden de compra</td>
+                  <td align="right" style="padding:6px 0;color:#241c18;font-size:13px;font-weight:600;">{{ordenCompra}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#847568;font-size:13px;">Código de autorización</td>
+                  <td align="right" style="padding:6px 0;color:#241c18;font-size:13px;font-weight:600;">{{codigoAutorizacion}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#847568;font-size:13px;">Medio de pago / Tarjeta</td>
+                  <td align="right" style="padding:6px 0;color:#241c18;font-size:13px;font-weight:600;">{{tipoPago}} · **** {{ultimos4Digitos}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Fecha de pago</td>
+                  <td align="right" style="padding:6px 0;color:#241c18;font-size:13px;font-weight:600;border-bottom:1px solid #ede4d9;">{{fechaTransaccion}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 0 4px;color:#241c18;font-size:14px;font-weight:700;">Monto total pagado</td>
+                  <td align="right" style="padding:12px 0 4px;font-family:'Playfair Display',Georgia,serif;color:#845938;font-size:22px;font-weight:700;">{{montoPagado}}</td>
+                </tr>
+              </table>
+
+              <!-- Botón principal -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center">
+                    <a href="{{urlMiPerfil}}" style="display:inline-block;width:100%;box-sizing:border-box;padding:15px 24px;background-color:#845938;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;border-radius:10px;text-align:center;">
+                      Ver mi reserva en Mi Perfil
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Pie de página -->
+          <tr>
+            <td style="padding:24px 38px;background-color:#fbf8f4;border-top:1px solid #ede4d9;text-align:center;color:#847568;font-size:12px;line-height:1.6;">
+              <strong style="color:#241c18;">Nicolett Studio Fantasy</strong> · Un espacio para ti. Un cuidado que se siente.<br>
+              Los Ciruelos, Buin · WhatsApp <a href="https://wa.me/56940322551" style="color:#845938;text-decoration:none;">+56 9 4032 2551</a> · Instagram <a href="https://www.instagram.com/nicolettstudiofantasy/" style="color:#845938;text-decoration:none;">@nicolettstudiofantasy</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

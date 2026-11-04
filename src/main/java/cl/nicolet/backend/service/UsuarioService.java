@@ -39,6 +39,9 @@ public class UsuarioService {
     @Autowired
     private PerfilUsuarioService perfilUsuarioService;
 
+    @Autowired(required = false)
+    private EmailService emailService;
+
     public List<UsuarioDTO> findAll(){
         Log.info("Consultando a todos los usuarios");
         return usuarioRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
@@ -80,6 +83,14 @@ public class UsuarioService {
 
         if (guardar.getTipoUsuario() != null) {
             perfilUsuarioService.sincronizarPerfil(guardar);
+        }
+
+        if (emailService != null) {
+            try {
+                emailService.enviarBienvenida(guardar);
+            } catch (Exception ignored) {
+                // El envío de correo no debe interrumpir el alta del usuario
+            }
         }
 
         return toDTO(guardar);

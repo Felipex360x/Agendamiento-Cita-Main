@@ -100,6 +100,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/servicios/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/trabajadores/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/disponibilidad/**").permitAll()
+                .requestMatchers("/api/v2/nicolet/correos/**").permitAll()
                 .requestMatchers("/doc/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

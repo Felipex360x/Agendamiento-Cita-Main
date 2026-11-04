@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>¡Tu cita ha sido confirmada! | Nicolett Studio Fantasy</title>
+</head>
+<body style="margin:0;padding:0;background-color:#fcf9f5;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#241c18;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#fcf9f5;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:540px;background-color:#ffffff;border:1px solid #ede4d9;border-radius:28px;box-shadow:0 22px 48px -10px rgba(84,55,30,0.10);overflow:hidden;">
+          <!-- Encabezado de marca -->
+          <tr>
+            <td style="padding:32px 38px 20px;border-bottom:1px solid #ede4d9;background-color:#fbf9f5;text-align:center;">
+              <div style="font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:600;letter-spacing:-1px;color:#241c18;">
+                nicolet<span style="color:#c49972;">.</span>
+              </div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:#847568;margin-top:4px;">
+                STUDIO FANTASY
+              </div>
+            </td>
+          </tr>
+
+          <!-- Cuerpo principal -->
+          <tr>
+            <td style="padding:38px 38px 32px;">
+              <p style="margin:0 0 8px;color:#845938;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">
+                Hora asegurada
+              </p>
+              <h1 style="margin:0 0 14px;font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:500;line-height:1.15;color:#241c18;">
+                ¡Tu cita está confirmada, {{nombreCliente}}!
+              </h1>
+              <p style="margin:0 0 22px;color:#847568;font-size:15px;line-height:1.65;">
+                Tu especialista <strong style="color:#241c18;">{{nombreTrabajador}}</strong> ha confirmado tu atención. Te esperamos en nuestro estudio para brindarte un momento pensado especialmente para ti.
+              </p>
+
+              <!-- Detalle de la Cita Confirmada -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#fbf8f4;border:1px solid #ede4d9;border-radius:16px;padding:18px 22px;margin-bottom:20px;">
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Estado</td>
+                  <td align="right" style="padding:8px 0;border-bottom:1px solid #ede4d9;">
+                    <span style="display:inline-block;padding:4px 12px;border-radius:999px;background-color:#edf7f0;border:1px solid #cce5d3;color:#326b4d;font-size:11px;font-weight:700;">CONFIRMADA</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Código de reserva</td>
+                  <td align="right" style="padding:8px 0;color:#241c18;font-size:14px;font-weight:700;border-bottom:1px solid #ede4d9;">{{codigoReserva}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Servicio</td>
+                  <td align="right" style="padding:8px 0;color:#241c18;font-size:14px;font-weight:600;border-bottom:1px solid #ede4d9;">{{nombreServicio}} ({{duracionMinutos}} min)</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Especialista</td>
+                  <td align="right" style="padding:8px 0;color:#241c18;font-size:14px;font-weight:600;border-bottom:1px solid #ede4d9;">{{nombreTrabajador}} ({{cargoEspecialidad}})</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;border-bottom:1px solid #ede4d9;">Fecha y hora</td>
+                  <td align="right" style="padding:8px 0;color:#241c18;font-size:14px;font-weight:600;border-bottom:1px solid #ede4d9;">{{fechaCita}} · {{horaCita}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#847568;font-size:13px;">Ubicación</td>
+                  <td align="right" style="padding:8px 0;color:#241c18;font-size:14px;font-weight:600;">Los Ciruelos, Buin</td>
+                </tr>
+              </table>
+
+              <!-- Recomendaciones -->
+              <div style="background-color:#efe7dd;border-left:3px solid #b18a68;border-radius:8px;padding:14px 16px;margin-bottom:26px;font-size:13px;color:#4a3e36;line-height:1.55;">
+                <strong style="display:block;color:#241c18;margin-bottom:4px;">Recomendaciones para tu visita:</strong>
+                Te sugerimos llegar 5 minutos antes de tu hora. Si necesitas comunicarte con el estudio, escríbenos por WhatsApp al <strong style="color:#241c18;">+56 9 4032 2551</strong> indicando tu código <strong style="color:#241c18;">{{codigoReserva}}</strong>.
+              </div>
+
+              <!-- Botón principal -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center">
+                    <a href="{{urlMiPerfil}}" style="display:inline-block;width:100%;box-sizing:border-box;padding:15px 24px;background-color:#845938;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;border-radius:10px;text-align:center;">
+                      Ver mis reservas en Mi Perfil
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Pie de página -->
+          <tr>
+            <td style="padding:24px 38px;background-color:#fbf8f4;border-top:1px solid #ede4d9;text-align:center;color:#847568;font-size:12px;line-height:1.6;">
+              <strong style="color:#241c18;">Nicolett Studio Fantasy</strong> · Un espacio para ti. Un cuidado que se siente.<br>
+              Los Ciruelos, Buin · WhatsApp <a href="https://wa.me/56940322551" style="color:#845938;text-decoration:none;">+56 9 4032 2551</a> · Instagram <a href="https://www.instagram.com/nicolettstudiofantasy/" style="color:#845938;text-decoration:none;">@nicolettstudiofantasy</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

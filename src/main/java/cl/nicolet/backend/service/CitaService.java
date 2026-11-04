@@ -64,6 +64,9 @@ public class CitaService {
     @Autowired
     private ServicioService servicioService;
 
+    @Autowired(required = false)
+    private EmailService emailService;
+
     public boolean esClientePropio(Long clienteId, Long usuarioId) {
         return clienteRepository.findById(clienteId)
                 .map(cliente -> cliente.getUsuario() != null && cliente.getUsuario().getId().equals(usuarioId))
@@ -198,6 +201,16 @@ public class CitaService {
         Cita guardada = citaRepository.save(cita);
         log.info("Cita agendada exitosamente con código={}", guardada.getCodigoReserva());
 
+        if (emailService != null) {
+            try {
+                emailService.enviarComprobantePagoYReserva(guardada);
+                emailService.enviarAvisoNuevaCitaTrabajador(guardada);
+            } catch (Exception e) {
+                log.warn("Error no bloqueante al enviar correos de agendamiento para cita {}: {}",
+                        guardada.getCodigoReserva(), e.getMessage());
+            }
+        }
+
         return toDTO(guardada);
     }
 
@@ -240,7 +253,23 @@ public class CitaService {
         }
 
         c.setEstado(dto.getNuevoEstado());
-        return toDTO(citaRepository.save(c));
+        Cita guardada = citaRepository.save(c);
+
+        if (emailService != null) {
+            try {
+                if (nuevo == EstadoCita.CONFIRMADA) {
+                    emailService.enviarCitaConfirmada(guardada);
+                } else if (nuevo == EstadoCita.CANCELADA) {
+                    emailService.enviarCitaCancelada(guardada);
+                    emailService.enviarAvisoCancelacionTrabajador(guardada);
+                }
+            } catch (Exception e) {
+                log.warn("Error no bloqueante al enviar correo por cambio de estado de cita {}: {}",
+                        guardada.getCodigoReserva(), e.getMessage());
+            }
+        }
+
+        return toDTO(guardada);
     }
 
     private void validarHorarioLaboral(Long trabajadorId, LocalDateTime inicio, LocalDateTime fin) {

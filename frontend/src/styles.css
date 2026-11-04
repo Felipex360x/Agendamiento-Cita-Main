@@ -1925,6 +1925,188 @@ input:focus, select:focus, textarea:focus {
   .admin-metrics { grid-template-columns: 1fr; }
 }
 
+/* ----------------------------------------------------
+   Email Templates & Preview Screens (Estilo Bienvenida)
+   ---------------------------------------------------- */
+.email-preview-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+.email-preview-tab {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-body);
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+.email-preview-tab:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-alt);
+  transform: translateY(-2px);
+}
+.email-preview-tab.active {
+  border-color: var(--color-primary);
+  background: #fdfaf6;
+  color: var(--color-text-main);
+  box-shadow: 0 0 0 1.5px var(--color-primary), 0 6px 20px rgba(132, 89, 56, 0.12);
+}
+.email-preview-tab strong {
+  font-size: 14px;
+  color: var(--color-text-main);
+}
+.email-preview-tab small {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.email-variables-panel {
+  margin-bottom: 24px;
+}
+
+.email-envelope-bar {
+  display: grid;
+  gap: 10px;
+  max-width: 580px;
+  margin: 0 auto 22px;
+  padding: 18px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #fbf8f4;
+  font-size: 13.5px;
+}
+.email-envelope-bar > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.email-envelope-bar > div > span:first-child {
+  min-width: 82px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.email-canvas {
+  display: grid;
+  place-items: center;
+  padding: 12px 0 36px;
+}
+.email-card {
+  width: min(100%, 580px);
+  padding: 0;
+  overflow: hidden;
+}
+.email-card-header {
+  padding: 28px 38px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: #fbf9f5;
+  text-align: center;
+}
+.email-card-header .site-brand {
+  justify-items: center;
+}
+.email-card-body {
+  padding: 36px 38px 32px;
+}
+.email-card-body h1 {
+  margin: 8px 0 14px;
+  font: 500 clamp(26px, 3.5vw, 34px)/1.15 var(--font-serif);
+}
+.email-sub-eyebrow {
+  margin-top: 22px;
+  margin-bottom: 6px;
+}
+
+.email-details-list {
+  margin: 18px 0;
+  padding: 14px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fbf8f4;
+}
+.email-details-list > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13.5px;
+}
+.email-details-list > div:last-child {
+  border-bottom: 0;
+}
+.email-details-list dt {
+  color: var(--color-text-muted);
+}
+.email-details-list dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  color: var(--color-text-main);
+}
+.email-details-list.compact {
+  margin: 10px 0 0;
+  padding: 8px 0 0;
+  border: 0;
+  background: transparent;
+}
+
+.email-voucher-box {
+  margin: 20px 0 24px;
+  padding: 20px 22px;
+  border: 1.5px dashed var(--color-border-hover);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+}
+.email-voucher-total {
+  margin-top: 12px;
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.email-card-footer {
+  display: grid;
+  gap: 4px;
+  padding: 22px 32px;
+  border-top: 1px solid var(--color-border);
+  background: #fbf8f4;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.email-card-footer strong {
+  color: var(--color-text-main);
+}
+
+@media (max-width: 560px) {
+  .email-card-header,
+  .email-card-body,
+  .email-card-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .email-details-list > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .email-details-list dd {
+    text-align: left;
+  }
+}
+
 @media (any-pointer: coarse) {
   button,
   input[type='button'],
