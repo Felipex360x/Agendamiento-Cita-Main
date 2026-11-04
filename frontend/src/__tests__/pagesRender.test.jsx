@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { AuthProvider } from '../auth/AuthContext.jsx';
 import App from '../App.jsx';
 import WorkerPortalPage from '../pages/WorkerPortalPage.jsx';
@@ -44,8 +44,9 @@ describe('Renderizado de Páginas y Enrutamiento React', () => {
 
     fireEvent.click(toggle);
     expect(screen.getByRole('button', { name: 'Cerrar menú' })).toHaveAttribute('aria-expanded', 'true');
-    expect(within(screen.getByRole('navigation', { name: 'Navegación principal' })).getByRole('link', { name: 'Iniciar sesión' }))
-      .toHaveAttribute('href', '/admin/login');
+    const loginLinks = screen.getAllByRole('link', { name: 'Iniciar sesión' });
+    expect(loginLinks).toHaveLength(1);
+    expect(loginLinks[0]).toHaveAttribute('href', '/admin/login');
     fireEvent.click(screen.getByRole('link', { name: 'Servicios' }));
     expect(screen.getByRole('button', { name: 'Abrir menú' })).toHaveAttribute('aria-expanded', 'false');
   });
