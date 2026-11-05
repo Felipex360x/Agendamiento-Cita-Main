@@ -32,6 +32,8 @@ Esto levantara:
 3. El panel visual phpMyAdmin accesible desde:
    http://localhost:8081 (Usuario: `desarrollador` / Contraseña: `password_seguro_123`).
 
+Al iniciar el backend, las bases MySQL existentes también actualizan `cliente.usuario_id` para permitir perfiles de clientes invitados sin cuenta.
+
 Para reiniciar con el esquema limpio en Docker:
 ```bash
 docker compose down -v

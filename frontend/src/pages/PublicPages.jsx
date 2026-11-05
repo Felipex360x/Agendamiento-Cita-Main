@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { api } from '../api/client.js';
+import displayText from '../utils/displayText.js';
 import { SiteFooter, SiteHeader } from './SiteShell.jsx';
 import hairImage from '../assets/hair.jpg';
 import nailsImage from '../assets/nails.jpg';
@@ -40,7 +41,7 @@ function ServiceCards({ services }) {
             <div className="site-service-copy">
               <p className="site-eyebrow">{service.duracionMinutos || '—'} minutos</p>
               <h2>{name}</h2>
-              <p>{service.descripcion || 'Un cuidado pensado para ti.'}</p>
+              <p>{displayText(service.descripcion) || 'Un cuidado pensado para ti.'}</p>
               <div className="site-service-meta"><strong>{money(service.precio)}</strong><a href={`/reservar?servicioId=${service.id}`}>Reservar →</a></div>
             </div>
           </article>

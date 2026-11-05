@@ -36,7 +36,7 @@ export function AdminShell({ title, children, active, roles = ['ADMINISTRADOR'] 
   if (loading || !user) return <main className="admin-loading" role="status">Verificando sesión…</main>;
   if (!allowed) return <main className="admin-loading"><h1>Acceso restringido</h1><p>Tu cuenta no tiene permiso para abrir este panel.</p><a href="/">Volver al inicio</a></main>;
 
-  return <div className="admin-app"><header className="admin-topbar"><a className="site-brand" href="/">NICOLETT<small>STUDIO FANTASY</small></a><button className={`site-menu-toggle admin-menu-toggle${menuOpen ? ' is-open' : ''}`} type="button" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={menuOpen} aria-controls="admin-navigation" onClick={() => setMenuOpen((open) => !open)}><span /><span /><span /></button><nav id="admin-navigation" className={menuOpen ? 'is-open' : ''} aria-label={role.includes('ADMIN') ? 'Administración' : 'Portal profesional'}>{navigation.map(([href, label]) => <a key={href} className={active === href ? 'active' : ''} href={href} onClick={() => setMenuOpen(false)}>{label}</a>)}</nav><div className="admin-identity"><span>{user.nombre} · {user.rol}</span><button type="button" onClick={logout}>Salir</button></div></header><main className="admin-content"><div className="admin-page-heading"><p className="site-eyebrow">{role.includes('ADMIN') ? 'Administración' : 'Mi espacio profesional'}</p><h1>{title}</h1></div>{children}</main></div>;
+  return <div className="admin-app"><header className="admin-topbar"><a className="site-brand" href="/">NICOLETT<small>STUDIO FANTASY</small></a><button className={`site-menu-toggle admin-menu-toggle${menuOpen ? ' is-open' : ''}`} type="button" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={menuOpen} aria-controls="admin-navigation" onClick={() => setMenuOpen((open) => !open)}><span /><span /><span /></button><nav id="admin-navigation" className={menuOpen ? 'is-open' : ''} aria-label={role.includes('ADMIN') ? 'Administración' : 'Portal profesional'}>{navigation.map(([href, label]) => <a key={href} className={active === href ? 'active' : ''} href={href} onClick={() => setMenuOpen(false)}>{label}</a>)}</nav><div className="admin-identity"><span>{user.nombre} · {user.rol}</span><button className="admin-logout" type="button" onClick={logout}>Salir</button></div></header><main className="admin-content"><div className="admin-page-heading"><p className="site-eyebrow">{role.includes('ADMIN') ? 'Administración' : 'Mi espacio profesional'}</p><h1>{title}</h1></div>{children}</main></div>;
 }
 
 export function RequestMessage({ error, notice }) {
@@ -53,5 +53,8 @@ export function EmptyState({ loading, error, empty, children }) {
 }
 
 export function personName(person) {
-  return [person?.usuario?.nombre, person?.usuario?.apellidoP].filter(Boolean).join(' ') || '—';
+  return [
+    person?.usuario?.nombre || person?.nombre,
+    person?.usuario?.apellidoP || person?.apellidoP,
+  ].filter(Boolean).join(' ') || '—';
 }
