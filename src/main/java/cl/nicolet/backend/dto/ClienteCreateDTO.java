@@ -1,5 +1,7 @@
 package cl.nicolet.backend.dto;
 
+import jakarta.validation.constraints.Size;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
@@ -13,15 +15,18 @@ public class ClienteCreateDTO {
     private Long usuarioId;
 
     @Schema(description = "Teléfono de contacto", example = "+56912345678")
+    @Size(max = 20, message = "El teléfono no puede exceder los 20 caracteres")
     private String telefono;
 
     @Schema(description = "RUT o DNI del cliente", example = "19876543-2")
+    @Size(max = 20, message = "El RUT/DNI no puede exceder los 20 caracteres")
     private String rutDni;
 
     @Schema(description = "Fecha de nacimiento", example = "1998-05-14")
     private LocalDate fechaNacimiento;
 
     @Schema(description = "Notas sobre preferencias, alergias, etc.", example = "Prefiere tonos neutros")
+    @Size(max = 2000, message = "Las notas no pueden exceder los 2000 caracteres")
     private String notasPreferencias;
 
     public ClienteCreateDTO() {

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.Optional;
 
 @Component
 public class JwtUtils {
@@ -22,6 +23,10 @@ public class JwtUtils {
     @Value("${jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
 
+    /** Versión del formato de token. Los tokens anteriores (subject = correo, sin "ver") se rechazan. */
+    public static final int TOKEN_VERSION = 2;
+    private static final String CLAIM_VERSION = "ver";
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
@@ -30,10 +35,11 @@ public class JwtUtils {
         String rol = userDetails.getAuthorities().stream()
                 .findFirst()
                 .map(a -> a.getAuthority())
-                .orElse("ROLE_CLIENTE");
+                .orElse("SIN_ROL");
 
         return Jwts.builder()
-                .subject(userDetails.getUsername())
+                .subject(String.valueOf(userDetails.getId()))
+                .claim(CLAIM_VERSION, TOKEN_VERSION)
                 .claim("id", userDetails.getId())
                 .claim("nombre", userDetails.getNombre())
                 .claim("apellido", userDetails.getApellidoP())
@@ -44,13 +50,30 @@ public class JwtUtils {
                 .compact();
     }
 
-    public String getUsernameFromToken(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+    /**
+     * Devuelve el ID de usuario firmado en el token, o vacío si el token no es válido, está expirado,
+     * usa el formato anterior (subject = correo) o su claim "id" no coincide con el subject.
+     * El rol del token es solo informativo: los permisos se leen siempre de la base de datos.
+     */
+    public Optional<Long> getUserIdFromToken(String token) {
+        try {
+            Claims claims = getClaimsFromToken(token);
+            Integer version = claims.get(CLAIM_VERSION, Integer.class);
+            if (version == null || version != TOKEN_VERSION) {
+                log.debug("Token JWT rechazado (formato anterior o versión desconocida)");
+                return Optional.empty();
+            }
+            long subjectId = Long.parseLong(claims.getSubject());
+            Number idClaim = claims.get("id", Number.class);
+            if (idClaim == null || idClaim.longValue() != subjectId) {
+                log.debug("Token JWT rechazado (identidad discordante)");
+                return Optional.empty();
+            }
+            return Optional.of(subjectId);
+        } catch (JwtException | IllegalArgumentException e) {
+            log.debug("Token JWT rechazado ({})", e.getClass().getSimpleName());
+            return Optional.empty();
+        }
     }
 
     public Claims getClaimsFromToken(String token) {

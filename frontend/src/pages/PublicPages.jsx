@@ -1,3 +1,4 @@
+import { getSafeRedirect as sharedSafeRedirect } from '../routes.js';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { api } from '../api/client.js';
@@ -59,12 +60,12 @@ function CatalogState({ loading, error, empty, children }) {
 
 export function HomePage() {
   const { items, loading, error } = useCatalog('services');
-  useEffect(() => { document.title = 'Nicolett Studio Fantasy'; }, []);
+  useEffect(() => { document.title = 'Nicolett Studio Fantasy: Belleza a tu ritmo y sin barreras'; }, []);
 
   return <><SiteHeader active="inicio" /><main>
     <section className="site-hero">
       <img src={salonImage} alt="Interior de Nicolett Studio Fantasy" />
-      <div className="site-hero-copy"><p className="site-eyebrow">Belleza a tu ritmo y sin barreras</p><h1>Nicolett Studio Fantasy, <em>tu esencia.</em></h1><p>Más que un salón, un espacio para reconectar contigo. Realzamos tu belleza con dedicación, estilo y un cuidado que se siente.</p><div className="site-hero-actions"><a className="site-button" href="/reservar">Reserva tu momento</a><a className="site-button site-button-outline" href="/servicios">Explorar servicios</a></div></div>
+      <div className="site-hero-copy"><p className="site-eyebrow">Belleza a tu ritmo y sin barreras</p><h1>Nicolett Studio Fantasy</h1><p>Más que un salón, un espacio para reconectar contigo. Realzamos tu belleza con dedicación, estilo y un cuidado que se siente.</p><div className="site-hero-actions"><a className="site-button" href="/reservar">Reserva tu momento</a><a className="site-button site-button-outline" href="/servicios">Explorar servicios</a></div></div>
     </section>
     <section className="site-benefits"><div><strong>Belleza a tu medida</strong><span>Cada detalle pensado para ti</span></div><div><strong>Manos expertas, cuidado real</strong><span>Especialistas que escuchan y acompañan</span></div><div><strong>Tu hora, asegurada</strong><span>Reserva en unos pocos pasos</span></div></section>
     <section className="site-section"><div className="site-section-heading"><div><p className="site-eyebrow">Nuestros servicios</p><h2>Elige cómo quieres brillar</h2></div><a href="/servicios">Ver todos →</a></div><CatalogState loading={loading} error={error} empty={!items.length}><ServiceCards services={items.slice(0, 3)} /></CatalogState></section>
@@ -102,18 +103,7 @@ function defaultRouteForRole(role) {
 
 function getSafeRedirect(fallback = null) {
   const requested = new URLSearchParams(window.location.search).get('redirect');
-  if (!requested || /^(?:[a-z0-9+.-]+:|\/\/)/i.test(requested.trim())) return fallback;
-  const target = new URL(requested, window.location.origin);
-  const pathname = target.pathname;
-  const suffix = `${target.search}${target.hash}`;
-  const publicPages = new Set(['index.html', 'reservar.html', 'servicios.html', 'equipo.html', 'agenda.html', 'dashboard.html', 'clientas.html', 'mi-perfil.html']);
-  const adminPages = new Set(['citas.html', 'disponibilidad.html', 'historial.html', 'login.html', 'mi-horario.html', 'panel-trabajador.html', 'pruebas.html', 'reserva-cliente.html', 'servicios.html', 'usuarios.html']);
-  const clean = pathname.replace(/^\/+/, '').replace(/\/$/, '');
-  if (clean.startsWith('admin/')) {
-    return adminPages.has(clean.slice('admin/'.length)) ? `/${clean}${suffix}` : fallback;
-  }
-  if (publicPages.has(clean)) return `/${clean}${suffix}`;
-  return adminPages.has(clean) ? `/admin/${clean}${suffix}` : fallback;
+  return sharedSafeRedirect(requested, window.location.origin, fallback);
 }
 
 export function LoginPage() {

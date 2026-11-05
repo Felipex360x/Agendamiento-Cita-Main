@@ -10,6 +10,23 @@ function Stop-LaunchedProcessTree {
     & taskkill.exe /PID $Process.Id /T /F 2>$null | Out-Null
 }
 
+function Wait-Http {
+    param([string]$Name, [string]$Url, [int]$TimeoutSeconds = 180, [System.Diagnostics.Process]$Process = $null, [string]$LogPath = $null)
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        if ($Process -and $Process.HasExited) {
+            $tail = if ($LogPath -and (Test-Path $LogPath)) { (Get-Content $LogPath -Tail 15) -join [Environment]::NewLine } else { '' }
+            throw "$Name termino antes de estar listo (codigo $($Process.ExitCode)).$([Environment]::NewLine)$tail"
+        }
+        try {
+            $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 3
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) { Write-Host "$Name listo ($Url)." -ForegroundColor Green; return }
+        } catch { }
+        Start-Sleep -Seconds 2
+    }
+    throw "$Name no respondio en $TimeoutSeconds s ($Url)."
+}
+
 try {
     # Defaults for the local MySQL service defined in docker-compose.yml.
     if ([string]::IsNullOrWhiteSpace($env:DB_USERNAME)) { $env:DB_USERNAME = 'desarrollador' }
@@ -55,13 +72,21 @@ try {
     $cancelHandler = [ConsoleCancelEventHandler]{ param($sender, $eventArgs) $eventArgs.Cancel = $true; $script:stopRequested = $true }
     [Console]::add_CancelKeyPress($cancelHandler)
 
-    Write-Host 'Iniciando Spring Boot, React y el tunel publico...'
-    $backend = Start-Process -FilePath $env:ComSpec -ArgumentList @('/k', 'call mvnw.cmd spring-boot:run') -WorkingDirectory $projectRoot -PassThru
+    Write-Host 'Iniciando Spring Boot y React...'
+    $logs = Join-Path $projectRoot 'logs'
+    New-Item -ItemType Directory -Force -Path $logs | Out-Null
+    $backendLog = Join-Path $logs 'backend.log'
+    $frontendLog = Join-Path $logs 'frontend.log'
+    # /c (no /k): el cmd termina cuando termina el proceso real, asi se detecta que Spring o Vite cayeron.
+    $backend = Start-Process -FilePath $env:ComSpec -ArgumentList @('/c', "call mvnw.cmd spring-boot:run > `"$backendLog`" 2>&1") -WorkingDirectory $projectRoot -PassThru -WindowStyle Minimized
     $launched.Add($backend)
-    $frontend = Start-Process -FilePath $env:ComSpec -ArgumentList @('/k', 'call npm.cmd run dev -- --host 127.0.0.1 --port 5173') -WorkingDirectory $frontendRoot -PassThru
+    $frontend = Start-Process -FilePath $env:ComSpec -ArgumentList @('/c', "call npm.cmd run dev -- --host 127.0.0.1 --port 5173 --strictPort > `"$frontendLog`" 2>&1") -WorkingDirectory $frontendRoot -PassThru -WindowStyle Minimized
     $launched.Add($frontend)
 
-    Start-Sleep -Seconds 12
+    # Salud real (con timeout) en lugar de una pausa fija: Spring directo, y Spring + frontend por la ruta de Vite.
+    Wait-Http -Name 'Spring Boot' -Url 'http://127.0.0.1:8080/actuator/health' -TimeoutSeconds 180 -Process $backend -LogPath $backendLog
+    Wait-Http -Name 'Frontend (Vite)' -Url 'http://127.0.0.1:5173/' -TimeoutSeconds 60 -Process $frontend -LogPath $frontendLog
+    Wait-Http -Name 'Salud de Spring via Vite' -Url 'http://127.0.0.1:5173/actuator/health' -TimeoutSeconds 30
     if ($env:CLOUDFLARE_TUNNEL_TOKEN) {
         if (-not $env:TUNNEL_HOSTNAME) { throw 'Configuraste CLOUDFLARE_TUNNEL_TOKEN, pero falta TUNNEL_HOSTNAME.' }
         Write-Host "Iniciando tunel para https://$env:TUNNEL_HOSTNAME ..."

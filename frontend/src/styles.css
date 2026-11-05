@@ -337,7 +337,6 @@ input:focus, select:focus, textarea:focus {
   background: var(--color-accent-soft);
   box-shadow: inset 0 0 0 1px rgba(196, 153, 114, 0.35);
 }
-.site-mobile-login { display: none; }
 .site-actions { gap: 14px; }
 .site-actions > a:first-child { color: var(--color-text-body); font-weight: 500; }
 .site-user {
@@ -966,6 +965,15 @@ input:focus, select:focus, textarea:focus {
 .site-booking-option small { color: var(--color-text-muted); font-size: 13px; }
 
 .site-day-picker { margin: 24px 0 16px; }
+.site-booking-date-picker {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.site-booking-date-picker .site-calendar-input {
+  margin-right: auto !important;
+  margin-left: auto !important;
+}
 .site-day-picker-label {
   display: block;
   margin-bottom: 10px;
@@ -1450,6 +1458,23 @@ input:focus, select:focus, textarea:focus {
 }
 .admin-form-grid textarea { resize: vertical; }
 .admin-form-grid .wide { grid-column: 1 / -1; }
+.admin-date-selector {
+  grid-column: 1 / -1;
+  display: grid;
+  place-items: center;
+}
+.admin-date-selector .site-day-picker {
+  width: min(100%, 760px);
+  margin: 8px auto 12px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #fbf8f4;
+}
+.admin-date-selector .site-calendar-input {
+  margin-right: auto !important;
+  margin-left: auto !important;
+}
 
 /* ----------------------------------------------------
    Tables & Status Badges
@@ -1670,6 +1695,69 @@ input:focus, select:focus, textarea:focus {
   font: inherit;
 }
 .admin-user-deactivation-reason { display: block; max-width: 240px; margin-top: 5px; color: #81756c; }
+.admin-row-actions .admin-user-submit {
+  min-width: 160px;
+  padding: 0 24px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #764c2c 100%);
+  color: #ffffff;
+  letter-spacing: 0.1px;
+  text-decoration: none;
+}
+.admin-table td.admin-row-actions .admin-user-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  margin: 3px 6px 3px 0;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+  text-decoration: none;
+  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.admin-table td.admin-row-actions .admin-user-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.admin-table td.admin-row-actions .admin-user-action:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.admin-table td.admin-row-actions .admin-user-action-edit {
+  color: #704b2f;
+  background: #f5ede4;
+  border-color: #e7d8c8;
+}
+.admin-table td.admin-row-actions .admin-user-action-edit:hover:not(:disabled) {
+  background: #eee0d1;
+  border-color: #d7bea5;
+}
+.admin-table td.admin-row-actions .admin-user-action-deactivate {
+  color: #9a3e36;
+  background: #fff1ef;
+  border-color: #f0d0cc;
+}
+.admin-table td.admin-row-actions .admin-user-action-deactivate:hover:not(:disabled) {
+  background: #ffe4e0;
+  border-color: #e9b9b3;
+}
+.admin-table td.admin-row-actions .admin-user-action-reactivate {
+  color: #326b4d;
+  background: #edf7f0;
+  border-color: #cce5d3;
+}
+.admin-table td.admin-row-actions .admin-user-action-reactivate:hover:not(:disabled) {
+  background: #dff0e4;
+  border-color: #add4b9;
+}
+.admin-table td.admin-row-actions .admin-user-action:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
 .admin-modal-close {
   position: absolute;
   top: 16px;
@@ -1841,12 +1929,7 @@ input:focus, select:focus, textarea:focus {
     transition-delay: 0s;
   }
   .site-topbar nav a { padding: 12px 14px; }
-  .site-mobile-login {
-    display: inline-flex;
-    align-self: flex-start;
-    margin-top: 8px;
-  }
-  .site-actions > a.site-login-link { display: none; }
+  .site-actions > a.site-login-link { display: inline-flex; }
   .site-actions { order: 3; margin-left: 0; }
   .site-user { display: none; }
   .site-card-grid, .site-team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1923,6 +2006,188 @@ input:focus, select:focus, textarea:focus {
   .admin-identity span { display: none; }
   .admin-table { min-width: 760px; }
   .admin-metrics { grid-template-columns: 1fr; }
+}
+
+/* ----------------------------------------------------
+   Email Templates & Preview Screens (Estilo Bienvenida)
+   ---------------------------------------------------- */
+.email-preview-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+.email-preview-tab {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-body);
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+.email-preview-tab:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-alt);
+  transform: translateY(-2px);
+}
+.email-preview-tab.active {
+  border-color: var(--color-primary);
+  background: #fdfaf6;
+  color: var(--color-text-main);
+  box-shadow: 0 0 0 1.5px var(--color-primary), 0 6px 20px rgba(132, 89, 56, 0.12);
+}
+.email-preview-tab strong {
+  font-size: 14px;
+  color: var(--color-text-main);
+}
+.email-preview-tab small {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.email-variables-panel {
+  margin-bottom: 24px;
+}
+
+.email-envelope-bar {
+  display: grid;
+  gap: 10px;
+  max-width: 580px;
+  margin: 0 auto 22px;
+  padding: 18px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #fbf8f4;
+  font-size: 13.5px;
+}
+.email-envelope-bar > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.email-envelope-bar > div > span:first-child {
+  min-width: 82px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.email-canvas {
+  display: grid;
+  place-items: center;
+  padding: 12px 0 36px;
+}
+.email-card {
+  width: min(100%, 580px);
+  padding: 0;
+  overflow: hidden;
+}
+.email-card-header {
+  padding: 28px 38px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: #fbf9f5;
+  text-align: center;
+}
+.email-card-header .site-brand {
+  justify-items: center;
+}
+.email-card-body {
+  padding: 36px 38px 32px;
+}
+.email-card-body h1 {
+  margin: 8px 0 14px;
+  font: 500 clamp(26px, 3.5vw, 34px)/1.15 var(--font-serif);
+}
+.email-sub-eyebrow {
+  margin-top: 22px;
+  margin-bottom: 6px;
+}
+
+.email-details-list {
+  margin: 18px 0;
+  padding: 14px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fbf8f4;
+}
+.email-details-list > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13.5px;
+}
+.email-details-list > div:last-child {
+  border-bottom: 0;
+}
+.email-details-list dt {
+  color: var(--color-text-muted);
+}
+.email-details-list dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  color: var(--color-text-main);
+}
+.email-details-list.compact {
+  margin: 10px 0 0;
+  padding: 8px 0 0;
+  border: 0;
+  background: transparent;
+}
+
+.email-voucher-box {
+  margin: 20px 0 24px;
+  padding: 20px 22px;
+  border: 1.5px dashed var(--color-border-hover);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+}
+.email-voucher-total {
+  margin-top: 12px;
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.email-card-footer {
+  display: grid;
+  gap: 4px;
+  padding: 22px 32px;
+  border-top: 1px solid var(--color-border);
+  background: #fbf8f4;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.email-card-footer strong {
+  color: var(--color-text-main);
+}
+
+@media (max-width: 560px) {
+  .email-card-header,
+  .email-card-body,
+  .email-card-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .email-details-list > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .email-details-list dd {
+    text-align: left;
+  }
 }
 
 @media (any-pointer: coarse) {

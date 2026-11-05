@@ -473,6 +473,18 @@ public class QaStressAndSecurityIntegrationTest {
                         .content(objectMapper.writeValueAsString(citaDomingo)))
                 .andExpect(status().isBadRequest());
 
+        // Matriz de estados (E08): PENDIENTE no salta directamente a COMPLETADA; primero se confirma.
+        mockMvc.perform(patch("/api/v2/nicolet/citas/" + citaId + "/estado")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CambioEstadoCitaDTO(EstadoCita.COMPLETADA, "Atención impecable"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Transición de estado no permitida: de PENDIENTE a COMPLETADA"));
+        mockMvc.perform(patch("/api/v2/nicolet/citas/" + citaId + "/estado")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CambioEstadoCitaDTO(EstadoCita.CONFIRMADA, null))))
+                .andExpect(status().isOk());
         mockMvc.perform(patch("/api/v2/nicolet/citas/" + citaId + "/estado")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)

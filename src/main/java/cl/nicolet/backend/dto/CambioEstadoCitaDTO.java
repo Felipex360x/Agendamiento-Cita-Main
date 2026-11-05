@@ -1,5 +1,7 @@
 package cl.nicolet.backend.dto;
 
+import jakarta.validation.constraints.Size;
+
 import cl.nicolet.backend.model.EstadoCita;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +14,7 @@ public class CambioEstadoCitaDTO {
     private EstadoCita nuevoEstado;
 
     @Schema(description = "Motivo de cancelación o notas del cambio", example = "Cancelado por el cliente con 24h de anticipación")
+    @Size(max = 2000, message = "El texto no puede exceder los 2000 caracteres")
     private String motivoONotas;
 
     public CambioEstadoCitaDTO() {

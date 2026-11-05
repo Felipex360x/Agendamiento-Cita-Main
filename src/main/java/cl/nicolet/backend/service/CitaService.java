@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -35,6 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class CitaService {
 
     private static final Logger log = LoggerFactory.getLogger(CitaService.class);
+
+    @Autowired
+    private Clock clock;
 
     @Autowired
     private CitaRepository citaRepository;
@@ -59,6 +63,9 @@ public class CitaService {
 
     @Autowired
     private ServicioService servicioService;
+
+    @Autowired(required = false)
+    private EmailService emailService;
 
     public boolean esClientePropio(Long clienteId, Long usuarioId) {
         return clienteRepository.findById(clienteId)
@@ -127,6 +134,12 @@ public class CitaService {
         return citaRepository.findByClienteId(clienteId).stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    /**
+     * READ_COMMITTED es necesario además del bloqueo de la fila del profesional: con REPEATABLE_READ (valor por
+     * defecto de MySQL/InnoDB) las lecturas no bloqueantes usan la foto tomada al primer SELECT de la
+     * transacción, anterior al bloqueo, y no verían la reserva que la otra transacción acaba de confirmar.
+     */
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public CitaDTO agendar(CitaCreateDTO dto) {
         log.info("Procesando agendamiento de cita para clienteId={}, trabajadorId={}, servicioId={}",
                 dto.getClienteId(), dto.getTrabajadorId(), dto.getServicioId());
@@ -140,7 +153,9 @@ public class CitaService {
             throw new IllegalArgumentException("La cuenta del cliente se encuentra desactivada");
         }
 
-        Trabajador trabajador = trabajadorRepository.findById(dto.getTrabajadorId())
+        // Bloqueo de la fila del profesional: serializa las altas de su agenda (no la de otros profesionales).
+        // Todas las comprobaciones de solapamiento se hacen DESPUÉS de adquirirlo.
+        Trabajador trabajador = trabajadorRepository.findByIdForUpdate(dto.getTrabajadorId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Trabajador no encontrado: " + dto.getTrabajadorId()));
         if (!Boolean.TRUE.equals(trabajador.getActivo())) {
             throw new IllegalArgumentException("El trabajador se encuentra inactivo");
@@ -154,9 +169,12 @@ public class CitaService {
         if (!Boolean.TRUE.equals(servicio.getActivo())) {
             throw new IllegalArgumentException("El servicio seleccionado no está activo actualmente");
         }
+        if (trabajador.getServicios().stream().noneMatch(s -> s.getId().equals(servicio.getId()))) {
+            throw new IllegalArgumentException("El profesional seleccionado no ofrece el servicio solicitado");
+        }
 
         LocalDateTime inicio = dto.getFechaHoraInicio();
-        if (inicio.isBefore(LocalDateTime.now().minusMinutes(2))) {
+        if (inicio.isBefore(LocalDateTime.now(clock).minusMinutes(2))) {
             throw new IllegalArgumentException("La fecha y hora de agendamiento debe ser posterior al momento actual");
         }
 
@@ -183,6 +201,16 @@ public class CitaService {
         Cita guardada = citaRepository.save(cita);
         log.info("Cita agendada exitosamente con código={}", guardada.getCodigoReserva());
 
+        if (emailService != null) {
+            try {
+                emailService.enviarComprobantePagoYReserva(guardada);
+                emailService.enviarAvisoNuevaCitaTrabajador(guardada);
+            } catch (Exception e) {
+                log.warn("Error no bloqueante al enviar correos de agendamiento para cita {}: {}",
+                        guardada.getCodigoReserva(), e.getMessage());
+            }
+        }
+
         return toDTO(guardada);
     }
 
@@ -195,15 +223,28 @@ public class CitaService {
         Cita c = citaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cita no encontrada: " + id));
 
-        if (c.getEstado() == EstadoCita.COMPLETADA) {
-            throw new IllegalArgumentException("No se puede modificar el estado de una cita ya completada");
+        EstadoCita actual = c.getEstado();
+        EstadoCita nuevo = dto.getNuevoEstado();
+        if (actual.esFinal()) {
+            throw new IllegalArgumentException(switch (actual) {
+                case COMPLETADA -> "No se puede modificar el estado de una cita ya completada";
+                case CANCELADA -> "No se puede modificar una cita cancelada; crea una nueva reserva";
+                default -> "No se puede modificar el estado de una cita en estado " + actual;
+            });
+        }
+        if (actual == nuevo || !actual.puedePasarA(nuevo)) {
+            throw new IllegalArgumentException("Transición de estado no permitida: de " + actual + " a " + nuevo);
         }
 
         if (dto.getNuevoEstado() == EstadoCita.CANCELADA) {
             if (dto.getMotivoONotas() == null || dto.getMotivoONotas().isBlank()) {
                 throw new IllegalArgumentException("Debes indicar el motivo para cancelar la cita");
             }
-            c.setMotivoCancelacion(dto.getMotivoONotas().trim());
+            String motivo = dto.getMotivoONotas().trim();
+            if (motivo.length() > 255) {
+                throw new IllegalArgumentException("El motivo de cancelación no puede exceder los 255 caracteres");
+            }
+            c.setMotivoCancelacion(motivo);
         } else if (dto.getNuevoEstado() == EstadoCita.COMPLETADA && requiereDetalleFinalizacion
                 && (dto.getMotivoONotas() == null || dto.getMotivoONotas().isBlank())) {
             throw new IllegalArgumentException("Debes describir el trabajo realizado antes de completar la cita");
@@ -212,7 +253,23 @@ public class CitaService {
         }
 
         c.setEstado(dto.getNuevoEstado());
-        return toDTO(citaRepository.save(c));
+        Cita guardada = citaRepository.save(c);
+
+        if (emailService != null) {
+            try {
+                if (nuevo == EstadoCita.CONFIRMADA) {
+                    emailService.enviarCitaConfirmada(guardada);
+                } else if (nuevo == EstadoCita.CANCELADA) {
+                    emailService.enviarCitaCancelada(guardada);
+                    emailService.enviarAvisoCancelacionTrabajador(guardada);
+                }
+            } catch (Exception e) {
+                log.warn("Error no bloqueante al enviar correo por cambio de estado de cita {}: {}",
+                        guardada.getCodigoReserva(), e.getMessage());
+            }
+        }
+
+        return toDTO(guardada);
     }
 
     private void validarHorarioLaboral(Long trabajadorId, LocalDateTime inicio, LocalDateTime fin) {
@@ -250,7 +307,7 @@ public class CitaService {
     }
 
     private String generarCodigoReserva() {
-        return "RES-" + LocalDateTime.now().getYear() + "-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        return "RES-" + LocalDateTime.now(clock).getYear() + "-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
     }
 
     public CitaDTO toDTO(Cita c) {
@@ -258,7 +315,7 @@ public class CitaService {
                 c.getId(),
                 c.getCodigoReserva(),
                 clienteService.toDTO(c.getCliente()),
-                trabajadorService.toDTO(c.getTrabajador()),
+                trabajadorService.toPublicDTO(c.getTrabajador()),
                 servicioService.toDTO(c.getServicio()),
                 c.getFechaHoraInicio(),
                 c.getFechaHoraFin(),

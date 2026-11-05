@@ -10,7 +10,7 @@ export function SiteHeader({ active }) {
   const isAdmin = role.includes('ADMIN');
   return (
     <header className="site-topbar">
-      <a className="site-brand" href="/">nicolet<small>STUDIO FANTASY</small></a>
+      <a className="site-brand" href="/">NICOLETT<small>STUDIO FANTASY</small></a>
       <button
         className={`site-menu-toggle${menuOpen ? ' is-open' : ''}`}
         type="button"
@@ -28,7 +28,6 @@ export function SiteHeader({ active }) {
         <a className={active === 'servicios' ? 'active' : ''} href="/servicios" onClick={() => setMenuOpen(false)}>Servicios</a>
         <a className={active === 'equipo' ? 'active' : ''} href="/equipo" onClick={() => setMenuOpen(false)}>Nuestro equipo</a>
         {isClient && <a className={active === 'perfil' ? 'active' : ''} href="/mi-perfil" onClick={() => setMenuOpen(false)}>Mi perfil</a>}
-        {!user && <a className="site-mobile-login site-button site-button-outline" href="/admin/login" onClick={() => setMenuOpen(false)}>Iniciar sesión</a>}
       </nav>
       <div className="site-actions">
         {user ? <><span className="site-user">Hola, {user.nombre}</span>{isWorker && <a className="site-button site-button-outline" href="/admin/panel-trabajador">Mi panel</a>}{isAdmin && <a className="site-button site-button-outline" href="/admin/citas">Administración</a>}<button type="button" className="site-link-button" onClick={logout}>Salir</button></> : <a className="site-button site-button-outline site-login-link" href="/admin/login">Iniciar sesión</a>}
@@ -41,7 +40,7 @@ export function SiteHeader({ active }) {
 export function SiteFooter() {
   return <footer className="site-footer">
     <div className="site-footer-brand">
-      <a className="site-brand" href="/">nicolet<span>.</span></a>
+      <a className="site-brand" href="/">NICOLETT</a>
       <span>Un espacio para ti. Un cuidado que se siente.</span>
     </div>
     <address className="site-footer-contact">
@@ -49,6 +48,6 @@ export function SiteFooter() {
       <div><strong>Instagram</strong><a href="https://www.instagram.com/nicolettstudiofantasy/" target="_blank" rel="noreferrer">@nicolettstudiofantasy</a></div>
       <div><strong>WhatsApp</strong><a href="https://wa.me/56940322551" target="_blank" rel="noreferrer">+56 9 4032 2551</a></div>
     </address>
-    <span className="site-footer-copyright">© {new Date().getFullYear()} Nicolett Studio Fantasy · Buin, Chile</span>
+    <span className="site-footer-copyright">© {new Date().getFullYear()} Nicolett Studio Fantasy: Belleza a tu ritmo y sin barreras · Buin, Chile</span>
   </footer>;
 }

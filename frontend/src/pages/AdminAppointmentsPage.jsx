@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import DaySelector, { localDateValue } from '../components/DaySelector.jsx';
+import { businessNowTime } from '../dates.js';
 import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
 
-const localTime = () => {
-  const date = new Date();
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-};
+const localTime = () => businessNowTime();
 
 export default function AdminAppointmentsPage() {
   const [appointments, setAppointments] = useState([]);
@@ -75,8 +73,8 @@ export default function AdminAppointmentsPage() {
       <label>Cliente<select required value={form.clienteId} onChange={(event) => setForm({ ...form, clienteId: event.target.value })}><option value="">Seleccionar cliente</option>{clients.map((client) => <option key={client.id} value={client.id}>{personName(client)}</option>)}</select></label>
       <label>Profesional<select required value={form.trabajadorId} onChange={(event) => setForm({ ...form, trabajadorId: event.target.value })}><option value="">Seleccionar profesional</option>{workers.map((item) => <option key={item.id} value={item.id}>{personName(item)}</option>)}</select></label>
       <label>Servicio<select required value={form.servicioId} onChange={(event) => setForm({ ...form, servicioId: event.target.value })}><option value="">Seleccionar servicio</option>{services.map((item) => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select></label>
-      <DaySelector label="Fecha" value={form.fecha} onChange={(fecha) => setForm({ ...form, fecha, hora: '' })} minDate={localDateValue()} />
       <label>Hora<input required type="time" min={form.fecha === localDateValue() ? localTime() : undefined} value={form.hora} onChange={(event) => setForm({ ...form, hora: event.target.value })} /></label>
+      <div className="admin-date-selector"><DaySelector label="Fecha" value={form.fecha} onChange={(fecha) => setForm({ ...form, fecha, hora: '' })} minDate={localDateValue()} /></div>
       <label className="wide">Notas<textarea rows={2} value={form.notasCliente} onChange={(event) => setForm({ ...form, notasCliente: event.target.value })} /></label>
       <button className="site-button" type="submit" disabled={saving || loading}>{saving ? 'Guardando…' : 'Crear cita'}</button>
     </form></section>
