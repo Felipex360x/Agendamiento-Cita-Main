@@ -71,7 +71,7 @@ public class CitaController {
     @Operation(summary = "Agendar una nueva Cita")
     @ApiResponse(responseCode = "201", description = "Cita agendada exitosamente")
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR') or @citaService.esClientePropio(#p0.clienteId, principal.id)")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or (#p0.clienteId != null and @citaService.esClientePropio(#p0.clienteId, principal.id))")
     public ResponseEntity<CitaDTO> agendar(@Valid @RequestBody CitaCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(citaService.agendar(dto));
     }

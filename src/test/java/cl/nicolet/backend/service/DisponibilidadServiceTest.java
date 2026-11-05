@@ -133,6 +133,41 @@ class DisponibilidadServiceTest {
     }
 
     @Test
+    @DisplayName("calcularDisponibilidad - debe bloquear una cita que termina después del inicio de colación")
+    void debeBloquearCitaQueCruzaInicioDeColacion() {
+        Trabajador trabajador = new Trabajador();
+        trabajador.setId(1L);
+        trabajador.setActivo(true);
+        trabajador.setUsuario(new Usuario());
+
+        Servicio servicio = new Servicio(1L, "Manicura rusa", "Desc", 60, new BigDecimal("22000"), true);
+        LocalDate fechaFutura = LocalDate.now().plusDays(2);
+        int diaSemana = fechaFutura.getDayOfWeek().getValue();
+        HorarioDisponibilidad horario = new HorarioDisponibilidad(
+                1L, trabajador, diaSemana,
+                LocalTime.of(9, 0), LocalTime.of(18, 0),
+                LocalTime.of(12, 30), LocalTime.of(13, 30),
+                true
+        );
+
+        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
+        when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
+        when(horarioDisponibilidadRepository.findByTrabajadorIdAndDiaSemanaAndActivoTrue(1L, diaSemana))
+                .thenReturn(Optional.of(horario));
+        when(citaRepository.findByTrabajadorAndRangoFechas(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of());
+
+        List<BloqueHorarioDTO> bloques = disponibilidadService.calcularDisponibilidad(1L, fechaFutura, 1L);
+        BloqueHorarioDTO bloqueMediodia = bloques.stream()
+                .filter(b -> b.getHoraInicio().equals(LocalTime.of(12, 0)))
+                .findFirst()
+                .orElseThrow();
+
+        assertFalse(bloqueMediodia.getDisponible());
+        assertEquals("DESCANSO", bloqueMediodia.getMotivoNoDisponible());
+    }
+
+    @Test
     @DisplayName("calcularDisponibilidad - debe marcar bloques con citas agendadas como OCUPADO")
     void debeMarcarCitaExistenteComoOcupado() {
         Trabajador trabajador = new Trabajador();

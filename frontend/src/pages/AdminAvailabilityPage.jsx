@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client.js';
 import DaySelector, { localDateValue } from '../components/DaySelector.jsx';
+import displayText from '../utils/displayText.js';
 import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
 
 const unavailableLabel = (reason) => ({ DESCANSO: 'Colación', OCUPADO: 'Ocupado', HORA_PASADA: 'No disponible' }[reason] || reason || 'Ocupado');
@@ -74,7 +75,7 @@ export default function AdminAvailabilityPage() {
       <label>Servicio<select value={serviceId} onChange={(event) => selectService(event.target.value)}><option value="">Duración predeterminada</option>{availableServices.map((item) => <option key={item.id} value={item.id}>{item.nombre}</option>)}</select></label>
       <button className="site-button" type="submit" disabled={catalogLoading || loading}>{loading ? 'Consultando…' : 'Ver disponibilidad'}</button>
     </form></section>
-    {worker && <section className="admin-panel"><p className="site-eyebrow">{personName(worker)}</p><h2>{worker.cargoEspecialidad || 'Profesional'}</h2>{worker.biografia && <p>{worker.biografia}</p>}</section>}
-    {(loading || error || result) && <section className="admin-panel"><h2>Bloques del {result?.date || date}</h2><EmptyState loading={loading} error={error} empty={!result?.slots.length}><div className="site-slot-grid">{(result?.slots || []).map((slot) => <div key={slot.horaInicio} className={`admin-slot ${slot.disponible ? 'available' : ''}`}><strong>{String(slot.horaInicio).slice(0, 5)}–{String(slot.horaFin).slice(0, 5)}</strong><small>{slot.disponible ? 'Disponible' : unavailableLabel(slot.motivoNoDisponible)}</small></div>)}</div><a className="site-button" href={`/reservar?trabajadorId=${result?.workerId}&fecha=${result?.date}${result?.serviceId ? `&servicioId=${result.serviceId}` : ''}`}>Reservar este día</a></EmptyState></section>}
+    {worker && <section className="admin-panel"><p className="site-eyebrow">{personName(worker)}</p><h2>{displayText(worker.cargoEspecialidad) || 'Profesional'}</h2>{worker.biografia && <p>{displayText(worker.biografia)}</p>}</section>}
+    {searched && <section className="admin-panel"><h2>Bloques del {date}</h2><EmptyState loading={loading} error={error} empty={!slots.length}><div className="site-slot-grid">{slots.map((slot) => <div key={slot.horaInicio} className={`admin-slot ${slot.disponible ? 'available' : ''}`}><strong>{String(slot.horaInicio).slice(0, 5)}–{String(slot.horaFin).slice(0, 5)}</strong><small>{slot.disponible ? 'Disponible' : unavailableLabel(slot.motivoNoDisponible)}</small></div>)}</div><a className="site-button" href={`/reservar?trabajadorId=${workerId}&fecha=${date}${serviceId ? `&servicioId=${serviceId}` : ''}`}>Reservar este día</a></EmptyState></section>}
   </AdminShell>;
 }

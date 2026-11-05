@@ -144,8 +144,21 @@ public class CitaService {
         log.info("Procesando agendamiento de cita para clienteId={}, trabajadorId={}, servicioId={}",
                 dto.getClienteId(), dto.getTrabajadorId(), dto.getServicioId());
 
-        Cliente cliente = clienteRepository.findById(dto.getClienteId())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado: " + dto.getClienteId()));
+        boolean guestDataProvided = (dto.getClienteNombre() != null && !dto.getClienteNombre().isBlank())
+                || (dto.getClienteApellidoP() != null && !dto.getClienteApellidoP().isBlank())
+                || (dto.getClienteCorreo() != null && !dto.getClienteCorreo().isBlank())
+                || (dto.getClienteTelefono() != null && !dto.getClienteTelefono().isBlank());
+        if (dto.getClienteId() != null && guestDataProvided) {
+            throw new IllegalArgumentException("Selecciona un cliente registrado o ingresa un invitado, no ambos");
+        }
+        if (dto.getClienteId() == null && !guestDataProvided) {
+            throw new IllegalArgumentException("Debes seleccionar un cliente o ingresar los datos del invitado");
+        }
+
+        Cliente cliente = dto.getClienteId() == null
+                ? clienteService.crearInvitado(dto.getClienteNombre(), dto.getClienteApellidoP(), dto.getClienteCorreo(), dto.getClienteTelefono())
+                : clienteRepository.findById(dto.getClienteId())
+                        .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado: " + dto.getClienteId()));
         if (!Boolean.TRUE.equals(cliente.getActivo())) {
             throw new IllegalArgumentException("El cliente se encuentra inactivo");
         }

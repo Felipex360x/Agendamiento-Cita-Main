@@ -61,6 +61,9 @@ public class ClienteService {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado: " + clienteId));
         Usuario usuario = cliente.getUsuario();
+        if (usuario == null) {
+            throw new IllegalArgumentException("Un cliente invitado no tiene un perfil de usuario para actualizar");
+        }
         String correo = dto.getCorreo().trim().toLowerCase();
         if (!correo.equalsIgnoreCase(usuario.getCorreo()) && usuarioRepository.existsByCorreoIgnoreCase(correo)) {
             throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado: " + correo);
@@ -87,6 +90,9 @@ public class ClienteService {
     public ClienteDTO crear(ClienteCreateDTO dto) {
         log.info("Creando perfil de cliente para usuarioId={}", dto.getUsuarioId());
 
+        if (dto.getUsuarioId() == null) {
+            throw new IllegalArgumentException("El ID de usuario es obligatorio para crear un perfil vinculado");
+        }
         if (clienteRepository.existsByUsuarioId(dto.getUsuarioId())) {
             throw new IllegalArgumentException("El usuario ya tiene un perfil de cliente registrado");
         }
@@ -108,6 +114,20 @@ public class ClienteService {
         c.setActivo(true);
 
         return toDTO(clienteRepository.save(c));
+    }
+
+    public Cliente crearInvitado(String nombre, String apellidoP, String correo, String telefono) {
+        if (nombre == null || nombre.isBlank() || apellidoP == null || apellidoP.isBlank()) {
+            throw new IllegalArgumentException("El nombre y apellido del cliente invitado son obligatorios");
+        }
+
+        Cliente cliente = new Cliente();
+        cliente.setNombreInvitado(nombre.trim());
+        cliente.setApellidoPInvitado(apellidoP.trim());
+        cliente.setCorreoInvitado(correo == null || correo.isBlank() ? null : correo.trim().toLowerCase());
+        cliente.setTelefono(telefono == null || telefono.isBlank() ? null : telefono.trim());
+        cliente.setActivo(true);
+        return clienteRepository.save(cliente);
     }
 
     public ClienteDTO actualizar(Long id, ClienteCreateDTO dto) {
@@ -140,20 +160,16 @@ public class ClienteService {
     public ClienteDTO toDTO(Cliente c) {
         Usuario u = c.getUsuario();
         TipoUsuarioDTO tipoDTO = null;
-        if (u.getTipoUsuario() != null) {
+        if (u != null && u.getTipoUsuario() != null) {
             tipoDTO = new TipoUsuarioDTO(
                     u.getTipoUsuario().getId(),
                     u.getTipoUsuario().getNombre(),
                     u.getTipoUsuario().getDescripcion()
             );
         }
-        UsuarioDTO userDTO = new UsuarioDTO(
-                u.getId(),
-                u.getNombre(),
-                u.getApellidoP(),
-                u.getCorreo(),
-                tipoDTO
-        );
+        UsuarioDTO userDTO = u == null
+                ? new UsuarioDTO(null, c.getNombreInvitado(), c.getApellidoPInvitado(), c.getCorreoInvitado(), null)
+                : new UsuarioDTO(u.getId(), u.getNombre(), u.getApellidoP(), u.getCorreo(), tipoDTO);
 
         return new ClienteDTO(
                 c.getId(),

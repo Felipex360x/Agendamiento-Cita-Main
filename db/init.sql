@@ -29,7 +29,10 @@ CREATE TABLE IF NOT EXISTS usuario (
 -- Tabla cliente
 CREATE TABLE IF NOT EXISTS cliente (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    usuario_id BIGINT NOT NULL UNIQUE,
+    usuario_id BIGINT UNIQUE,
+    nombre_invitado VARCHAR(100),
+    apellido_p_invitado VARCHAR(100),
+    correo_invitado VARCHAR(150),
     telefono VARCHAR(20),
     rut_dni VARCHAR(20) UNIQUE,
     fecha_nacimiento DATE,

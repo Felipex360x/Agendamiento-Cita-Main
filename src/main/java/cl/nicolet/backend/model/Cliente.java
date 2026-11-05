@@ -21,10 +21,18 @@ public class Cliente {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "usuario_id", nullable = false, unique = true)
+    @JoinColumn(name = "usuario_id", nullable = true, unique = true)
     private Usuario usuario;
 
-    @Column(length = 20)
+    @Column(name = "nombre_invitado", length = 100)
+    private String nombreInvitado;
+
+    @Column(name = "apellido_p_invitado", length = 100)
+    private String apellidoPInvitado;
+
+    @Column(name = "correo_invitado", length = 150)
+    private String correoInvitado;
+
     private String telefono;
 
     @Column(name = "rut_dni", unique = true, length = 20)
@@ -66,6 +74,30 @@ public class Cliente {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
+    }
+
+    public String getNombreInvitado() {
+        return nombreInvitado;
+    }
+
+    public void setNombreInvitado(String nombreInvitado) {
+        this.nombreInvitado = nombreInvitado;
+    }
+
+    public String getApellidoPInvitado() {
+        return apellidoPInvitado;
+    }
+
+    public void setApellidoPInvitado(String apellidoPInvitado) {
+        this.apellidoPInvitado = apellidoPInvitado;
+    }
+
+    public String getCorreoInvitado() {
+        return correoInvitado;
+    }
+
+    public void setCorreoInvitado(String correoInvitado) {
+        this.correoInvitado = correoInvitado;
     }
 
     public String getTelefono() {
@@ -114,6 +146,9 @@ public class Cliente {
         if (!(o instanceof Cliente that)) return false;
         return Objects.equals(id, that.id)
                 && Objects.equals(usuario, that.usuario)
+                && Objects.equals(nombreInvitado, that.nombreInvitado)
+                && Objects.equals(apellidoPInvitado, that.apellidoPInvitado)
+                && Objects.equals(correoInvitado, that.correoInvitado)
                 && Objects.equals(telefono, that.telefono)
                 && Objects.equals(rutDni, that.rutDni)
                 && Objects.equals(fechaNacimiento, that.fechaNacimiento)
@@ -123,7 +158,8 @@ public class Cliente {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, usuario, telefono, rutDni, fechaNacimiento, notasPreferencias, activo);
+        return Objects.hash(id, usuario, nombreInvitado, apellidoPInvitado, correoInvitado,
+                telefono, rutDni, fechaNacimiento, notasPreferencias, activo);
     }
 
     @Override
