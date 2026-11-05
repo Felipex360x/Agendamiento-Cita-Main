@@ -22,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -62,6 +63,9 @@ class CitaServiceTest {
     @Mock
     private ServicioService servicioService;
 
+    @Spy
+    private java.time.Clock clock = java.time.Clock.systemDefaultZone();
+
     @InjectMocks
     private CitaService citaService;
 
@@ -72,9 +76,9 @@ class CitaServiceTest {
         Cliente cliente = new Cliente(1L, uCliente, "+569123", "12345678-9", null, null, true);
 
         Usuario uTrabajador = new Usuario(2L, "Camila", "Silva", "c@s.cl", "123");
-        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of());
+                Servicio servicio = new Servicio(1L, "Corte", "Desc", 45, new BigDecimal("15000"), true);
+        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of(servicio));
 
-        Servicio servicio = new Servicio(1L, "Corte", "Desc", 45, new BigDecimal("15000"), true);
 
         LocalDateTime inicio = LocalDateTime.now().plusDays(2).withHour(10).withMinute(0).withSecond(0).withNano(0);
         CitaCreateDTO dto = new CitaCreateDTO(1L, 1L, 1L, inicio, "Notas");
@@ -86,7 +90,7 @@ class CitaServiceTest {
         );
 
         when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
-        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
+        when(trabajadorRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trabajador));
         when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
         when(horarioDisponibilidadRepository.findByTrabajadorIdAndDiaSemanaAndActivoTrue(1L, inicio.getDayOfWeek().getValue()))
                 .thenReturn(Optional.of(horario));
@@ -105,7 +109,7 @@ class CitaServiceTest {
 
         when(citaRepository.save(any(Cita.class))).thenReturn(citaGuardada);
         when(clienteService.toDTO(cliente)).thenReturn(new ClienteDTO());
-        when(trabajadorService.toDTO(trabajador)).thenReturn(new TrabajadorDTO());
+        when(trabajadorService.toPublicDTO(trabajador)).thenReturn(new TrabajadorDTO());
         when(servicioService.toDTO(servicio)).thenReturn(new ServicioDTO());
 
         CitaDTO resultado = citaService.agendar(dto);
@@ -177,9 +181,9 @@ class CitaServiceTest {
         Cliente cliente = new Cliente(1L, uCliente, "+569123", "12345678-9", null, null, true);
 
         Usuario uTrabajador = new Usuario(2L, "Camila", "Silva", "c@s.cl", "123");
-        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of());
+                Servicio servicio = new Servicio(1L, "Corte", "Desc", 45, new BigDecimal("15000"), true);
+        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of(servicio));
 
-        Servicio servicio = new Servicio(1L, "Corte", "Desc", 45, new BigDecimal("15000"), true);
         LocalDateTime inicio = LocalDateTime.now().plusDays(2).withHour(10).withMinute(0).withSecond(0).withNano(0);
         CitaCreateDTO dto = new CitaCreateDTO(1L, 1L, 1L, inicio, null);
 
@@ -189,7 +193,7 @@ class CitaServiceTest {
         );
 
         when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
-        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
+        when(trabajadorRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trabajador));
         when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
         when(horarioDisponibilidadRepository.findByTrabajadorIdAndDiaSemanaAndActivoTrue(1L, inicio.getDayOfWeek().getValue()))
                 .thenReturn(Optional.of(horario));
@@ -241,5 +245,34 @@ class CitaServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> citaService.cambiarEstado(50L, dto));
         assertTrue(ex.getMessage().contains("No se puede modificar el estado de una cita ya completada"));
+    }
+
+    @Test
+    @DisplayName("cambiarEstado - el motivo de cancelación admite 255 caracteres y rechaza 256 (VARCHAR(255))")
+    void motivoDeCancelacionRespetaElLimiteDeLaColumna() {
+        Usuario u = new Usuario(1L, "Martina", "Contreras", "m@c.cl", "123");
+        Cliente cliente = new Cliente(1L, u, "+569123", "12345678-9", null, null, true);
+        Trabajador trabajador = new Trabajador(1L, new Usuario(2L, "Camila", "Silva", "c@s.cl", "123"), "1-9", "+569876",
+                "Estilista", null, BigDecimal.ZERO, true, Set.of());
+        Servicio servicio = new Servicio(1L, "Corte", "Desc", 45, new BigDecimal("15000"), true);
+        Cita cita = new Cita();
+        cita.setId(5L);
+        cita.setCliente(cliente);
+        cita.setTrabajador(trabajador);
+        cita.setServicio(servicio);
+        cita.setEstado(EstadoCita.PENDIENTE);
+        when(citaRepository.findById(5L)).thenReturn(Optional.of(cita));
+        when(citaRepository.save(any(Cita.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(clienteService.toDTO(cliente)).thenReturn(new ClienteDTO());
+        when(trabajadorService.toPublicDTO(trabajador)).thenReturn(new TrabajadorDTO());
+        when(servicioService.toDTO(servicio)).thenReturn(new ServicioDTO());
+
+        assertThrows(IllegalArgumentException.class, () ->
+                citaService.cambiarEstado(5L, new cl.nicolet.backend.dto.CambioEstadoCitaDTO(EstadoCita.CANCELADA, "x".repeat(256))));
+        assertEquals(EstadoCita.PENDIENTE, cita.getEstado(), "una validación fallida no cambia el estado");
+
+        citaService.cambiarEstado(5L, new cl.nicolet.backend.dto.CambioEstadoCitaDTO(EstadoCita.CANCELADA, "x".repeat(255)));
+        assertEquals(EstadoCita.CANCELADA, cita.getEstado());
+        assertEquals(255, cita.getMotivoCancelacion().length());
     }
 }

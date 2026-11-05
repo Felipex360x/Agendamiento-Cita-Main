@@ -49,6 +49,9 @@ public class PerfilUsuarioService {
     /** Applies profile changes when a user's role is explicitly created or updated. */
     public void sincronizarPerfil(Usuario usuario) {
         if (usuario.getTipoUsuario() == null || usuario.getTipoUsuario().getNombre() == null) {
+            // "Sin rol": la cuenta no tiene permisos; los perfiles se desactivan (no se borran datos ni historial).
+            desactivarCliente(usuario);
+            desactivarTrabajador(usuario);
             return;
         }
 
@@ -136,6 +139,15 @@ public class PerfilUsuarioService {
             Trabajador guardado = trabajadorRepository.save(trabajador);
             crearHorariosBaseSiFaltan(guardado);
             return guardado;
+        });
+    }
+
+    private void desactivarCliente(Usuario usuario) {
+        clienteRepository.findByUsuarioId(usuario.getId()).ifPresent(cliente -> {
+            if (Boolean.TRUE.equals(cliente.getActivo())) {
+                cliente.setActivo(false);
+                clienteRepository.save(cliente);
+            }
         });
     }
 

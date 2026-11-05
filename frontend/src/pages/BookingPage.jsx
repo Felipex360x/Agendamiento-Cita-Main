@@ -2,16 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import DaySelector from '../components/DaySelector.jsx';
+import { businessToday } from '../dates.js';
 import { SiteFooter, SiteHeader } from './SiteShell.jsx';
 
 const money = (value) => new Intl.NumberFormat('es-CL', {
   style: 'currency', currency: 'CLP', maximumFractionDigits: 0,
 }).format(Number(value) || 0);
 
-const localDate = () => {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-};
+const localDate = () => businessToday();
+
+const offersService = (worker, serviceId) => (worker?.servicios || []).some((item) => String(item.id) === String(serviceId));
+const isValidDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value || '') && value >= businessToday();
+const isValidTime = (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value || '');
 
 const timeLabel = (time) => (time || '').slice(0, 5);
 const unavailableLabel = (reason) => ({ DESCANSO: 'Conflicto con colación', OCUPADO: 'Ocupado', HORA_PASADA: 'No disponible' }[reason] || 'No disponible');
@@ -47,7 +49,9 @@ export default function BookingPage() {
   );
   const steps = ['Servicio', 'Especialista', 'Fecha y hora', 'Tus datos'];
   const [step, setStep] = useState(workerId ? 3 : serviceId ? 2 : 1);
-  const loginHref = `/admin/login?redirect=${encodeURIComponent(`/reservar.html${serviceId ? `?servicioId=${serviceId}` : ''}`)}`;
+  // El borrador (servicio, profesional, fecha y hora) viaja en el redirect; al volver se revalida la disponibilidad.
+  const draftQuery = new URLSearchParams(Object.entries({ servicioId: serviceId, trabajadorId: workerId, fecha: date, hora: time }).filter(([, value]) => value)).toString();
+  const loginHref = `/admin/login?redirect=${encodeURIComponent(`/reservar.html${draftQuery ? `?${draftQuery}` : ''}`)}`;
 
   useEffect(() => {
     document.title = 'Reserva tu hora | Nicolett Studio Fantasy';
@@ -57,6 +61,14 @@ export default function BookingPage() {
         if (!active) return;
         setServices(availableServices || []);
         setWorkers(availableWorkers || []);
+        // Enlaces con datos parciales o inválidos: se abre el primer paso incompleto.
+        const requestedService = (availableServices || []).find((item) => String(item.id) === String(serviceId));
+        if (!requestedService) { setServiceId(''); setWorkerId(''); setDate(''); setTime(''); setStep(1); return; }
+        const requestedWorker = (availableWorkers || []).find((item) => String(item.id) === String(workerId));
+        if (!requestedWorker || !offersService(requestedWorker, serviceId)) { setWorkerId(''); setDate(''); setTime(''); setStep(2); return; }
+        if (!isValidDate(date)) { setDate(''); setTime(''); setStep(3); return; }
+        if (!isValidTime(time)) setTime('');
+        setStep(3);
       })
       .catch((requestError) => { if (active) setError(requestError.message); })
       .finally(() => { if (active) setCatalogLoading(false); });
@@ -64,7 +76,8 @@ export default function BookingPage() {
   }, []);
 
   useEffect(() => {
-    if (!serviceId || !workerId || !date) {
+    // No consultar hasta que el catálogo esté cargado y los parámetros de la URL saneados (E19).
+    if (catalogLoading || !serviceId || !workerId || !date) {
       setSlots([]);
       return undefined;
     }
@@ -73,18 +86,30 @@ export default function BookingPage() {
     setSlots([]);
     setError('');
     api.disponibilidad(workerId, date, serviceId)
-      .then((availableSlots) => { if (active) setSlots(availableSlots || []); })
+      .then((availableSlots) => {
+        if (!active) return;
+        setSlots(availableSlots || []);
+        setTime((current) => {
+          if (!current) return current;
+          const still = (availableSlots || []).some((slot) => slot.disponible && timeLabel(slot.horaInicio) === current);
+          if (!still) setError('El horario que habías elegido ya no está disponible. Elige otro.');
+          return still ? current : '';
+        });
+      })
       .catch((requestError) => { if (active) setError(requestError.message); })
       .finally(() => { if (active) setSlotsLoading(false); });
     return () => { active = false; };
-  }, [serviceId, workerId, date]);
+  }, [catalogLoading, serviceId, workerId, date]);
+
+  const compatibleWorkers = workers.filter((item) => !serviceId || offersService(item, serviceId));
 
   function chooseService(id) {
+    const keepWorker = workerId && offersService(workers.find((item) => String(item.id) === String(workerId)), id);
     setServiceId(String(id));
-    setWorkerId('');
-    setDate('');
+    if (!keepWorker) setWorkerId('');
+    setDate(keepWorker ? date : '');
     setTime('');
-    setStep(2);
+    setStep(keepWorker ? 3 : 2);
     setError('');
   }
 

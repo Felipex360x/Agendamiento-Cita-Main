@@ -13,6 +13,7 @@ import AdminHistoryPage from '../pages/AdminHistoryPage.jsx';
 import AdminDiagnosticsPage from '../pages/AdminDiagnosticsPage.jsx';
 import BookingPage from '../pages/BookingPage.jsx';
 import ClientProfilePage from '../pages/ClientProfilePage.jsx';
+import EmailTemplatesPage from '../pages/EmailTemplatesPage.jsx';
 import { HomePage, LoginPage, ServicesPage, TeamPage } from '../pages/PublicPages.jsx';
 import { SiteFooter, SiteHeader } from '../pages/SiteShell.jsx';
 import { AdminShell } from '../pages/AdminShell.jsx';
@@ -334,5 +335,37 @@ describe('Renderizado de Páginas y Enrutamiento React', () => {
 
     window.location.pathname = '/admin/panel-trabajador';
     expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+
+    window.location.pathname = '/correos';
+    expect(() => render(<AuthProvider><App /></AuthProvider>)).not.toThrow();
+  });
+
+  it('debe renderizar EmailTemplatesPage y permitir alternar entre las pantallas de correo (Bienvenida, Pago, Trabajador y Confirmada)', () => {
+    render(<AuthProvider><EmailTemplatesPage /></AuthProvider>);
+
+    // Por defecto muestra la pantalla 2 (Pago y Reserva)
+    expect(screen.getByText(/Comprobante de pago y reserva recibida/i)).toBeInTheDocument();
+    expect(screen.getByText(/Comprobante de transacción \(Webpay\)/i)).toBeInTheDocument();
+
+    // Pantalla 1: Bienvenida
+    fireEvent.click(screen.getByRole('tab', { name: /1\. Bienvenida/i }));
+    expect(screen.getByText(/Cuenta creada con éxito/i)).toBeInTheDocument();
+
+    // Pantalla 3: Aviso al Trabajador
+    fireEvent.click(screen.getByRole('tab', { name: /3\. Aviso al Trabajador/i }));
+    expect(screen.getByText(/agendaron una hora contigo/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Ir a Mi Panel y Confirmar Cita/i })).toHaveAttribute('href', '/admin/panel-trabajador');
+
+    // Pantalla 4: Cita Confirmada
+    fireEvent.click(screen.getByRole('tab', { name: /4\. Cita Confirmada/i }));
+    expect(screen.getByText(/¡Tu cita está confirmada/i)).toBeInTheDocument();
+
+    // Pantalla 5: Cita Cancelada
+    fireEvent.click(screen.getByRole('tab', { name: /5\. Cita Cancelada/i }));
+    expect(screen.getByText(/Tu cita ha sido cancelada/i)).toBeInTheDocument();
+
+    // Pantalla 6: Recordatorio 24h
+    fireEvent.click(screen.getByRole('tab', { name: /6\. Recordatorio 24h/i }));
+    expect(screen.getByText(/Recordatorio 24 horas antes/i)).toBeInTheDocument();
   });
 });

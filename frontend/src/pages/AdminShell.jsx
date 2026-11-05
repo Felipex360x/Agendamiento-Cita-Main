@@ -11,6 +11,7 @@ const adminLinks = [
   ['/admin/historial', 'Historial'],
   ['/admin/usuarios', 'Usuarios'],
   ['/admin/panel-trabajador', 'Portal profesional'],
+  ['/correos', 'Correos'],
 ];
 const workerLinks = [
   ['/admin/panel-trabajador', 'Mis citas'],

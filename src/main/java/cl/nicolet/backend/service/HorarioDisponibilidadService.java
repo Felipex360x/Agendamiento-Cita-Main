@@ -25,11 +25,40 @@ public class HorarioDisponibilidadService {
 
     private final HorarioDisponibilidadRepository horarioRepository;
     private final TrabajadorRepository trabajadorRepository;
+    private final cl.nicolet.backend.repository.CitaRepository citaRepository;
+    private final java.time.Clock clock;
 
     public HorarioDisponibilidadService(HorarioDisponibilidadRepository horarioRepository,
-                                        TrabajadorRepository trabajadorRepository) {
+                                        TrabajadorRepository trabajadorRepository,
+                                        cl.nicolet.backend.repository.CitaRepository citaRepository,
+                                        java.time.Clock clock) {
         this.horarioRepository = horarioRepository;
         this.trabajadorRepository = trabajadorRepository;
+        this.citaRepository = citaRepository;
+        this.clock = clock;
+    }
+
+    /**
+     * Cantidad de citas vigentes (pendientes, confirmadas o en atención) que, con la jornada guardada, quedan
+     * fuera de turno, en un día inactivo o dentro de la colación. Cambiar la jornada NO cancela ni mueve
+     * citas: se conservan y siguen ocupando su horario; esta cifra permite avisar al usuario.
+     */
+    @Transactional(readOnly = true)
+    public long contarCitasFueraDeJornada(Long trabajadorId) {
+        Map<Integer, HorarioDisponibilidad> porDia = horarioRepository.findByTrabajadorId(trabajadorId).stream()
+                .collect(Collectors.toMap(HorarioDisponibilidad::getDiaSemana, h -> h, (a, b) -> a));
+        return citaRepository.findVigentesDesde(trabajadorId, java.time.LocalDateTime.now(clock)).stream()
+                .filter(cita -> {
+                    HorarioDisponibilidad h = porDia.get(cita.getFechaHoraInicio().getDayOfWeek().getValue());
+                    if (h == null || !Boolean.TRUE.equals(h.getActivo())) return true;
+                    LocalTime ini = cita.getFechaHoraInicio().toLocalTime();
+                    LocalTime fin = cita.getFechaHoraFin().toLocalTime();
+                    boolean mismoDia = cita.getFechaHoraInicio().toLocalDate().equals(cita.getFechaHoraFin().toLocalDate());
+                    if (!mismoDia || ini.isBefore(h.getHoraInicio()) || fin.isAfter(h.getHoraFin())) return true;
+                    return h.getHoraInicioDescanso() != null && h.getHoraFinDescanso() != null
+                            && ini.isBefore(h.getHoraFinDescanso()) && fin.isAfter(h.getHoraInicioDescanso());
+                })
+                .count();
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +105,9 @@ public class HorarioDisponibilidadService {
         }
         Set<Integer> dias = new HashSet<>();
         for (HorarioDisponibilidadDTO horario : horarios) {
+            if (horario == null) {
+                throw new IllegalArgumentException("La lista de horarios no puede contener elementos vacíos");
+            }
             Integer dia = horario.getDiaSemana();
             if (dia == null || dia < 1 || dia > 7 || !dias.add(dia)) {
                 throw new IllegalArgumentException("Los días deben estar entre lunes (1) y domingo (7), sin repetir");

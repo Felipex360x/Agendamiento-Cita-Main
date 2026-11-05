@@ -1,5 +1,7 @@
 package cl.nicolet.backend.dto;
 
+import jakarta.validation.constraints.Size;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
@@ -43,6 +45,7 @@ public class CitaCreateDTO {
     private LocalDateTime fechaHoraInicio;
 
     @Schema(description = "Notas adicionales ingresadas por el cliente", example = "Primera sesión")
+    @Size(max = 1000, message = "Las notas no pueden exceder los 1000 caracteres")
     private String notasCliente;
 
     public CitaCreateDTO() {

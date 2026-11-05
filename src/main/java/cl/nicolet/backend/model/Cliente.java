@@ -35,7 +35,7 @@ public class Cliente {
 
     private String telefono;
 
-    @Column(name = "rut_dni", unique = true)
+    @Column(name = "rut_dni", unique = true, length = 20)
     private String rutDni;
 
     @Column(name = "fecha_nacimiento")

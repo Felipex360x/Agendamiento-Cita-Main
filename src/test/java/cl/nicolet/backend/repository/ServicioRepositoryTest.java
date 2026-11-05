@@ -31,12 +31,14 @@ class ServicioRepositoryTest {
     @Test
     @DisplayName("findByActivoTrue - debe retornar solo los servicios activos")
     void debeRetornarSoloActivos() {
+        int activosAntes = servicioRepository.findByActivoTrue().size(); // la BD puede traer filas previas
         servicioRepository.save(new Servicio(null, "Servicio A", "Desc", 30, new BigDecimal("10000"), true));
         servicioRepository.save(new Servicio(null, "Servicio B", "Desc", 30, new BigDecimal("10000"), false));
 
         List<Servicio> activos = servicioRepository.findByActivoTrue();
-        assertEquals(1, activos.size());
-        assertEquals("Servicio A", activos.get(0).getNombre());
+        assertEquals(activosAntes + 1, activos.size());
+        assertTrue(activos.stream().anyMatch(s -> "Servicio A".equals(s.getNombre())));
+        assertTrue(activos.stream().noneMatch(s -> "Servicio B".equals(s.getNombre())));
     }
 
     @Test

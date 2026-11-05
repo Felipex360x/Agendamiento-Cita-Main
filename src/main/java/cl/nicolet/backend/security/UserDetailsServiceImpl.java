@@ -26,4 +26,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         return UserDetailsImpl.build(usuario);
     }
+
+    /** Carga inequívoca por ID permanente; usada por el filtro JWT. Rechaza cuentas desactivadas. */
+    @Transactional(readOnly = true)
+    public UserDetails loadUserById(Long id) throws UsernameNotFoundException {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("Credenciales inválidas"));
+        if (usuario.getEstado() != Usuario.ESTADO_ACTIVO) {
+            throw new UsernameNotFoundException("Credenciales inválidas");
+        }
+        return UserDetailsImpl.build(usuario);
+    }
 }

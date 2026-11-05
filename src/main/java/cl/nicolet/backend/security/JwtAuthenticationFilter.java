@@ -34,10 +34,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @org.springframework.lang.NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
             String jwt = parseJwt(request);
-            if (jwt != null && jwtUtils.validarToken(jwt)) {
-                String username = jwtUtils.getUsernameFromToken(jwt);
-
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            Long userId = jwt == null ? null : jwtUtils.getUserIdFromToken(jwt).orElse(null);
+            if (userId != null) {
+                UserDetails userDetails = userDetailsService.loadUserById(userId);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

@@ -7,9 +7,15 @@ const checks = [
   ['Profesionales', () => api.trabajadores()],
   ['Citas', () => api.citas()],
   ['Estado Spring', async () => {
-    const response = await fetch('/actuator/health');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.json();
+    // Ruta real vía Vite/túnel (proxy específico en vite.config.js).
+    const response = await fetch('/actuator/health', { headers: { Accept: 'application/json' } });
+    const type = response.headers.get('content-type') || '';
+    if (!type.includes('json')) {
+      throw new Error(`La ruta de salud no devolvió JSON (HTTP ${response.status}); revisa el proxy hacia Spring.`);
+    }
+    const body = await response.json();
+    if (!response.ok && !body?.status) throw new Error(`HTTP ${response.status}`);
+    return body;
   }],
 ];
 
