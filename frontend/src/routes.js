@@ -1,6 +1,6 @@
 // Registro único de rutas: lo usan App (renderizado) y el login (redirección segura).
-export const PUBLIC_PAGES = new Set(['index.html', 'reservar.html', 'servicios.html', 'equipo.html', 'agenda.html', 'dashboard.html', 'clientas.html', 'mi-perfil.html']);
-export const ADMIN_PAGES = new Set(['citas.html', 'disponibilidad.html', 'historial.html', 'login.html', 'mi-horario.html', 'panel-trabajador.html', 'pruebas.html', 'reserva-cliente.html', 'servicios.html', 'usuarios.html']);
+export const PUBLIC_PAGES = new Set(['index.html', 'reservar.html', 'servicios.html', 'equipo.html', 'agenda.html', 'dashboard.html', 'clientas.html', 'mi-perfil.html', 'correos.html']);
+export const ADMIN_PAGES = new Set(['citas.html', 'disponibilidad.html', 'historial.html', 'login.html', 'mi-horario.html', 'panel-trabajador.html', 'pruebas.html', 'reserva-cliente.html', 'servicios.html', 'usuarios.html', 'correos.html']);
 
 export function getLegacyPath(pathname) {
   const clean = pathname.replace(/^\/+/, '');

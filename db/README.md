@@ -1,4 +1,4 @@
-# Base de Datos - Nicolet Estudio (Agendamiento de Citas)
+# Base de Datos - Nicolett Studio Fantasy (Agendamiento de Citas)
 
 Este directorio contiene los scripts y la configuracion para inicializar la base de datos MySQL requerida por el servicio backend.
 

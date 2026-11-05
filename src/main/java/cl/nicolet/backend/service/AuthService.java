@@ -6,6 +6,7 @@ import cl.nicolet.backend.model.TipoUsuario;
 import cl.nicolet.backend.model.Usuario;
 import cl.nicolet.backend.repository.TipoUsuarioRepository;
 import cl.nicolet.backend.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ public class AuthService {
     private final TipoUsuarioRepository tipoUsuarioRepository;
     private final PerfilUsuarioService perfilUsuarioService;
     private final PasswordEncoder passwordEncoder;
+
+    @Autowired(required = false)
+    private EmailService emailService;
 
     public AuthService(UsuarioRepository usuarioRepository,
                        TipoUsuarioRepository tipoUsuarioRepository,
@@ -75,6 +79,13 @@ public class AuthService {
         }
         // Un fallo aquí NO se interpreta como correo duplicado: propaga y revierte toda la transacción.
         perfilUsuarioService.crearPerfilCliente(guardado, telefono);
+        if (emailService != null) {
+            try {
+                emailService.enviarBienvenida(guardado);
+            } catch (Exception ignored) {
+                // El envío de correo no debe interrumpir el registro del cliente
+            }
+        }
         return guardado;
     }
 }

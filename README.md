@@ -1,6 +1,6 @@
-# Nicolet Estudio
+# Nicolett Studio Fantasy: Belleza a tu ritmo y sin barreras
 
-Sistema web para gestionar el agendamiento de citas de Nicolet Estudio. El proyecto separa la interfaz React del backend Spring Boot y usa MySQL como base de datos.
+Sistema web para gestionar el agendamiento de citas de Nicolett Studio Fantasy: Belleza a tu ritmo y sin barreras. El proyecto separa la interfaz React del backend Spring Boot y usa MySQL como base de datos.
 
 ## Contenido
 

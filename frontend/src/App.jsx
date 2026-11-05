@@ -11,6 +11,7 @@ import WorkerSchedulePage from './pages/WorkerSchedulePage.jsx';
 import AdminDiagnosticsPage from './pages/AdminDiagnosticsPage.jsx';
 import { StaffAgendaPage, StaffClientsPage, StaffDashboardPage } from './pages/StaffPages.jsx';
 import ClientProfilePage from './pages/ClientProfilePage.jsx';
+import EmailTemplatesPage from './pages/EmailTemplatesPage.jsx';
 
 export { PUBLIC_PAGES, ADMIN_PAGES, getLegacyPath, resolveKnownPage, getSafeRedirect } from './routes.js';
 import { getLegacyPath } from './routes.js';
@@ -52,5 +53,6 @@ export default function App() {
   if (page === 'admin/panel-trabajador.html') return <WorkerPortalPage />;
   if (page === 'admin/mi-horario.html') return <WorkerSchedulePage />;
   if (page === 'admin/pruebas.html') return <AdminDiagnosticsPage />;
+  if (page === 'correos.html' || page === 'admin/correos.html') return <EmailTemplatesPage />;
   return <main className="site-page-section"><h1>Página no encontrada</h1><a href="/">Volver al inicio</a></main>;
 }
