@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -135,12 +136,13 @@ class DisponibilidadServiceTest {
     @Test
     @DisplayName("calcularDisponibilidad - debe bloquear una cita que termina después del inicio de colación")
     void debeBloquearCitaQueCruzaInicioDeColacion() {
+        Servicio servicio = new Servicio(1L, "Manicura rusa", "Desc", 60, new BigDecimal("22000"), true);
         Trabajador trabajador = new Trabajador();
         trabajador.setId(1L);
         trabajador.setActivo(true);
         trabajador.setUsuario(new Usuario());
+        trabajador.setServicios(Set.of(servicio));
 
-        Servicio servicio = new Servicio(1L, "Manicura rusa", "Desc", 60, new BigDecimal("22000"), true);
         LocalDate fechaFutura = LocalDate.now().plusDays(2);
         int diaSemana = fechaFutura.getDayOfWeek().getValue();
         HorarioDisponibilidad horario = new HorarioDisponibilidad(
@@ -154,7 +156,7 @@ class DisponibilidadServiceTest {
         when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
         when(horarioDisponibilidadRepository.findByTrabajadorIdAndDiaSemanaAndActivoTrue(1L, diaSemana))
                 .thenReturn(Optional.of(horario));
-        when(citaRepository.findByTrabajadorAndRangoFechas(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(citaRepository.findSolapadasConRango(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(List.of());
 
         List<BloqueHorarioDTO> bloques = disponibilidadService.calcularDisponibilidad(1L, fechaFutura, 1L);

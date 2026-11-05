@@ -135,7 +135,7 @@ describe('Renderizado de Páginas y Enrutamiento React', () => {
         return { ok: true, status: 200, text: async () => JSON.stringify([{ id: 2, nombre: 'Manicura rusa', duracionMinutos: 60, precio: 22000 }]) };
       }
       if (requestUrl.endsWith('/trabajadores')) {
-        return { ok: true, status: 200, text: async () => JSON.stringify([{ id: 1, usuario: { nombre: 'Camila', apellidoP: 'Silva' } }]) };
+        return { ok: true, status: 200, text: async () => JSON.stringify([{ id: 1, usuario: { nombre: 'Camila', apellidoP: 'Silva' }, servicios: [{ id: 2 }] }]) };
       }
       return { ok: true, status: 200, text: async () => '[]' };
     });

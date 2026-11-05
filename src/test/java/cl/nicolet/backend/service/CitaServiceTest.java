@@ -131,8 +131,8 @@ class CitaServiceTest {
         cliente.setActivo(true);
 
         Usuario uTrabajador = new Usuario(2L, "Camila", "Silva", "c@s.cl", "123");
-        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of());
         Servicio servicio = new Servicio(1L, "Corte", "Desc", 45, new BigDecimal("15000"), true);
+        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of(servicio));
         LocalDateTime inicio = LocalDateTime.now().plusDays(2).withHour(10).withMinute(0).withSecond(0).withNano(0);
 
         CitaCreateDTO dto = new CitaCreateDTO(null, 1L, 1L, inicio, "Primera visita");
@@ -146,7 +146,7 @@ class CitaServiceTest {
                 LocalTime.of(9, 0), LocalTime.of(18, 0), null, null, true
         );
         when(clienteService.crearInvitado(" Ana ", " Pérez ", "ana@example.com", "+56912345678")).thenReturn(cliente);
-        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
+        when(trabajadorRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trabajador));
         when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
         when(horarioDisponibilidadRepository.findByTrabajadorIdAndDiaSemanaAndActivoTrue(1L, inicio.getDayOfWeek().getValue()))
                 .thenReturn(Optional.of(horario));
@@ -164,7 +164,7 @@ class CitaServiceTest {
         citaGuardada.setPrecioFinal(new BigDecimal("15000"));
         when(citaRepository.save(any(Cita.class))).thenReturn(citaGuardada);
         when(clienteService.toDTO(cliente)).thenReturn(new ClienteDTO());
-        when(trabajadorService.toDTO(trabajador)).thenReturn(new TrabajadorDTO());
+        when(trabajadorService.toPublicDTO(trabajador)).thenReturn(new TrabajadorDTO());
         when(servicioService.toDTO(servicio)).thenReturn(new ServicioDTO());
 
         CitaDTO result = citaService.agendar(dto);
@@ -210,8 +210,8 @@ class CitaServiceTest {
         Usuario uCliente = new Usuario(1L, "Martina", "Contreras", "m@c.cl", "123");
         Cliente cliente = new Cliente(1L, uCliente, "+569123", "12345678-9", null, null, true);
         Usuario uTrabajador = new Usuario(2L, "Camila", "Silva", "c@s.cl", "123");
-        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of());
         Servicio servicio = new Servicio(1L, "Manicura rusa", "Desc", 60, new BigDecimal("22000"), true);
+        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of(servicio));
         LocalDateTime inicio = LocalDateTime.now().plusDays(2).withHour(12).withMinute(0).withSecond(0).withNano(0);
         CitaCreateDTO dto = new CitaCreateDTO(1L, 1L, 1L, inicio, null);
         HorarioDisponibilidad horario = new HorarioDisponibilidad(
@@ -221,7 +221,7 @@ class CitaServiceTest {
         );
 
         when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
-        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
+        when(trabajadorRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trabajador));
         when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
         when(horarioDisponibilidadRepository.findByTrabajadorIdAndDiaSemanaAndActivoTrue(1L, inicio.getDayOfWeek().getValue()))
                 .thenReturn(Optional.of(horario));

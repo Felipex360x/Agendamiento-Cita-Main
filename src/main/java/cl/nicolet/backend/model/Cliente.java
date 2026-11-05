@@ -33,6 +33,7 @@ public class Cliente {
     @Column(name = "correo_invitado", length = 150)
     private String correoInvitado;
 
+    @Column(length = 20)
     private String telefono;
 
     @Column(name = "rut_dni", unique = true, length = 20)
