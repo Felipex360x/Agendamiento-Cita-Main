@@ -23,7 +23,7 @@ public class JwtUtils {
     @Value("${jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
 
-    /** Versión del formato de token. Los tokens anteriores (subject = correo, sin "ver") se rechazan. */
+    /** Versión actual del token. Los tokens antiguos sin versión se rechazan. */
     public static final int TOKEN_VERSION = 2;
     private static final String CLAIM_VERSION = "ver";
 
@@ -51,9 +51,8 @@ public class JwtUtils {
     }
 
     /**
-     * Devuelve el ID de usuario firmado en el token, o vacío si el token no es válido, está expirado,
-     * usa el formato anterior (subject = correo) o su claim "id" no coincide con el subject.
-     * El rol del token es solo informativo: los permisos se leen siempre de la base de datos.
+     * Obtiene el ID del usuario desde el token. Devuelve vacío si el token no sirve, venció
+     * o tiene formato antiguo. Los permisos reales siempre se consultan en la base de datos.
      */
     public Optional<Long> getUserIdFromToken(String token) {
         try {
@@ -93,7 +92,7 @@ public class JwtUtils {
                     .parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            // Invalid bearer tokens are expected input; do not log attacker-controlled token data.
+            // No mostramos el contenido del token en el log si falla la validación.
             log.debug("Token JWT rechazado ({})", e.getClass().getSimpleName());
         }
         return false;

@@ -33,8 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Reglas de reserva con la pila real (seguridad, servicios, JPA). La prueba de concurrencia usa hilos con
- * transacciones independientes; hoy corre contra H2 y debe repetirse contra el motor definitivo (MySQL).
+ * Pruebas de reglas de agendamiento, horarios, cambios de estado y reservas simultáneas.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -54,8 +53,8 @@ class ReservasIntegrationTest {
 
     private String sufijo;
     private Usuario admin;
-    private Servicio servicio;     // 60 min
-    private Servicio otroServicio; // 30 min, NO lo ofrece el profesional A
+    private Servicio servicio;     // dura 60 minutos
+    private Servicio otroServicio; // dura 30 minutos y no lo atiende el trabajador A
     private Trabajador proA, proB;
     private final List<Cliente> clientes = new ArrayList<>();
     private LocalDate lunes;
@@ -87,7 +86,7 @@ class ReservasIntegrationTest {
         }
     }
 
-    // ------------------------------------------------------------ fixtures
+    // Funciones de ayuda para crear datos de prueba
 
     private Usuario usuario(String alias, String rol) {
         Usuario u = new Usuario();
@@ -162,7 +161,7 @@ class ReservasIntegrationTest {
         for (Callable<Integer> tarea : tareas) {
             futuros.add(pool.submit(() -> { salida.await(); return tarea.call(); }));
         }
-        salida.countDown(); // todas las solicitudes arrancan a la vez
+        salida.countDown(); // todas las peticiones parten al mismo tiempo
         List<Integer> estados = new ArrayList<>();
         for (Future<Integer> f : futuros) estados.add(f.get(60, TimeUnit.SECONDS));
         pool.shutdown();
@@ -173,7 +172,7 @@ class ReservasIntegrationTest {
         return estados.stream().filter(e -> e == codigo).count();
     }
 
-    // ------------------------------------------------------------------ E07
+    // Reservas al mismo tiempo
 
     @Test
     @DisplayName("E07: 8 solicitudes simultáneas por el mismo intervalo → solo una reserva")
@@ -193,7 +192,7 @@ class ReservasIntegrationTest {
     @DisplayName("E07: intervalos con inicios distintos pero superpuestos (10:00, 10:15, 10:30) → solo uno; 11:00 contiguo cabe")
     void parcialmenteSuperpuestosYContiguos() throws Exception {
         List<Callable<Integer>> tareas = new ArrayList<>();
-        int[] minutos = {0, 15, 30, 45};                 // 10:00-11:00, 10:15-11:15, 10:30-11:30, 10:45-11:45: todos se cruzan
+        int[] minutos = {0, 15, 30, 45};                 // todos estos horarios de 1 hora se cruzan entre sí
         for (int i = 0; i < minutos.length; i++) {
             Cliente c = clientes.get(i);
             LocalDateTime inicio = lunes.atTime(10, minutos[i]);
@@ -202,7 +201,7 @@ class ReservasIntegrationTest {
         List<Integer> estados = enParalelo(tareas);
         assertThat(contar(estados, 201)).as("estados=%s", estados).isEqualTo(1);
 
-        // Contiguo: empieza justo cuando termina la reserva aceptada → se acepta, sin solapamiento
+        // Si empieza justo cuando termina la cita anterior, sí se permite
         Cita aceptada = citaRepository.findByTrabajadorId(proA.getId()).get(0);
         assertThat(reservar(clientes.get(5), proA, servicio, aceptada.getFechaHoraFin())).isEqualTo(201);
     }
@@ -218,7 +217,7 @@ class ReservasIntegrationTest {
         assertThat(estados).containsExactly(201, 201);
     }
 
-    // ------------------------------------------------------------------ E08
+    // Cambios de estado de citas
 
     @Test
     @DisplayName("E08: una cita cancelada no puede reactivarse sobre otra reserva que tomó su horario")
@@ -233,7 +232,7 @@ class ReservasIntegrationTest {
         assertThat(patchEstado(idA, "CONFIRMADA", null)).as("reactivar A").isEqualTo(400);
         assertThat(patchEstado(idA, "PENDIENTE", null)).isEqualTo(400);
         assertThat(citaRepository.findById(idA).orElseThrow().getEstado()).isEqualTo(EstadoCita.CANCELADA);
-        // el horario sigue ocupado una sola vez
+        // solo queda una cita activa en ese horario
         assertThat(citaRepository.findByTrabajadorId(proA.getId()).stream()
                 .filter(c -> c.getEstado() != EstadoCita.CANCELADA).count()).isEqualTo(1);
     }
@@ -252,7 +251,7 @@ class ReservasIntegrationTest {
         for (String destino : new String[]{"PENDIENTE", "CONFIRMADA", "CANCELADA", "NO_ASISTIO"}) {
             assertThat(patchEstado(id, destino, "motivo")).as("COMPLETADA→" + destino).isEqualTo(400);
         }
-        // cancelar exige motivo
+        // para cancelar es obligatorio indicar un motivo
         long id2 = mapper.readTree(reservarResultado(clientes.get(1), proA, servicio, lunes.atTime(12, 0))
                 .getResponse().getContentAsString()).get("id").asLong();
         assertThat(patchEstado(id2, "CANCELADA", null)).isEqualTo(400);
@@ -260,7 +259,7 @@ class ReservasIntegrationTest {
         assertThat(patchEstado(id2, "CANCELADA", "x".repeat(255))).isEqualTo(200);
     }
 
-    // ------------------------------------------------------------------ E09
+    // Servicios asignados al trabajador
 
     @Test
     @DisplayName("E09: reserva y disponibilidad rechazan un servicio que el profesional no ofrece")
@@ -273,13 +272,13 @@ class ReservasIntegrationTest {
         mockMvc.perform(get("/api/v2/nicolet/disponibilidad").param("trabajadorId", String.valueOf(proA.getId()))
                         .param("fecha", lunes.toString()).param("servicioId", String.valueOf(servicio.getId())))
                 .andExpect(status().isOk());
-        // servicio inactivo
+        // si el servicio está desactivado, tampoco permite reservar
         servicio.setActivo(false);
         servicioRepository.save(servicio);
         assertThat(reservar(clientes.get(0), proA, servicio, lunes.atTime(10, 0))).isEqualTo(400);
     }
 
-    // ------------------------------------------------------------------ E10
+    // Actualización de servicios del trabajador
 
     private int putTrabajador(String serviciosJson) throws Exception {
         String body = "{\"usuarioId\":" + proA.getUsuario().getId() + ",\"cargoEspecialidad\":\"Estilista\""
@@ -311,7 +310,7 @@ class ReservasIntegrationTest {
         assertThat(serviciosDeA()).isEmpty();
     }
 
-    // ------------------------------------------------------------------ E11 / E12
+    // Horarios de trabajo y citas ya agendadas
 
     private String semana(String lunesJson) {
         StringBuilder sb = new StringBuilder("[").append(lunesJson);
@@ -337,7 +336,7 @@ class ReservasIntegrationTest {
     @Test
     @DisplayName("E12: cambiar la jornada no borra citas; se informan en X-Citas-Fuera-De-Jornada y siguen bloqueando")
     void cambioDeJornadaConCitasExistentes() throws Exception {
-        assertThat(reservar(clientes.get(0), proA, servicio, lunes.atTime(9, 0))).isEqualTo(201); // 09:00-10:00
+        assertThat(reservar(clientes.get(0), proA, servicio, lunes.atTime(9, 0))).isEqualTo(201); // de 09:00 a 10:00
         String nuevaSemana = semana("{\"diaSemana\":1,\"horaInicio\":\"09:30\",\"horaFin\":\"18:00\",\"activo\":true}");
 
         MvcResult r = mockMvc.perform(put("/api/v2/nicolet/horarios/trabajador/" + proA.getId())
@@ -346,19 +345,19 @@ class ReservasIntegrationTest {
         assertThat(r.getResponse().getHeader("X-Citas-Fuera-De-Jornada")).isEqualTo("1");
         assertThat(citaRepository.findByTrabajadorId(proA.getId())).as("la cita se conserva").hasSize(1);
 
-        // La disponibilidad del lunes no ofrece 09:30 (la cita 09:00-10:00 lo ocupa) pero sí 10:00
+        // El lunes a las 09:30 aparece ocupado por la cita de 09:00 a 10:00, pero a las 10:00 está libre
         MvcResult disp = mockMvc.perform(get("/api/v2/nicolet/disponibilidad")
                         .param("trabajadorId", String.valueOf(proA.getId())).param("fecha", lunes.toString())
                         .param("servicioId", String.valueOf(servicio.getId()))).andExpect(status().isOk()).andReturn();
         JsonNode bloques = mapper.readTree(disp.getResponse().getContentAsString());
         assertThat(bloques.get(0).get("horaInicio").asText()).startsWith("09:30");
         assertThat(bloques.get(0).get("disponible").asBoolean()).isFalse();
-        // y la reserva de ese mismo bloque también se rechaza: consulta y alta coinciden
+        // tampoco deja agendar a las 09:30 porque está ocupado
         assertThat(reservar(clientes.get(1), proA, servicio, lunes.atTime(9, 30))).isEqualTo(400);
         assertThat(reservar(clientes.get(1), proA, servicio, lunes.atTime(10, 0))).isEqualTo(201);
     }
 
-    // ------------------------------------------------------------------ E13
+    // Fechas pasadas no permitidas
 
     @Test
     @DisplayName("E13: disponibilidad de ayer → 400; hoy y mañana → 200")

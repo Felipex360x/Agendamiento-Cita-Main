@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client.js';
 import DaySelector, { localDateValue } from '../components/DaySelector.jsx';
 import displayText from '../utils/displayText.js';
-import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
+import { AdminShell, EmptyState, RequestMessage, personName } from '../layouts/AdminShell.jsx';
 
 const unavailableLabel = (reason) => ({ DESCANSO: 'Colación', OCUPADO: 'Ocupado', HORA_PASADA: 'No disponible' }[reason] || reason || 'Ocupado');
 
@@ -12,7 +12,7 @@ export default function AdminAvailabilityPage() {
   const [workerId, setWorkerId] = useState('');
   const [serviceId, setServiceId] = useState('');
   const [date, setDate] = useState(localDateValue());
-  // Resultado de UNA consulta concreta: {workerId, serviceId, date, slots}. Se invalida al cambiar los filtros.
+  // Guarda el resultado de la búsqueda actual. Se borra al cambiar los filtros.
   const [result, setResult] = useState(null);
   const requestSeq = useRef(0);
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -27,7 +27,7 @@ export default function AdminAvailabilityPage() {
   }, []);
 
   function resetResults() {
-    requestSeq.current += 1; // cualquier respuesta en vuelo deja de ser vigente
+    requestSeq.current += 1; // ignora respuestas de búsquedas anteriores que aún no terminan
     setResult(null);
     setError('');
     setLoading(false);
@@ -51,7 +51,7 @@ export default function AdminAvailabilityPage() {
   }
 
   const selectedWorker = workers.find((item) => String(item.id) === String(workerId));
-  // Solo se ofrecen los servicios que el profesional elegido atiende.
+  // Solo muestra los servicios que realiza el profesional elegido.
   const availableServices = selectedWorker
     ? services.filter((item) => (selectedWorker.servicios || []).some((own) => own.id === item.id))
     : services;

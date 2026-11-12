@@ -1,16 +1,17 @@
-// Registro único de rutas: lo usan App (renderizado) y el login (redirección segura).
-export const PUBLIC_PAGES = new Set(['index.html', 'reservar.html', 'servicios.html', 'equipo.html', 'agenda.html', 'dashboard.html', 'clientas.html', 'mi-perfil.html', 'correos.html']);
+// Lista de páginas del sitio: la usan la aplicación principal y el inicio de sesión.
+export const PUBLIC_PAGES = new Set(['index.html', 'reservar.html', 'servicios.html', 'equipo.html', 'agenda.html', 'dashboard.html', 'clientas.html', 'mi-perfil.html']);
 export const ADMIN_PAGES = new Set(['citas.html', 'disponibilidad.html', 'historial.html', 'login.html', 'mi-horario.html', 'panel-trabajador.html', 'pruebas.html', 'reserva-cliente.html', 'servicios.html', 'usuarios.html', 'correos.html']);
 
-export function getLegacyPath(pathname) {
+export function resolvePage(pathname) {
   const clean = pathname.replace(/^\/+/, '');
   if (!clean) return 'index.html';
   if (clean === 'app' || clean === 'app/') return 'admin/citas.html';
   if (clean === 'admin' || clean === 'admin/') return 'admin/citas.html';
 
-  // Alias y accesos directos críticos (DEF-01, DEF-03)
+  // Nombres cortos y accesos rápidos
   if (clean === 'login' || clean === 'login.html') return 'admin/login.html';
   if (clean === 'reserva-cliente' || clean === 'reserva-cliente.html') return 'admin/reserva-cliente.html';
+  if (clean === 'correos' || clean === 'correos.html') return 'admin/correos.html';
 
   if (clean.startsWith('admin/')) {
     let page = clean.slice('admin/'.length).split('/')[0];
@@ -27,8 +28,8 @@ export function getLegacyPath(pathname) {
 }
 
 /**
- * Resuelve una ruta SOLO si corresponde a una página conocida (a diferencia de getLegacyPath, que cae
- * en una página por defecto). Devuelve la clave canónica ('index.html', 'admin/usuarios.html', …) o null.
+ * Busca una ruta solo si pertenece a una página existente (a diferencia de resolvePage, que abre
+ * una página por defecto). Devuelve el nombre de la página ('index.html', 'admin/usuarios.html', …) o null.
  */
 export function resolveKnownPage(pathname) {
   const clean = String(pathname || '').replace(/^\/+/, '').replace(/\/+$/, '');
@@ -36,6 +37,7 @@ export function resolveKnownPage(pathname) {
   if (clean === 'app' || clean === 'admin') return 'admin/citas.html';
   if (clean === 'login' || clean === 'login.html') return 'admin/login.html';
   if (clean === 'reserva-cliente' || clean === 'reserva-cliente.html') return 'admin/reserva-cliente.html';
+  if (clean === 'correos' || clean === 'correos.html') return 'admin/correos.html';
   const withHtml = (name) => (name.includes('.') ? name : `${name}.html`);
   if (clean.startsWith('admin/')) {
     const page = withHtml(clean.slice('admin/'.length));
@@ -48,9 +50,9 @@ export function resolveKnownPage(pathname) {
 }
 
 /**
- * Destino local seguro para `?redirect=`. Acepta rutas amigables (/admin/usuarios) y con .html, conserva
- * query y hash, y rechaza destinos externos, esquemas, `//host`, `/\host`, caracteres de control,
- * páginas desconocidas y el propio login (evita bucles).
+ * Revisa que la ruta de `?redirect=` sea segura y dentro del mismo sitio. Acepta rutas cortas
+ * (/admin/usuarios) y con .html, mantiene los parámetros, y rechaza enlaces a otros sitios,
+ * páginas que no existen y el propio inicio de sesión (para no quedar en bucle).
  */
 export function getSafeRedirect(requested, origin, fallback = null) {
   if (typeof requested !== 'string') return fallback;

@@ -67,7 +67,7 @@ class AuthControllerTest {
 
     @org.junit.jupiter.api.BeforeEach
     void permitirIntentos() {
-        // El mock de LoginAttemptService rechazaría por defecto la reserva de intento (tryAcquire → false).
+        // Permitimos intentos de login por defecto en el mock de pruebas.
         when(loginAttemptService.tryAcquire(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn(true);
     }

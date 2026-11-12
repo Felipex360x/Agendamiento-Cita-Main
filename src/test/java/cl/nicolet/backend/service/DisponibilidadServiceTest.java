@@ -236,7 +236,7 @@ class DisponibilidadServiceTest {
     @Test
     @DisplayName("E13: hoy y fechas futuras sí se consultan (reloj controlable, límite de medianoche)")
     void aceptaHoyYFuturoConRelojControlado() {
-        // 2030-03-15 23:50 en la zona del negocio: «hoy» es el 15 y los bloques de hoy ya pasaron
+        // Fecha fija 15-03-2030 a las 23:50: el día 15 es hoy, pero sus horas ya pasaron
         java.time.ZoneId zona = java.time.ZoneId.of("America/Santiago");
         java.time.Clock fijo = java.time.Clock.fixed(java.time.ZonedDateTime.of(2030, 3, 15, 23, 50, 0, 0, zona).toInstant(), zona);
         org.springframework.test.util.ReflectionTestUtils.setField(disponibilidadService, "clock", fijo);
@@ -263,7 +263,7 @@ class DisponibilidadServiceTest {
         trabajador.setActivo(true);
         trabajador.setUsuario(new Usuario());
         Servicio otro = new Servicio(9L, "Otro", "Desc", 30, new BigDecimal("1000"), true);
-        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador)); // sin servicios asignados
+        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador)); // trabajador sin servicios
         when(servicioRepository.findById(9L)).thenReturn(Optional.of(otro));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -283,7 +283,7 @@ class DisponibilidadServiceTest {
         LocalDate fecha = LocalDate.now(clock).plusDays(2);
         int dia = fecha.getDayOfWeek().getValue();
         HorarioDisponibilidad horario = new HorarioDisponibilidad(1L, trabajador, dia,
-                LocalTime.of(9, 30), LocalTime.of(12, 0), null, null, true); // jornada ya cambiada a las 09:30
+                LocalTime.of(9, 30), LocalTime.of(12, 0), null, null, true); // horario cambiado para empezar a las 09:30
         Cita cita = new Cita();
         cita.setEstado(EstadoCita.CONFIRMADA);
         cita.setFechaHoraInicio(fecha.atTime(9, 0));

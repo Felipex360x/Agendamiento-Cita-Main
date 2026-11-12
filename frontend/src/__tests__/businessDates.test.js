@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { businessParts } from '../dates.js';
+import { businessParts } from '../utils/dates.js';
 
 describe('dates.js: «hoy» y hora en la zona del negocio (America/Santiago)', () => {
   it('no depende de la zona del navegador: medianoche UTC aún es el día anterior en Chile', () => {

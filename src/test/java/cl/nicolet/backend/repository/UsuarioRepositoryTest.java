@@ -24,13 +24,13 @@ class UsuarioRepositoryTest {
     @Test
     @DisplayName("save - debe persistir el usuario y asignar un Id generado automaticamente")
     void debePersistirUsuarioYAsignarIdGenerado() {
-        // Given
+        // Preparar datos
         Usuario usuario = new Usuario(
             null, "Martina", "Contreras", "Mar.con@gmail.com", "123412"
         );
-        // When
+        // Ejecutar
         Usuario guardado = usuarioRepository.save(usuario);
-        // Then
+        // Comprobar
         assertNotNull(guardado.getId());
         assertTrue(guardado.getId() > 0);
         assertEquals("Martina", guardado.getNombre());
@@ -39,18 +39,18 @@ class UsuarioRepositoryTest {
     @Test
     @DisplayName("findAll - debe retornar todos los Usuarios guardados en la BD")
     void debeRetornarTodosLosUsuarios() {
-        // Given: la BD puede traer filas previas (MySQL compartido); se compara contra el recuento inicial
+        // Guardamos la cantidad inicial por si la base de datos ya tiene usuarios
         int antes = usuarioRepository.findAll().size();
-        // correos distintos: en la BD real (init.sql) correo es UNIQUE
+        // Usamos correos distintos porque el correo no se puede repetir
         usuarioRepository.save(new Usuario(
             null, "Martina", "Contreras", "martina.repo@gmail.com", "123412"
         ));
         usuarioRepository.save(new Usuario(
             null, "Javiera", "Contreras", "javiera.repo@gmail.com", "123412"
         ));
-        // When
+        // Ejecutar
         List<Usuario> usuarios = usuarioRepository.findAll();
-        // Then
+        // Comprobar
         assertNotNull(usuarios);
         assertEquals(antes + 2, usuarios.size());
     }
@@ -58,13 +58,13 @@ class UsuarioRepositoryTest {
     @Test
     @DisplayName("findById - debe retornar el usuario cuando el ID existe")
     void debeEncontrarUsuarioPorIdExistente() {
-        // Given
+        // Preparar datos
         Usuario guardado = usuarioRepository.save(new Usuario(
             null, "Martina", "Contreras", "Mar.con@gmail.com", "123412"
         ));
-        // When
+        // Ejecutar
         Optional<Usuario> resultado = usuarioRepository.findById(guardado.getId());
-        // Then
+        // Comprobar
         assertTrue(resultado.isPresent());
         assertEquals("Martina", resultado.get().getNombre());
     } 
@@ -72,24 +72,24 @@ class UsuarioRepositoryTest {
     @Test
     @DisplayName("findById - debe retornar Optional vacío cuando el ID no existe")
     void debeRetornarOptionalVacioCuandoIdNoExiste() {
-        // When
+        // Ejecutar
         Optional<Usuario> resultado = usuarioRepository.findById(999L);
 
-        // Then
+        // Comprobar
         assertFalse(resultado.isPresent());
     }
 
     @Test
     @DisplayName("deleteById - debe eliminar el Usuario de la base de datos")
     void debeEliminarUsuarioPorId() {
-        // Given
+        // Preparar datos
         Usuario guardado = usuarioRepository.save(new Usuario(
             null, "Daniela", "Contreras", "Mar.con@gmail.com", "123412"
         ));
         Long id = guardado.getId();
-        // When
+        // Ejecutar
         usuarioRepository.deleteById(id);
-        // Then
+        // Comprobar
         assertFalse(usuarioRepository.findById(id).isPresent());
     }
 }

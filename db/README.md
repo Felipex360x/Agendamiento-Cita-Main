@@ -13,8 +13,8 @@ Este directorio contiene los scripts y la configuracion para inicializar la base
 | Host en Docker | `mysql_usuario` (puerto `3306`) |
 | Nombre Base de Datos | `universidad_backend` |
 | Usuario | `desarrollador` |
-| Contraseña | `password_seguro_123` |
-| Root Password | `root_password_123` |
+| Contraseña | la de `DB_PASSWORD` en `.env` (hay un valor por defecto solo para desarrollo local) |
+| Root Password | la de `MYSQL_ROOT_PASSWORD` en `.env` |
 
 ---
 
@@ -27,10 +27,16 @@ docker compose up -d
 ```
 
 Esto levantara:
-1. El contenedor `mysql_usuario` en el puerto `3306`.
-2. El script de inicializacion `init.sql` con el esquema completo de agendamiento y datos semilla.
-3. El panel visual phpMyAdmin accesible desde:
-   http://localhost:8081 (Usuario: `desarrollador` / Contraseña: `password_seguro_123`).
+1. El contenedor `mysql_usuario` en el puerto `3306`, publicado solo en `127.0.0.1` (no es accesible desde otros equipos de la red).
+2. El script de inicializacion `init.sql` con el esquema completo, los roles y el catalogo base de servicios. No crea cuentas de usuario.
+
+El panel phpMyAdmin es opcional y no se inicia por defecto:
+
+```bash
+docker compose --profile herramientas up -d
+```
+
+Queda en http://localhost:8081 (solo desde este equipo) y pide el usuario y la contraseña de la base de datos.
 
 Al iniciar el backend, las bases MySQL existentes también actualizan `cliente.usuario_id` para permitir perfiles de clientes invitados sin cuenta.
 
@@ -42,13 +48,15 @@ docker compose up -d
 
 ---
 
-## Seguridad y Almacenamiento de Contraseñas
+## Cuentas y Contraseñas
 
-Las contraseñas de las cuentas de usuario se almacenan exclusivamente como hashes criptograficos BCrypt (`$2a$...`). El sistema no almacena ni expone contraseñas en texto plano:
+El repositorio no contiene cuentas de usuario ni contraseñas (tampoco sus hashes).
 
-- El componente `DataInitializer` del backend verifica en el arranque que todas las cuentas base posean su contraseña debidamente cifrada con BCrypt.
-- Si detecta contraseñas legadas en texto plano, las actualiza de forma automatica y transparente.
-- Las cuentas de prueba administrativas (`admin.test@nicolet.cl` y `admin@nicolet.cl`) cuentan con sincronizacion garantizada de credenciales.
+- **Primer administrador**: si la base no tiene ningun administrador, el backend crea uno al arrancar con `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. Si no defines la contraseña, genera una al azar y la muestra una unica vez en la consola. Si ya existe un administrador no modifica nada.
+- **Datos de ejemplo**: con `APP_DEMO_DATA_ENABLED=true` se cargan clientes, profesionales y citas de demostracion. Su contraseña es la de `APP_DEMO_PASSWORD`; si no la defines se genera una al azar en cada arranque y se muestra en la consola. No actives los datos de ejemplo en un entorno expuesto a Internet.
+- Las contraseñas se guardan siempre como hash BCrypt.
+
+Si tu base se creo con una version anterior de `init.sql`, conserva las cuentas antiguas con contraseñas que estuvieron publicadas: cambialas o eliminalas (o recrea el volumen con `docker compose down -v`, que borra todos los datos).
 
 ---
 

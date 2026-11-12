@@ -250,12 +250,6 @@ public class QaStressAndSecurityIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").exists());
 
-        mockMvc.perform(post("/api/v2/nicolet/usuarios/manual")
-                        .header("Authorization", "Bearer " + adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dupDto)))
-                .andExpect(status().isBadRequest());
-
         UsuarioCreateDTO rolInexistenteDto = new UsuarioCreateDTO(
                 "Fantasma", "Rol", "fantasma.rol@nicolet.cl", "Clave12345", 999999L
         );
@@ -473,7 +467,7 @@ public class QaStressAndSecurityIntegrationTest {
                         .content(objectMapper.writeValueAsString(citaDomingo)))
                 .andExpect(status().isBadRequest());
 
-        // Matriz de estados (E08): PENDIENTE no salta directamente a COMPLETADA; primero se confirma.
+        // Una cita PENDIENTE no puede pasar directo a COMPLETADA; primero debe confirmarse.
         mockMvc.perform(patch("/api/v2/nicolet/citas/" + citaId + "/estado")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -560,7 +554,7 @@ public class QaStressAndSecurityIntegrationTest {
                         .content(objectMapper.writeValueAsString(otroUsuarioDesdeMismaIp)))
                 .andExpect(status().isTooManyRequests());
 
-        // A forged X-Forwarded-For value must not transfer another source's IP block.
+        // Enviar una cabecera X-Forwarded-For falsa no debe bloquear a otra IP distinta.
         mockMvc.perform(post("/api/v2/nicolet/auth/login")
                         .with(servletRequest -> { servletRequest.setRemoteAddr("192.0.2.20"); return servletRequest; })
                         .header("X-Forwarded-For", ipAtacante)

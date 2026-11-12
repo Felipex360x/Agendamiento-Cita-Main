@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client.js';
-import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
-import { completedRevenue, reservedValue } from './dashboardStats.js';
+import { AdminShell, EmptyState, RequestMessage, personName } from '../layouts/AdminShell.jsx';
+import { completedRevenue, reservedValue } from '../utils/dashboardStats.js';
 
 export default function AdminHistoryPage() {
   const [workers, setWorkers] = useState([]);
@@ -17,7 +17,7 @@ export default function AdminHistoryPage() {
   }, []);
 
   useEffect(() => {
-    // Al cambiar de profesional se invalida lo anterior: resultados, ficha abierta y error.
+    // Al cambiar de profesional se limpian la lista, la ficha abierta y los mensajes de error.
     setAppointments([]);
     setSelected(null);
     setError('');

@@ -135,9 +135,8 @@ public class CitaService {
     }
 
     /**
-     * READ_COMMITTED es necesario además del bloqueo de la fila del profesional: con REPEATABLE_READ (valor por
-     * defecto de MySQL/InnoDB) las lecturas no bloqueantes usan la foto tomada al primer SELECT de la
-     * transacción, anterior al bloqueo, y no verían la reserva que la otra transacción acaba de confirmar.
+     * Usa lectura actualizada (READ_COMMITTED) junto con el bloqueo del trabajador para ver
+     * de inmediato las citas que se acaban de guardar en otras peticiones.
      */
     @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public CitaDTO agendar(CitaCreateDTO dto) {
@@ -166,8 +165,7 @@ public class CitaService {
             throw new IllegalArgumentException("La cuenta del cliente se encuentra desactivada");
         }
 
-        // Bloqueo de la fila del profesional: serializa las altas de su agenda (no la de otros profesionales).
-        // Todas las comprobaciones de solapamiento se hacen DESPUÉS de adquirirlo.
+        // Bloquea al trabajador para revisar y guardar su agenda sin que se crucen dos reservas a la vez.
         Trabajador trabajador = trabajadorRepository.findByIdForUpdate(dto.getTrabajadorId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Trabajador no encontrado: " + dto.getTrabajadorId()));
         if (!Boolean.TRUE.equals(trabajador.getActivo())) {
@@ -206,7 +204,7 @@ public class CitaService {
         cita.setServicio(servicio);
         cita.setFechaHoraInicio(inicio);
         cita.setFechaHoraFin(fin);
-        // El estado inicial lo define el servidor; nunca se acepta desde el payload del cliente.
+        // Toda cita nueva parte como PENDIENTE.
         cita.setEstado(EstadoCita.PENDIENTE);
         cita.setPrecioFinal(servicio.getPrecio());
         cita.setNotasCliente(dto.getNotasCliente());

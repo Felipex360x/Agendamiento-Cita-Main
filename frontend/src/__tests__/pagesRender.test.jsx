@@ -15,8 +15,8 @@ import BookingPage from '../pages/BookingPage.jsx';
 import ClientProfilePage from '../pages/ClientProfilePage.jsx';
 import EmailTemplatesPage from '../pages/EmailTemplatesPage.jsx';
 import { HomePage, LoginPage, ServicesPage, TeamPage } from '../pages/PublicPages.jsx';
-import { SiteFooter, SiteHeader } from '../pages/SiteShell.jsx';
-import { AdminShell } from '../pages/AdminShell.jsx';
+import { SiteFooter, SiteHeader } from '../layouts/SiteShell.jsx';
+import { AdminShell } from '../layouts/AdminShell.jsx';
 
 describe('Renderizado de Páginas y Enrutamiento React', () => {
   beforeEach(() => {
@@ -341,6 +341,7 @@ describe('Renderizado de Páginas y Enrutamiento React', () => {
   });
 
   it('debe renderizar EmailTemplatesPage y permitir alternar entre las pantallas de correo (Bienvenida, Pago, Trabajador y Confirmada)', () => {
+    localStorage.setItem('nicolet_jwt_user', JSON.stringify({ id: 1, nombre: 'Admin', rol: 'ADMINISTRADOR' }));
     render(<AuthProvider><EmailTemplatesPage /></AuthProvider>);
 
     // Por defecto muestra la pantalla 2 (Pago y Reserva)
@@ -367,5 +368,22 @@ describe('Renderizado de Páginas y Enrutamiento React', () => {
     // Pantalla 6: Recordatorio 24h
     fireEvent.click(screen.getByRole('tab', { name: /6\. Recordatorio 24h/i }));
     expect(screen.getByText(/Recordatorio 24 horas antes/i)).toBeInTheDocument();
+  });
+
+  it('no muestra la página de correos ni consulta la bandeja sin sesión de administrador', () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, status: 200, text: () => Promise.resolve('{}') });
+
+    const anonimo = render(<AuthProvider><EmailTemplatesPage /></AuthProvider>);
+    expect(screen.getByText('Verificando sesión…')).toBeInTheDocument();
+    expect(screen.queryByText(/Bandeja de correos despachados/i)).not.toBeInTheDocument();
+    expect(window.location.replace).toHaveBeenCalledWith('/admin/login?redirect=%2F');
+    anonimo.unmount();
+
+    localStorage.setItem('nicolet_jwt_user', JSON.stringify({ id: 2, nombre: 'Clienta', rol: 'CLIENTE' }));
+    render(<AuthProvider><EmailTemplatesPage /></AuthProvider>);
+    expect(screen.getByText('Acceso restringido')).toBeInTheDocument();
+    expect(screen.queryByText(/Bandeja de correos despachados/i)).not.toBeInTheDocument();
+
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

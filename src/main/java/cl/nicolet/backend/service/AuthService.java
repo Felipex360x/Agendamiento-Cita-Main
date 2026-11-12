@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 
-/** Orquesta el alta de cuenta y perfil de cliente en un único límite transaccional. */
+/** Servicio para registrar cuentas de clientes junto con su perfil. */
 @Service
 public class AuthService {
 
@@ -37,10 +37,10 @@ public class AuthService {
     }
 
     /**
-     * Crea Usuario + Cliente de forma atómica: si falla cualquier paso se revierte todo, de modo que no
-     * quedan cuentas huérfanas ni un correo ocupado por un alta fallida.
+     * Crea el usuario y su perfil de cliente en un solo paso.
+     * Si algo falla se deshace todo para no dejar datos a medias.
      *
-     * @throws ConflictoException si el correo ya existe (también ante duplicados concurrentes)
+     * @throws ConflictoException si el correo ya está registrado
      */
     @Transactional
     public Usuario registrarCliente(RegistroRequestDTO request) {
@@ -71,19 +71,19 @@ public class AuthService {
         try {
             guardado = usuarioRepository.saveAndFlush(usuario);
         } catch (DataIntegrityViolationException e) {
-            // Duplicado concurrente: el índice único de correo rechazó el INSERT.
+            // Si dos registros usan el mismo correo al mismo tiempo, la base de datos rechaza el segundo.
             if (usuarioRepository.existsByCorreoIgnoreCase(correo)) {
                 throw new ConflictoException("El correo electrónico ya se encuentra registrado.");
             }
             throw e;
         }
-        // Un fallo aquí NO se interpreta como correo duplicado: propaga y revierte toda la transacción.
+        // Si falla al crear el perfil, se cancela todo el registro.
         perfilUsuarioService.crearPerfilCliente(guardado, telefono);
         if (emailService != null) {
             try {
                 emailService.enviarBienvenida(guardado);
             } catch (Exception ignored) {
-                // El envío de correo no debe interrumpir el registro del cliente
+                // Si falla el envío del correo, el registro sigue adelante igual
             }
         }
         return guardado;

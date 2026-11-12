@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { api } from '../api/client.js';
 import displayText from '../utils/displayText.js';
-import { SiteFooter, SiteHeader } from './SiteShell.jsx';
+import { SiteFooter, SiteHeader } from '../layouts/SiteShell.jsx';
 import hairImage from '../assets/hair.jpg';
 import nailsImage from '../assets/nails.jpg';
 import salonImage from '../assets/salon-interior.jpg';
@@ -142,7 +142,7 @@ export function LoginPage() {
     <form id="react-login-form" onSubmit={submit}>
       {tab === 'register' && <><label>Nombre<input name="nombre" autoComplete="given-name" required /></label><label>Apellido paterno<input name="apellidoP" autoComplete="family-name" required /></label></>}
       <label>Correo electrónico<input name="correo" type="email" autoComplete="email" required /></label>
-      <label>Contraseña<input name="password" type="password" autoComplete={tab === 'login' ? 'current-password' : 'new-password'} minLength={tab === 'register' ? 6 : undefined} maxLength={72} required /></label>
+      <label>Contraseña<input name="password" type="password" autoComplete={tab === 'login' ? 'current-password' : 'new-password'} minLength={tab === 'register' ? 8 : undefined} maxLength={72} required /></label>
       {tab === 'register' && <label>Teléfono (opcional)<input name="telefono" type="tel" autoComplete="tel" /></label>}
       {error && <p className="site-form-error" role="alert">{error}</p>}
       <button className="site-button site-submit" type="submit" disabled={busy}>{busy ? 'Procesando…' : tab === 'login' ? 'Ingresar' : 'Crear cuenta y reservar'}</button>

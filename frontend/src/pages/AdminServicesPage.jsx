@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import displayText from '../utils/displayText.js';
-import { AdminShell, EmptyState, RequestMessage } from './AdminShell.jsx';
+import { AdminShell, EmptyState, RequestMessage } from '../layouts/AdminShell.jsx';
 
 const blankService = { nombre: '', descripcion: '', duracionMinutos: '', precio: '' };
 

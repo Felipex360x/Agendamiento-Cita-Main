@@ -8,10 +8,8 @@ import java.time.Clock;
 import java.time.ZoneId;
 
 /**
- * Reloj único de la aplicación. Contrato de fechas: {@code LocalDate}/{@code LocalDateTime} de la API son
- * "hora de pared" del negocio, interpretadas en la zona {@code app.timezone} (por defecto America/Santiago),
- * nunca en la zona del servidor ni la del navegador. «Hoy» y «hora pasada» se calculan con este reloj.
- * Si {@code app.timezone} está vacío se usa la zona del sistema (útil en pruebas locales).
+ * Reloj principal del sistema. Usa la zona horaria del negocio (por defecto America/Santiago)
+ * para calcular la fecha y hora actual. Si no se indica una zona, usa la del sistema.
  */
 @Configuration
 public class ClockConfig {

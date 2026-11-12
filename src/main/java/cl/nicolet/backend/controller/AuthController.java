@@ -77,8 +77,8 @@ public class AuthController {
 
         String accountKey = "account:" + correo;
         String ipKey = "ip:" + clientIp;
-        // Reserva atómica del intento (cuenta e IP) antes de verificar la contraseña: evita que una ráfaga
-        // concurrente supere el límite. Un login correcto o un error interno devuelven la reserva.
+        // Contamos el intento antes de revisar la contraseña para evitar muchos intentos al mismo tiempo.
+        // Si el login sale bien o hay un error del servidor, se devuelve el intento.
         if (!loginAttemptService.tryAcquire(accountKey, ipKey)) {
             log.warn("Bloqueo temporal de autenticación por intentos fallidos");
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
@@ -88,7 +88,7 @@ public class AuthController {
             ));
         }
 
-        log.info("Intento de inicio de sesión para correo: {}", correo);
+        log.debug("Intento de inicio de sesión recibido");
 
         try {
             Authentication authentication;
@@ -106,8 +106,10 @@ public class AuthController {
                     if (u.getPassword() != null 
                             && !u.getPassword().startsWith("$2a$") 
                             && !u.getPassword().startsWith("$2b$")
-                            && u.getPassword().equals(loginRequest.getPassword())) {
-                        log.info("Migrando contraseña legacy en texto plano a BCrypt durante login para: {}", correo);
+                            && java.security.MessageDigest.isEqual(
+                                    u.getPassword().getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                                    loginRequest.getPassword().getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+                        log.info("Migrando contraseña legacy en texto plano a BCrypt durante login para id={}", u.getId());
                         u.setPassword(passwordEncoder.encode(loginRequest.getPassword()));
                         usuarioRepository.save(u);
                         authentication = authenticationManager.authenticate(
@@ -124,7 +126,7 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             if (userDetails.getAuthorities().isEmpty()) {
-                // Credenciales correctas pero cuenta sin rol: no se emite token (no tendría permisos).
+                // Si la cuenta no tiene rol, no se entrega token porque no tiene permisos.
                 loginAttemptService.loginSucceeded(accountKey);
                 loginAttemptService.release(ipKey);
                 SecurityContextHolder.clearContext();
@@ -138,7 +140,7 @@ public class AuthController {
             String jwt = jwtUtils.generarToken(userDetails);
 
             loginAttemptService.loginSucceeded(accountKey);
-            loginAttemptService.release(ipKey); // un acierto no borra los fallos previos de esa IP
+            loginAttemptService.release(ipKey); // entrar bien no borra los fallos anteriores de esa IP
 
             String rol = userDetails.getAuthorities().stream()
                     .findFirst()
@@ -159,10 +161,10 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {
-            // El intento ya se contó en tryAcquire.
+            // El intento fallido ya se descontó antes.
             int intentosRestantes = loginAttemptService.getRemainingAttempts(accountKey);
 
-            log.warn("Credenciales incorrectas para correo: {}. Intentos restantes: {}", correo, intentosRestantes);
+            log.warn("Credenciales incorrectas. Intentos restantes para la cuenta: {}", intentosRestantes);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "status", HttpStatus.UNAUTHORIZED.value(),
                     "error", "Unauthorized",
@@ -170,7 +172,7 @@ public class AuthController {
                     "intentosRestantes", intentosRestantes
             ));
         } catch (Exception e) {
-            loginAttemptService.release(accountKey); // un error interno no es un fallo de credenciales
+            loginAttemptService.release(accountKey); // si falla el servidor no cuenta como error de contraseña
             loginAttemptService.release(ipKey);
             log.error("Error durante el inicio de sesión: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
@@ -208,18 +210,26 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Registrar nuevo usuario/cliente y obtener sesión inicial")
-    public ResponseEntity<?> register(@Valid @RequestBody RegistroRequestDTO request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegistroRequestDTO request, HttpServletRequest httpRequest) {
         if (request.getPassword() != null && request.getPassword().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                     "status", 400, "codigo", "VALIDACION",
-                    "mensaje", "La contraseña debe tener entre 6 y 72 caracteres",
-                    "errores", Map.of("password", "La contraseña debe tener entre 6 y 72 caracteres"),
-                    "password", "La contraseña debe tener entre 6 y 72 caracteres"
+                    "mensaje", "La contraseña debe tener entre 8 y 72 caracteres",
+                    "errores", Map.of("password", "La contraseña debe tener entre 8 y 72 caracteres"),
+                    "password", "La contraseña debe tener entre 8 y 72 caracteres"
+            ));
+        }
+        if (loginAttemptService.registroBloqueado(obtenerIpCliente(httpRequest))) {
+            log.warn("Registro rechazado: demasiadas cuentas solicitadas desde la misma dirección IP");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                    "status", HttpStatus.TOO_MANY_REQUESTS.value(),
+                    "error", "Too Many Requests",
+                    "mensaje", "Se crearon demasiadas cuentas desde esta conexión. Inténtalo de nuevo más tarde."
             ));
         }
         log.info("Solicitud de registro de nuevo usuario");
 
-        // Cuenta + perfil de cliente en una sola transacción (AuthService); duplicados -> 409.
+        // Crea el usuario y su perfil de cliente juntos; si el correo ya existe devuelve error 409.
         Usuario usuarioGuardado = authService.registrarCliente(request);
         UserDetailsImpl userDetails = UserDetailsImpl.build(usuarioGuardado);
         String jwt = jwtUtils.generarToken(userDetails);

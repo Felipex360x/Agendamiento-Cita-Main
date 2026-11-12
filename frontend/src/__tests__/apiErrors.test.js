@@ -9,8 +9,8 @@ describe('E22: contrato de errores de la API', () => {
 
   it('un 400 de validación con "errores" muestra los mensajes por campo, no "Error HTTP 400"', async () => {
     global.fetch = vi.fn().mockResolvedValue(respuesta(400, {
-      status: 400, codigo: 'VALIDACION', mensaje: 'Formato de correo electrónico inválido La contraseña debe tener entre 6 y 72 caracteres',
-      errores: { correo: 'Formato de correo electrónico inválido', password: 'La contraseña debe tener entre 6 y 72 caracteres' },
+      status: 400, codigo: 'VALIDACION', mensaje: 'Formato de correo electrónico inválido La contraseña debe tener entre 8 y 72 caracteres',
+      errores: { correo: 'Formato de correo electrónico inválido', password: 'La contraseña debe tener entre 8 y 72 caracteres' },
     }));
     const error = await apiRequest('/auth/register', { method: 'POST', body: '{}' }).catch((e) => e);
     expect(error.status).toBe(400);
@@ -18,7 +18,7 @@ describe('E22: contrato de errores de la API', () => {
     expect(error.message).toContain('Formato de correo electrónico inválido');
     expect(error.fieldErrors).toEqual({
       correo: 'Formato de correo electrónico inválido',
-      password: 'La contraseña debe tener entre 6 y 72 caracteres',
+      password: 'La contraseña debe tener entre 8 y 72 caracteres',
     });
   });
 

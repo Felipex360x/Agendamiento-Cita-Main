@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import DaySelector, { localDateValue } from '../components/DaySelector.jsx';
-import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
+import { AdminShell, EmptyState, RequestMessage, personName } from '../layouts/AdminShell.jsx';
 
 const timeLabel = (time) => (time || '').slice(0, 5);
 const unavailableLabel = (reason) => ({ DESCANSO: 'Conflicto con colación', OCUPADO: 'Ocupado', HORA_PASADA: 'No disponible' }[reason] || 'No disponible');

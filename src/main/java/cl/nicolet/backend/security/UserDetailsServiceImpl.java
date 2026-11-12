@@ -27,7 +27,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return UserDetailsImpl.build(usuario);
     }
 
-    /** Carga inequívoca por ID permanente; usada por el filtro JWT. Rechaza cuentas desactivadas. */
+    /** Busca al usuario por su ID para validar el token JWT y rechaza cuentas desactivadas. */
     @Transactional(readOnly = true)
     public UserDetails loadUserById(Long id) throws UsernameNotFoundException {
         Usuario usuario = usuarioRepository.findById(id)

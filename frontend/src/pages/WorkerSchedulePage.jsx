@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
-import { AdminShell, RequestMessage, personName } from './AdminShell.jsx';
+import { AdminShell, RequestMessage, personName } from '../layouts/AdminShell.jsx';
 
 const weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 

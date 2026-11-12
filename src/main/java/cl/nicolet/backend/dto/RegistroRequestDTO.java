@@ -27,7 +27,7 @@ public class RegistroRequestDTO {
 
     @Schema(description = "Contraseña de la cuenta (máximo 72 caracteres)", example = "ClaveSegura123!")
     @NotBlank(message = "La contraseña es obligatoria")
-    @Size(min = 6, max = 72, message = "La contraseña debe tener entre 6 y 72 caracteres")
+    @Size(min = 8, max = 72, message = "La contraseña debe tener entre 8 y 72 caracteres")
     private String password;
 
     @Schema(description = "Teléfono de contacto opcional", example = "+56912345678")

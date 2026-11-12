@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
-import { SiteFooter, SiteHeader } from './SiteShell.jsx';
+import { AdminShell } from '../layouts/AdminShell.jsx';
 
 const money = (value) => new Intl.NumberFormat('es-CL', {
   style: 'currency', currency: 'CLP', maximumFractionDigits: 0,
@@ -80,7 +80,17 @@ export const EMAIL_SCREENS = [
   },
 ];
 
+// La página muestra la bandeja real del servidor (datos de clientes) y permite configurar el
+// envío, así que solo se monta dentro de AdminShell, cuando hay sesión de administrador.
 export default function EmailTemplatesPage() {
+  return (
+    <AdminShell title="Pantallas de correo" active="/correos">
+      <EmailTemplatesContent />
+    </AdminShell>
+  );
+}
+
+function EmailTemplatesContent() {
   const [selectedId, setSelectedId] = useState('pago');
   const [data, setData] = useState(INITIAL_DATA);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -104,7 +114,7 @@ export default function EmailTemplatesPage() {
         if (response.remitente) setSmtpRemitente(response.remitente);
       }
     } catch {
-      // En pruebas unitarias sin backend activo no bloquea el renderizado
+      // La bandeja es opcional: si el backend no responde, la vista previa sigue disponible.
     }
   }
 
@@ -151,8 +161,6 @@ export default function EmailTemplatesPage() {
     setNotice('');
     try {
       const result = await api.configurarSmtp({
-        host: 'smtp.gmail.com',
-        port: 587,
         remitente: smtpRemitente,
         appPassword: smtpPassword,
       });
@@ -167,13 +175,11 @@ export default function EmailTemplatesPage() {
   }
 
   return (
-    <>
-      <SiteHeader />
-      <main className="site-section site-page-section">
+      <div className="site-section site-page-section">
         <div className="site-section-heading">
           <div>
             <p className="site-eyebrow">Notificaciones por correo electrónico</p>
-            <h1>Pantallas de correo · Nicolett Studio Fantasy</h1>
+            <h2>Pantallas de correo · Nicolett Studio Fantasy</h2>
             <p className="site-muted">
               Diseñadas siguiendo la identidad visual de la pantalla de <strong>Bienvenida</strong> para el cliente (<strong>{data.correoCliente}</strong>) y el profesional (<strong>{data.correoTrabajador}</strong>).
             </p>
@@ -207,7 +213,6 @@ export default function EmailTemplatesPage() {
         {error && <p className="site-form-error" role="alert">{error}</p>}
         {notice && <p className="admin-alert success" role="status">{notice}</p>}
 
-        {/* Configuración opcional de Contraseña de Aplicación de Gmail */}
         {smtpOpen && (
           <section className="site-booking-panel email-variables-panel" aria-label="Configuración SMTP Gmail">
             <h2>Despacho real a Gmail (smtp.gmail.com:587)</h2>
@@ -240,7 +245,6 @@ export default function EmailTemplatesPage() {
           </section>
         )}
 
-        {/* Selector de pantallas de correo */}
         <div className="email-preview-tabs" role="tablist" aria-label="Pantallas de correo">
           {EMAIL_SCREENS.map((screen) => (
             <button
@@ -257,7 +261,6 @@ export default function EmailTemplatesPage() {
           ))}
         </div>
 
-        {/* Editor opcional de variables */}
         {editorOpen && (
           <section className="site-booking-panel email-variables-panel" aria-label="Variables de plantilla">
             <h2>Datos de prueba en vivo</h2>
@@ -278,7 +281,6 @@ export default function EmailTemplatesPage() {
           </section>
         )}
 
-        {/* Cabecera de metadatos del correo (Sobre / Envelope) */}
         <section className="email-envelope-bar" aria-label="Encabezado del correo">
           <div>
             <span>De:</span>
@@ -298,10 +300,8 @@ export default function EmailTemplatesPage() {
           </div>
         </section>
 
-        {/* Contenedor visual del correo siguiendo el diseño de Bienvenida (site-auth-card) */}
         <div className="email-canvas">
           <article className="site-auth-card email-card" aria-label={`Vista previa: ${currentScreen.title}`}>
-            {/* Encabezado de marca idéntico al estilo del sitio */}
             <header className="email-card-header">
               <span className="site-brand">
                 nicolet<span>.</span>
@@ -313,7 +313,6 @@ export default function EmailTemplatesPage() {
               </span>
             </header>
 
-            {/* 1. PANTALLA DE BIENVENIDA */}
             {selectedId === 'bienvenida' && (
               <div className="email-card-body">
                 <p className="site-eyebrow">Cuenta creada con éxito</p>
@@ -348,7 +347,6 @@ export default function EmailTemplatesPage() {
               </div>
             )}
 
-            {/* 2. PANTALLA DE PAGO Y RESERVA RECIBIDA */}
             {selectedId === 'pago' && (
               <div className="email-card-body">
                 <p className="site-eyebrow">Comprobante de pago y reserva recibida</p>
@@ -417,7 +415,6 @@ export default function EmailTemplatesPage() {
               </div>
             )}
 
-            {/* 3. PANTALLA DEL TRABAJADOR CUANDO AGENDAN CON ÉL */}
             {selectedId === 'trabajador-nueva-cita' && (
               <div className="email-card-body">
                 <p className="site-eyebrow">Nueva solicitud en tu agenda</p>
@@ -464,7 +461,6 @@ export default function EmailTemplatesPage() {
               </div>
             )}
 
-            {/* 4. PANTALLA AL USUARIO CUANDO EL TRABAJADOR CONFIRMA SU CITA */}
             {selectedId === 'cita-confirmada' && (
               <div className="email-card-body">
                 <p className="site-eyebrow">Hora asegurada</p>
@@ -513,7 +509,6 @@ export default function EmailTemplatesPage() {
               </div>
             )}
 
-            {/* 5. PANTALLA DE CITA CANCELADA CON MOTIVO */}
             {selectedId === 'cita-cancelada' && (
               <div className="email-card-body">
                 <p className="site-eyebrow">Actualización de tu reserva</p>
@@ -551,7 +546,6 @@ export default function EmailTemplatesPage() {
               </div>
             )}
 
-            {/* 6. PANTALLA DE RECORDATORIO 24H ANTES */}
             {selectedId === 'recordatorio' && (
               <div className="email-card-body">
                 <p className="site-eyebrow">Recordatorio 24 horas antes</p>
@@ -589,7 +583,6 @@ export default function EmailTemplatesPage() {
               </div>
             )}
 
-            {/* Pie de correo unificado */}
             <footer className="email-card-footer">
               <strong>Nicolett Studio Fantasy</strong> · Un espacio para ti. Un cuidado que se siente.
               <span>Los Ciruelos, Buin · WhatsApp +56 9 4032 2551 · @nicolettstudiofantasy</span>
@@ -597,7 +590,6 @@ export default function EmailTemplatesPage() {
           </article>
         </div>
 
-        {/* Bandeja de Correos Enviados / Generados por el Backend en Tiempo Real */}
         <section className="site-booking-panel" aria-label="Bandeja de correos enviados">
           <div className="admin-section-title">
             <div>
@@ -672,14 +664,13 @@ export default function EmailTemplatesPage() {
               </p>
               <iframe
                 title={`Contenido HTML ${selectedSentEmail.id}`}
+                sandbox=""
                 srcDoc={selectedSentEmail.html}
                 style={{ width: '100%', height: '620px', border: '1px solid #ede4d9', borderRadius: '16px', background: '#fcf9f5' }}
               />
             </section>
           </div>
         )}
-      </main>
-      <SiteFooter />
-    </>
+      </div>
   );
 }

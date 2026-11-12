@@ -39,9 +39,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Matriz de autorización con la cadena de seguridad real (sin filtros desactivados) para
- * ADMINISTRADOR, CLIENTE, PROFESIONAL, propietario, tercero y usuario sin autenticar.
- * Incluye E02: un cliente no recibe RUT, teléfono, correo ni comisión del profesional.
+ * Pruebas de permisos de acceso para administrador, cliente, trabajador y usuarios sin sesión.
+ * También comprueba que un cliente no vea datos privados del trabajador (RUT, teléfono, correo ni comisión).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -152,7 +151,7 @@ class AuthorizationIntegrationTest {
         return mockMvc.perform(req);
     }
 
-    // ------------------------------------------------------------------ matriz
+    // Pruebas de permisos por rol
 
     @Test
     @DisplayName("GET /citas (listado global): solo ADMINISTRADOR")
@@ -170,11 +169,11 @@ class AuthorizationIntegrationTest {
                 "/api/v2/nicolet/citas/" + cita.getId(),
                 "/api/v2/nicolet/citas/codigo/" + cita.getCodigoReserva()}) {
             como(null, get(url)).andExpect(status().isUnauthorized());
-            como(usuarioClienteA, get(url)).andExpect(status().isOk());   // propietario
-            como(usuarioProA, get(url)).andExpect(status().isOk());       // profesional asignado
+            como(usuarioClienteA, get(url)).andExpect(status().isOk());   // dueño de la cita
+            como(usuarioProA, get(url)).andExpect(status().isOk());       // trabajador asignado
             como(admin, get(url)).andExpect(status().isOk());
-            como(usuarioClienteB, get(url)).andExpect(status().isForbidden()); // tercero cliente
-            como(usuarioProB, get(url)).andExpect(status().isForbidden());     // tercero profesional
+            como(usuarioClienteB, get(url)).andExpect(status().isForbidden()); // otro cliente
+            como(usuarioProB, get(url)).andExpect(status().isForbidden());     // otro trabajador
         }
     }
 
@@ -221,9 +220,9 @@ class AuthorizationIntegrationTest {
             como(admin, get(url)).andExpect(status().isOk());
         }
         String perfilPro = "/api/v2/nicolet/trabajadores/" + proA.getId();
-        como(usuarioProA, get(perfilPro)).andExpect(status().isOk());      // propietario
+        como(usuarioProA, get(perfilPro)).andExpect(status().isOk());      // dueño del perfil
         como(admin, get(perfilPro)).andExpect(status().isOk());
-        como(usuarioProB, get(perfilPro)).andExpect(status().isForbidden()); // tercero
+        como(usuarioProB, get(perfilPro)).andExpect(status().isForbidden()); // otra persona
         como(usuarioClienteA, get(perfilPro)).andExpect(status().isForbidden());
 
         String perfilCliente = "/api/v2/nicolet/clientes/" + clienteA.getId();
@@ -232,20 +231,20 @@ class AuthorizationIntegrationTest {
         como(admin, get(perfilCliente)).andExpect(status().isOk());
     }
 
-    // --------------------------------------------------------------------- E02
+    // Datos privados del trabajador
 
     private void assertSinDatosInternosDelProfesional(String json) throws Exception {
         assertThat(json).doesNotContain(RUT_PRO).doesNotContain(TEL_PRO).doesNotContain(COMISION_PRO)
                 .doesNotContain("37.5")
-                .doesNotContain(usuarioProA.getCorreo()); // el correo del cliente sí es legítimo; el del profesional no
+                .doesNotContain(usuarioProA.getCorreo()); // el correo del cliente sí se muestra, pero el del trabajador no
         JsonNode cita = objectMapper.readTree(json);
-        // en el listado la cita es un elemento del array
+        // si viene una lista, tomamos la primera cita
         JsonNode trabajador = (cita.isArray() ? cita.get(0) : cita).get("trabajador");
         assertThat(trabajador.hasNonNull("rutDni")).isFalse();
         assertThat(trabajador.hasNonNull("telefono")).isFalse();
         assertThat(trabajador.hasNonNull("comisionPorcentaje")).isFalse();
         assertThat(trabajador.get("usuario").hasNonNull("correo")).isFalse();
-        // lo que sí necesita la interfaz
+        // datos públicos que sí usa la pantalla
         assertThat(trabajador.get("id").asLong()).isEqualTo(proA.getId());
         assertThat(trabajador.get("usuario").get("nombre").asText()).isEqualTo("proA");
         assertThat(trabajador.get("cargoEspecialidad").asText()).isEqualTo("Estilista");
@@ -272,7 +271,7 @@ class AuthorizationIntegrationTest {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertSinDatosInternosDelProfesional(json);
 
-        // Presencia administrativa permitida: el perfil completo sigue disponible para admin y propietario.
+        // El administrador y el propio trabajador sí pueden ver el perfil completo.
         for (Usuario quien : new Usuario[]{admin, usuarioProA}) {
             JsonNode perfil = objectMapper.readTree(
                     como(quien, get("/api/v2/nicolet/trabajadores/" + proA.getId()))

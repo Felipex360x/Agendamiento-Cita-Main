@@ -26,6 +26,8 @@ public class Usuario {
     private String apellidoP;
     @Column(name = "correo", nullable = false, length = 150)
     private String correo;
+    // Nunca se incluye en respuestas JSON, aunque alguien devuelva la entidad por error.
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Column(name = "estado", nullable = false, columnDefinition = "TINYINT NOT NULL DEFAULT 1")
@@ -34,7 +36,6 @@ public class Usuario {
     @Column(name = "motivo_desactivacion", columnDefinition = "TEXT")
     private String motivoDesactivacion;
 
-    // conexion con la tabla de tipo usuario
     @ManyToOne
     @JoinColumn(name = "tipo_usuario_id")
     private TipoUsuario tipoUsuario;

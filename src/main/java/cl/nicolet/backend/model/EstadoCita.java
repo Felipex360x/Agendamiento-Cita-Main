@@ -4,14 +4,14 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Estados de una cita y máquina de transiciones.
+ * Estados posibles de una cita y cambios permitidos:
  * <pre>
  * PENDIENTE   -> CONFIRMADA | CANCELADA
  * CONFIRMADA  -> EN_ATENCION | COMPLETADA | CANCELADA | NO_ASISTIO
  * EN_ATENCION -> COMPLETADA | CANCELADA
- * COMPLETADA, CANCELADA, NO_ASISTIO: estados finales (no se reactivan; se crea una nueva reserva).
+ * COMPLETADA, CANCELADA, NO_ASISTIO: estados finales (no cambian más; se debe crear una cita nueva).
  * </pre>
- * Solo CANCELADA libera el horario del profesional; el resto de los estados lo ocupa.
+ * Solo una cita CANCELADA deja libre el horario del trabajador.
  */
 public enum EstadoCita {
     PENDIENTE,

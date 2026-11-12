@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import DaySelector from '../components/DaySelector.jsx';
-import { businessToday } from '../dates.js';
-import { SiteFooter, SiteHeader } from './SiteShell.jsx';
+import { businessToday } from '../utils/dates.js';
+import { SiteFooter, SiteHeader } from '../layouts/SiteShell.jsx';
 
 const money = (value) => new Intl.NumberFormat('es-CL', {
   style: 'currency', currency: 'CLP', maximumFractionDigits: 0,
@@ -49,7 +49,7 @@ export default function BookingPage() {
   );
   const steps = ['Servicio', 'Especialista', 'Fecha y hora', 'Tus datos'];
   const [step, setStep] = useState(workerId ? 3 : serviceId ? 2 : 1);
-  // El borrador (servicio, profesional, fecha y hora) viaja en el redirect; al volver se revalida la disponibilidad.
+  // Guarda los datos elegidos en el enlace de inicio de sesión; al volver se revisa si la hora sigue libre.
   const draftQuery = new URLSearchParams(Object.entries({ servicioId: serviceId, trabajadorId: workerId, fecha: date, hora: time }).filter(([, value]) => value)).toString();
   const loginHref = `/admin/login?redirect=${encodeURIComponent(`/reservar.html${draftQuery ? `?${draftQuery}` : ''}`)}`;
 
@@ -61,7 +61,7 @@ export default function BookingPage() {
         if (!active) return;
         setServices(availableServices || []);
         setWorkers(availableWorkers || []);
-        // Enlaces con datos parciales o inválidos: se abre el primer paso incompleto.
+        // Si el enlace trae datos incompletos o no válidos, se abre el primer paso que falte.
         const requestedService = (availableServices || []).find((item) => String(item.id) === String(serviceId));
         if (!requestedService) { setServiceId(''); setWorkerId(''); setDate(''); setTime(''); setStep(1); return; }
         const requestedWorker = (availableWorkers || []).find((item) => String(item.id) === String(workerId));
@@ -76,7 +76,7 @@ export default function BookingPage() {
   }, []);
 
   useEffect(() => {
-    // No consultar hasta que el catálogo esté cargado y los parámetros de la URL saneados (E19).
+    // Espera a que carguen los servicios y que los datos del enlace sean válidos antes de buscar horas.
     if (catalogLoading || !serviceId || !workerId || !date) {
       setSlots([]);
       return undefined;
