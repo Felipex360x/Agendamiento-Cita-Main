@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { api } from '../api/client.js';
-import { AdminShell, RequestMessage } from './AdminShell.jsx';
+import { AdminShell, RequestMessage } from '../layouts/AdminShell.jsx';
 
 const checks = [
   ['Servicios', () => api.servicios()],
   ['Profesionales', () => api.trabajadores()],
   ['Citas', () => api.citas()],
   ['Estado Spring', async () => {
-    // Ruta real vía Vite/túnel (proxy específico en vite.config.js).
+    // Consulta el estado de Spring a través de Vite (configurado en vite.config.js).
     const response = await fetch('/actuator/health', { headers: { Accept: 'application/json' } });
     const type = response.headers.get('content-type') || '';
     if (!type.includes('json')) {

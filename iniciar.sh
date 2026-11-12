@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Lanzador solo para Linux: base de datos (Docker, solo si hace falta) + Spring Boot + React (Vite).
+# Inicia el proyecto en Linux: base de datos (con Docker, si hace falta), Spring Boot y React.
 #
 #   ./iniciar.sh                 inicia todo y espera a que esté listo
-#   ./iniciar.sh --sin-docker    no intenta iniciar MySQL (exige que ya esté disponible)
+#   ./iniciar.sh --sin-docker    no intenta iniciar MySQL (debe estar encendido de antes)
 #   ./iniciar.sh --ayuda
 #
 # Variables opcionales: DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, JWT_SECRET.
-# Nunca detiene procesos ajenos ni borra datos/volúmenes. Ctrl+C detiene solo lo que inició este script
-# (la base de datos queda activa).
+# No cierra otros programas ni borra datos. Al presionar Ctrl+C solo detiene lo que abrió este archivo
+# (la base de datos sigue encendida).
 
 set -u -o pipefail
 
@@ -122,8 +122,8 @@ fi
 
 export DB_HOST="${DB_HOST:-127.0.0.1}"
 export DB_PORT="${DB_PORT:-3306}"
-export DB_USERNAME="${DB_USERNAME:-desarrollador}"      # usuario definido en docker-compose.yml
-export DB_PASSWORD="${DB_PASSWORD:-password_seguro_123}" # ídem; cámbialo si usas otra base
+export DB_USERNAME="${DB_USERNAME:-desarrollador}"      # usuario de docker-compose.yml
+export DB_PASSWORD="${DB_PASSWORD:-password_seguro_123}" # contraseña de docker-compose.yml; cámbiala si usas otra base
 export MAIL_HOST="${MAIL_HOST:-smtp.gmail.com}"
 export MAIL_PORT="${MAIL_PORT:-587}"
 export MAIL_USERNAME="${MAIL_USERNAME:-nacuna888@gmail.com}"

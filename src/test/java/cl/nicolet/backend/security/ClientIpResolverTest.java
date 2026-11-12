@@ -6,7 +6,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** O07: la IP del cliente solo se toma de X-Forwarded-For cuando viene de un proxy de confianza. */
+/** Comprueba que la IP del cliente solo se tome de X-Forwarded-For cuando viene de un proxy seguro. */
 class ClientIpResolverTest {
 
     private MockHttpServletRequest request(String remote, String forwarded) {
@@ -28,7 +28,7 @@ class ClientIpResolverTest {
     void proxyDeConfianza() {
         ClientIpResolver resolver = new ClientIpResolver("127.0.0.1,::1");
         assertEquals("203.0.113.5", resolver.resolve(request("127.0.0.1", "203.0.113.5")));
-        // Cloudflare -> cloudflared (loopback) -> Vite -> Spring: "cliente, loopback"
+        // Cuando pasa por varios proxies locales: "ip_cliente, 127.0.0.1"
         assertEquals("203.0.113.5", resolver.resolve(request("127.0.0.1", "203.0.113.5, 127.0.0.1")));
         assertEquals("203.0.113.5", resolver.resolve(request("::1", "203.0.113.5")));
     }
@@ -37,7 +37,7 @@ class ClientIpResolverTest {
     @DisplayName("un cliente no puede suplantar la IP: se ignora lo que escribió a la izquierda de la cadena")
     void suplantacionIgnorada() {
         ClientIpResolver resolver = new ClientIpResolver("127.0.0.1");
-        // el atacante envió "9.9.9.9"; el proxy añadió su IP real al final
+        // aunque el usuario envíe "9.9.9.9", el proxy agrega su IP real al final
         assertEquals("203.0.113.5", resolver.resolve(request("127.0.0.1", "9.9.9.9, 203.0.113.5")));
         assertEquals("203.0.113.5", resolver.resolve(request("127.0.0.1", "9.9.9.9, 8.8.8.8, 203.0.113.5, 127.0.0.1")));
     }

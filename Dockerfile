@@ -10,5 +10,8 @@ RUN mvn -B clean package
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
+# La aplicación no se ejecuta como root dentro del contenedor.
+RUN useradd --system --no-create-home --shell /usr/sbin/nologin nicolet
+USER nicolet
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

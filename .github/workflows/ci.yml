@@ -5,6 +5,10 @@ on:
     branches: [main, 'fix/**']
   pull_request:
 
+# El flujo solo necesita leer el código.
+permissions:
+  contents: read
+
 jobs:
   backend:
     name: Backend (Java 17, Maven)
@@ -16,8 +20,7 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      # Ejecuta las pruebas (H2 en memoria). Las pruebas de concurrencia/migración sobre MySQL se añadirán
-      # cuando se defina el motor de base de datos definitivo.
+      # Ejecuta las pruebas automáticas usando una base de datos en memoria (H2).
       - run: ./mvnw -B -ntp clean verify
 
   frontend:
@@ -35,5 +38,7 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      # Falla si alguna dependencia tiene una vulnerabilidad alta o crítica conocida.
+      - run: npm audit --audit-level=high
       - run: npm test
       - run: npm run build

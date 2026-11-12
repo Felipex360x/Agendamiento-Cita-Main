@@ -7,7 +7,7 @@ export class ApiError extends Error {
     this.name = 'ApiError';
     this.status = status;
     this.payload = payload;
-    this.fieldErrors = fieldErrors; // { campo: mensaje } cuando la API devuelve errores de validación
+    this.fieldErrors = fieldErrors; // { campo: mensaje } cuando faltan datos o hay errores en el formulario
   }
 }
 
@@ -18,8 +18,8 @@ const FIELD_LABELS = {
   notasCliente: 'Notas', tipoUsuarioId: 'Rol', fechaHoraInicio: 'Fecha y hora',
 };
 
-// Contrato de errores: { status, codigo, mensaje, error, errores?: { campo: mensaje } }.
-// Se aceptan también los formatos anteriores: { campo: mensaje } plano, { message } y { error }.
+// Formato de errores del servidor: { status, codigo, mensaje, error, errores?: { campo: mensaje } }.
+// También entiende formatos más simples como { campo: mensaje }, { message } o { error }.
 export function parseApiError(payload, status) {
   if (payload && typeof payload === 'object') {
     let fields = {};

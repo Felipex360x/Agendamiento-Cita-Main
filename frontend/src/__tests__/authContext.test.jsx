@@ -6,7 +6,7 @@ import { api } from '../api/client.js';
 import fs from 'fs';
 import path from 'path';
 
-// Componente auxiliar de prueba para consumir el hook useAuth
+// Componente de prueba para usar useAuth
 function DummyConsumer() {
   const { user, loading, login, logout } = useAuth();
   return (
@@ -31,7 +31,7 @@ describe('Módulo de Autenticación React: AuthContext.jsx', () => {
 
   describe('Control de Invocación del Hook useAuth()', () => {
     it('debe lanzar un error descriptivo si se invoca fuera de AuthProvider', () => {
-      // Suprimir error en consola de React para test de error boundary esperado
+      // Oculta el error en consola de React porque esta prueba espera que falle
       const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       expect(() => {
@@ -208,11 +208,10 @@ describe('Módulo de Autenticación React: AuthContext.jsx', () => {
       expect(pagesSource).toContain('api.trabajadores');
     });
 
-    it('las pantallas antiguas no cargan ni analizan HTML dinámico', () => {
+    it('App renderiza componentes React y no carga ni analiza HTML dinámico', () => {
       const appPath = path.resolve(__dirname, '../App.jsx');
       const appSource = fs.readFileSync(appPath, 'utf8');
 
-      expect(appSource).toContain('export function LegacyPage()');
       expect(appSource).not.toContain('DOMParser');
       expect(appSource).not.toContain('innerHTML');
       expect(appSource).toContain("page === 'index.html'");

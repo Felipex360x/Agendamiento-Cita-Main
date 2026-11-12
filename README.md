@@ -20,20 +20,34 @@ Sistema web para gestionar el agendamiento de citas de Nicolett Studio Fantasy: 
 - **Base de datos:** MySQL 8 o MariaDB.
 - **Acceso temporal desde Internet:** Cloudflare Quick Tunnel.
 
-La aplicación activa es React: las páginas se renderizan directamente con componentes (`frontend/src`). `frontend/public/legacy` conserva archivos históricos que **no** se publican (`publicDir: false` en Vite) y no forman parte de la aplicación. Spring Boot funciona como API. Durante el desarrollo local, Vite sirve la interfaz y reenvía `/api`, `/doc` y solo la sonda `/actuator/health` al backend.
+La interfaz es React: todas las páginas se renderizan con componentes de `frontend/src`. Spring Boot funciona como API. Durante el desarrollo local, Vite sirve la interfaz y reenvía `/api`, `/doc` y solo la sonda `/actuator/health` al backend.
 
 ## Estructura
 
 ```text
-frontend/                  Aplicación React y recursos heredados
-src/main/java/             API y lógica de negocio Spring Boot
-src/main/resources/        Configuración del backend
-
-db/                        Inicialización y documentación de la base de datos
-docker-compose.yml          MySQL y phpMyAdmin
-iniciar-demo.cmd            Lanzador de Spring, React y Cloudflare Tunnel
-iniciar-demo.ps1            Lógica del lanzador
-iniciar.sh                  Lanzador para Linux (base de datos si hace falta, Spring y React)
+frontend/                       Aplicación React (Vite)
+  index.html                    HTML de entrada
+  src/
+    pages/                      Páginas (una por ruta)
+    layouts/                    Estructuras comunes: sitio público (SiteShell) y panel (AdminShell)
+    components/                 Componentes reutilizables
+    api/                        Cliente HTTP de la API
+    auth/                       Contexto de sesión
+    utils/                      Fechas, estadísticas y utilidades de texto
+    styles/                     Hojas de estilo
+    assets/                     Imágenes e ícono
+    __tests__/                  Pruebas (Vitest)
+    routes.js                   Registro único de rutas
+src/main/java/                  API Spring Boot (controller, service, repository, model, dto, security…)
+src/main/resources/             Configuración y plantillas de correo
+src/test/                       Pruebas del backend (JUnit)
+db/                             Inicialización y documentación de la base de datos
+scripts/start.cmd, start.ps1    Inicia solo el backend en Windows
+.github/workflows/ci.yml        Integración continua (backend y frontend)
+docker-compose.yml              MySQL y phpMyAdmin
+iniciar-demo.cmd                Lanzador de Spring, React y Cloudflare Tunnel (Windows)
+iniciar-demo.ps1                Lógica del lanzador de Windows
+iniciar.sh                      Lanzador para Linux (base de datos si hace falta, Spring y React)
 ```
 
 ## Inicio rápido en Windows
@@ -100,7 +114,7 @@ El resultado queda en `frontend/dist`.
 
 ## Compartir una demo por Internet
 
-`iniciar-demo.cmd` espera la salud real de Spring y de Vite (con tiempo máximo) antes de abrir el túnel, escribe los registros en `logs/` y se detiene si algún proceso cae. `start.ps1` ya no detiene procesos que usen el puerto 8080: informa quién lo ocupa y termina.
+`iniciar-demo.cmd` espera la salud real de Spring y de Vite (con tiempo máximo) antes de abrir el túnel, escribe los registros en `logs/` y se detiene si algún proceso cae. Para iniciar solo el backend en Windows usa `scripts\start.cmd`: no detiene procesos que usen el puerto 8080, informa quién lo ocupa y termina.
 
 `iniciar-demo.cmd` inicia un Quick Tunnel temporal hacia React. Comparte la dirección que imprime cloudflared; no uses `localhost` ni `127.0.0.1` en el dispositivo remoto. La dirección cambia cuando se crea un túnel nuevo y deja de funcionar cuando el túnel se cierra. Cualquier persona que tenga el enlace podrá abrir la demo.
 

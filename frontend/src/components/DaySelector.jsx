@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 
-import { businessToday } from '../dates.js';
+import { businessToday } from '../utils/dates.js';
 
-// «Hoy» en la zona horaria del negocio (no la del navegador).
+// Fecha de hoy según la hora de Chile (no la del navegador).
 export function localDateValue() {
   return businessToday();
 }

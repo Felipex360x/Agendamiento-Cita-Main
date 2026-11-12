@@ -52,7 +52,7 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
         @Param("fin") LocalDateTime fin
     );
 
-    /** Citas no canceladas que se superponen con [inicio, fin), aunque comiencen antes del rango. */
+    /** Busca citas no canceladas que se cruzan con el horario indicado. */
     @Query("SELECT c FROM Cita c WHERE c.trabajador.id = :trabajadorId " +
            "AND c.estado <> cl.nicolet.backend.model.EstadoCita.CANCELADA " +
            "AND c.fechaHoraInicio < :fin AND c.fechaHoraFin > :inicio ORDER BY c.fechaHoraInicio ASC")
@@ -62,7 +62,7 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
         @Param("fin") LocalDateTime fin
     );
 
-    /** Citas vigentes (no canceladas ni terminadas) que aún no terminan a la fecha dada. */
+    /** Busca citas activas que todavía no terminan a partir de la fecha indicada. */
     @Query("SELECT c FROM Cita c WHERE c.trabajador.id = :trabajadorId " +
            "AND c.estado IN (cl.nicolet.backend.model.EstadoCita.PENDIENTE, cl.nicolet.backend.model.EstadoCita.CONFIRMADA, cl.nicolet.backend.model.EstadoCita.EN_ATENCION) " +
            "AND c.fechaHoraFin > :desde ORDER BY c.fechaHoraInicio ASC")

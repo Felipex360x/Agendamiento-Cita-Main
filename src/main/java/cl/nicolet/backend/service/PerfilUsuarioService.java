@@ -46,10 +46,10 @@ public class PerfilUsuarioService {
         this.horarioDisponibilidadRepository = horarioDisponibilidadRepository;
     }
 
-    /** Applies profile changes when a user's role is explicitly created or updated. */
+    /** Actualiza o crea el perfil de cliente o trabajador cuando cambia el rol del usuario. */
     public void sincronizarPerfil(Usuario usuario) {
         if (usuario.getTipoUsuario() == null || usuario.getTipoUsuario().getNombre() == null) {
-            // "Sin rol": la cuenta no tiene permisos; los perfiles se desactivan (no se borran datos ni historial).
+            // Si queda sin rol, se desactivan sus perfiles pero sin borrar sus datos ni historial.
             desactivarCliente(usuario);
             desactivarTrabajador(usuario);
             return;
@@ -74,12 +74,12 @@ public class PerfilUsuarioService {
         }
     }
 
-    /** Creates a customer profile for the registration flow, preserving the submitted phone. */
+    /** Crea el perfil de cliente durante el registro guardando su teléfono. */
     public Cliente crearPerfilCliente(Usuario usuario, String telefono) {
         return obtenerOCrearPerfilCliente(usuario, telefono);
     }
 
-    /** Repairs profiles for existing role-bearing users once during application startup. */
+    /** Crea los perfiles que falten para los usuarios existentes al iniciar el sistema. */
     public void crearPerfilesFaltantes() {
         for (Usuario usuario : usuarioRepository.findAll()) {
             if (usuario.getTipoUsuario() == null || usuario.getTipoUsuario().getNombre() == null) {
@@ -98,7 +98,7 @@ public class PerfilUsuarioService {
         }
     }
 
-    /** Adds the standard weekday schedule when a new worker has no schedule yet. */
+    /** Agrega el horario normal de lunes a viernes si el nuevo trabajador aún no tiene horario. */
     public void crearHorariosBaseSiFaltan(Trabajador trabajador) {
         if (!horarioDisponibilidadRepository.findByTrabajadorId(trabajador.getId()).isEmpty()) {
             return;

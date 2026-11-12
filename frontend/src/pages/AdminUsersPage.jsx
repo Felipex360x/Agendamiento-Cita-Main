@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
-import { AdminShell, EmptyState, RequestMessage } from './AdminShell.jsx';
+import { AdminShell, EmptyState, RequestMessage } from '../layouts/AdminShell.jsx';
 
 const blankUser = { nombre: '', apellidoP: '', correo: '', password: '', tipoUsuarioId: '' };
 
@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
       <label>Nombre<input required value={form.nombre} onChange={(event) => setForm({ ...form, nombre: event.target.value })} /></label>
       <label>Apellido paterno<input required value={form.apellidoP} onChange={(event) => setForm({ ...form, apellidoP: event.target.value })} /></label>
       <label>Correo<input required type="email" value={form.correo} onChange={(event) => setForm({ ...form, correo: event.target.value })} /></label>
-      <label>Contraseña<input required={!editingId} type="password" minLength="6" maxLength="72" autoComplete="new-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder={editingId ? 'Dejar vacía para conservarla' : ''} /></label>
+      <label>Contraseña<input required={!editingId} type="password" minLength="8" maxLength="72" autoComplete="new-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder={editingId ? 'Dejar vacía para conservarla' : ''} /></label>
       <label>Rol<select value={form.tipoUsuarioId} onChange={(event) => setForm({ ...form, tipoUsuarioId: event.target.value })}><option value="">Sin rol</option>{roles.map((role) => <option key={role.id} value={role.id}>{role.nombre}</option>)}</select></label>
       <div className="admin-row-actions"><button className="site-button admin-primary-submit" type="submit" disabled={saving}>{saving ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Crear usuario'}</button>{editingId && <button className="site-button site-button-outline" type="button" onClick={reset}>Cancelar edición</button>}</div>
     </form></section>

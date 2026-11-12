@@ -28,8 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * E01: el token se vincula al ID permanente del usuario. Usa la cadena de filtros real
- * (JwtAuthenticationFilter + @PreAuthorize), sin desactivar la seguridad.
+ * Pruebas para verificar que el token JWT identifica al usuario por su ID fijo.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -103,14 +102,14 @@ class JwtIdentityIntegrationTest {
 
         a.setCorreo(correoUnico("y"));
         usuarioRepository.save(a);
-        Usuario b = crearUsuario(correoX, "ADMINISTRADOR"); // B toma el correo liberado
+        Usuario b = crearUsuario(correoX, "ADMINISTRADOR"); // el usuario B usa el correo que dejó libre A
 
         mockMvc.perform(get(ME).header(HttpHeaders.AUTHORIZATION, bearer(tokenA)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(a.getId()))
                 .andExpect(jsonPath("$.id").value(org.hamcrest.Matchers.not(b.getId().intValue())))
                 .andExpect(jsonPath("$.rol").value("CLIENTE"));
-        // y con el token de A no se obtienen permisos de administrador de B
+        // el token de A no da permisos de administrador de B
         mockMvc.perform(get(USUARIOS).header(HttpHeaders.AUTHORIZATION, bearer(tokenA)))
                 .andExpect(status().isForbidden());
     }
@@ -144,7 +143,7 @@ class JwtIdentityIntegrationTest {
     void identidadDiscordante() throws Exception {
         Usuario cliente = crearUsuario(correoUnico("c"), "CLIENTE");
         Usuario admin = crearUsuario(correoUnico("adm"), "ADMINISTRADOR");
-        // subject apunta al administrador, el id firmado al cliente
+        // el subject tiene el ID del admin pero el campo id tiene el del cliente
         String t = tokenManual(b -> b.subject(String.valueOf(admin.getId()))
                 .claim("ver", JwtUtils.TOKEN_VERSION).claim("id", cliente.getId()), 60_000);
 
@@ -175,7 +174,7 @@ class JwtIdentityIntegrationTest {
     @DisplayName("Los permisos son los actuales en BD, no el rol que traía el token")
     void rolActualNoElDelToken() throws Exception {
         Usuario a = crearUsuario(correoUnico("rol"), "ADMINISTRADOR");
-        String token = tokenDe(a); // el claim "rol" dice ADMINISTRADOR
+        String token = tokenDe(a); // el token dice que era ADMINISTRADOR
 
         mockMvc.perform(get(USUARIOS).header(HttpHeaders.AUTHORIZATION, bearer(token)))
                 .andExpect(status().isOk());

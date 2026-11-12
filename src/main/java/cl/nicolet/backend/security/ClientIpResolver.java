@@ -10,13 +10,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Determina la IP real del cliente para el límite de intentos de login.
- * <p>
- * {@code X-Forwarded-For} solo se considera si la conexión directa proviene de un proxy de confianza
- * ({@code app.security.trusted-proxies}: IPs o CIDR separados por coma; vacío = no confiar en ninguno).
- * La cabecera se recorre de derecha a izquierda omitiendo proxies de confianza: la primera dirección que NO
- * es de confianza es el cliente. Un cliente solo controla la parte izquierda de la cabecera, así que no
- * puede suplantar la IP que añadió el último proxy de confianza.
+ * Obtiene la IP real del cliente para controlar el límite de intentos de login.
+ * Solo usa la cabecera X-Forwarded-For si la petición viene de un proxy seguro configurado.
+ * Revisa la lista de IPs de derecha a izquierda saltando los proxies seguros hasta encontrar la IP del cliente.
  */
 @Component
 public class ClientIpResolver {
@@ -40,7 +36,7 @@ public class ClientIpResolver {
         if (request == null) return "unknown";
         String remote = request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown";
         if (trustedProxies.isEmpty() || !isTrusted(remote)) {
-            return remote; // sin proxy de confianza: las cabeceras Forwarded las controla el cliente
+            return remote; // si no viene de un proxy seguro, usamos la IP directa
         }
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded == null || forwarded.isBlank()) return remote;
@@ -49,7 +45,7 @@ public class ClientIpResolver {
         for (int i = chain.length - 1; i >= 0; i--) {
             String candidate = chain[i].trim();
             if (!IP_LITERAL.matcher(candidate).matches()) {
-                return remote; // valor no válido en la cadena: no se puede confiar en ella
+                return remote; // si hay un texto inválido en la cabecera, usamos la IP directa
             }
             if (!isTrusted(candidate)) {
                 return candidate;
@@ -63,7 +59,7 @@ public class ClientIpResolver {
             try {
                 if (matcher.matches(address)) return true;
             } catch (IllegalArgumentException ignored) {
-                // dirección no interpretable: no es de confianza
+                // formato de IP no válido
             }
         }
         return false;

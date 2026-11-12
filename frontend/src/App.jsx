@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { HomePage, LoginPage, ServicesPage, TeamPage } from './pages/PublicPages.jsx';
 import BookingPage from './pages/BookingPage.jsx';
 import AdminAppointmentsPage from './pages/AdminAppointmentsPage.jsx';
@@ -12,29 +11,10 @@ import AdminDiagnosticsPage from './pages/AdminDiagnosticsPage.jsx';
 import { StaffAgendaPage, StaffClientsPage, StaffDashboardPage } from './pages/StaffPages.jsx';
 import ClientProfilePage from './pages/ClientProfilePage.jsx';
 import EmailTemplatesPage from './pages/EmailTemplatesPage.jsx';
-
-export { PUBLIC_PAGES, ADMIN_PAGES, getLegacyPath, resolveKnownPage, getSafeRedirect } from './routes.js';
-import { getLegacyPath } from './routes.js';
-
-export function assetUrl(value, sourceUrl) {
-  if (!value) return value;
-  if (typeof value !== 'string') return value;
-  const trimmed = value.trim();
-  if (/^javascript:/i.test(trimmed)) return '#';
-  if (/^(?:[a-z0-9+.-]+:|\/\/|#|data:)/i.test(trimmed)) return trimmed;
-  return new URL(trimmed, sourceUrl).href;
-}
-
-/**
- * Retained for compatibility while direct legacy asset URLs are phased out.
- * Application routes below now render React pages directly.
- */
-export function LegacyPage() {
-  return <main className="site-page-section"><h1>Esta vista antigua ya no está disponible</h1><a href="/">Volver al inicio</a></main>;
-}
+import { resolvePage } from './routes.js';
 
 export default function App() {
-  const page = getLegacyPath(window.location.pathname);
+  const page = resolvePage(window.location.pathname);
 
   if (page === 'index.html') return <HomePage />;
   if (page === 'servicios.html') return <ServicesPage />;

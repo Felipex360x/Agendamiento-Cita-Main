@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
-import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
+import { AdminShell, EmptyState, RequestMessage, personName } from '../layouts/AdminShell.jsx';
 
 const states = ['PENDIENTE', 'CONFIRMADA', 'COMPLETADA', 'CANCELADA'];
 

@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Base de Datos MySQL 8
+  mysql:
+    image: mysql:8.0
+    container_name: nicolet_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: universidad_backend
+      MYSQL_USER: desarrollador
+      MYSQL_PASSWORD: password_seguro_123
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - mysql_prod_data:/var/lib/mysql
+    networks:
+      - nicolet_net
+
+  # Backend Spring Boot 3
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nicolet_backend
+    restart: always
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: desarrollador
+      DB_PASSWORD: password_seguro_123
+      JWT_SECRET: superSecretJwtKeyNicoletStudioFantasyAgendamiento2026Secure256Bit
+      APP_FRONTEND_URL: http://13.216.213.135
+      TRUSTED_PROXIES: 127.0.0.1,::1
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: nacuna888@gmail.com
+      MAIL_PASSWORD: ""
+    depends_on:
+      - mysql
+    networks:
+      - nicolet_net
+
+  # Frontend React (Nginx reverse-proxy)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nicolet_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - nicolet_net
+
+volumes:
+  mysql_prod_data:
+    driver: local
+
+networks:
+  nicolet_net:
+    driver: bridge

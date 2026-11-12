@@ -14,8 +14,7 @@ import java.util.Optional;
 @Repository
 public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
     /**
-     * Bloquea la fila del profesional hasta el fin de la transacción. Serializa las operaciones que ocupan
-     * o liberan su agenda sin bloquear a los demás profesionales.
+     * Bloquea el registro del trabajador mientras dura la operación para evitar citas al mismo tiempo.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT t FROM Trabajador t WHERE t.id = :id")

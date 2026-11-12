@@ -12,16 +12,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Contrato único de errores de la API. Toda respuesta de error incluye:
+ * Formato común para los errores de la API. Cada respuesta incluye:
  * <ul>
  *   <li>{@code status}: código HTTP;</li>
- *   <li>{@code codigo}: identificador estable (VALIDACION, CONFLICTO, NO_ENCONTRADO, SOLICITUD_INVALIDA,
+ *   <li>{@code codigo}: tipo de error (VALIDACION, CONFLICTO, NO_ENCONTRADO, SOLICITUD_INVALIDA,
  *       SERVICIO_NO_DISPONIBLE);</li>
- *   <li>{@code mensaje}: texto legible para mostrar al usuario;</li>
- *   <li>{@code error}: igual a {@code mensaje} (se conserva por compatibilidad con consumidores anteriores).</li>
+ *   <li>{@code mensaje}: texto claro para mostrar al usuario;</li>
+ *   <li>{@code error}: mismo texto que {@code mensaje} por compatibilidad.</li>
  * </ul>
- * Las validaciones añaden {@code errores} ({campo: mensaje}) y, por compatibilidad, repiten cada campo al nivel
- * superior (comportamiento anterior; preferir {@code errores}).
+ * En errores de validación también se agrega {@code errores} ({campo: mensaje}) y se repite cada campo arriba.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -64,7 +63,7 @@ public class GlobalExceptionHandler {
         ResponseEntity<Map<String, Object>> base = respuesta(HttpStatus.BAD_REQUEST, "VALIDACION", resumen);
         Map<String, Object> cuerpo = new LinkedHashMap<>(base.getBody());
         cuerpo.put("errores", errores);
-        errores.forEach(cuerpo::putIfAbsent); // compatibilidad: campos al nivel superior
+        errores.forEach(cuerpo::putIfAbsent); // repite los campos arriba por compatibilidad
         return ResponseEntity.badRequest().body(cuerpo);
     }
 
