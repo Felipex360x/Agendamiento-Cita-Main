@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeDashboard } from '../pages/dashboardStats.js';
+import { computeDashboard } from '../utils/dashboardStats.js';
 
 const TODAY = new Date(2026, 9, 25, 12); // 25-oct-2026
 

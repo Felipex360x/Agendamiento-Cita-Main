@@ -53,3 +53,6 @@ cloudflared.exe
 
 
 logs/
+
+# Capturas de sesiones de navegador (pueden mostrar datos del panel)
+.playwright-mcp/

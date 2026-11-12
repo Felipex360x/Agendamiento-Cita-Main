@@ -122,6 +122,59 @@ class CitaServiceTest {
     }
 
     @Test
+    @DisplayName("agendar - debe crear el perfil invitado junto con la cita")
+    void debeAgendarCitaParaClienteInvitado() {
+        Cliente cliente = new Cliente();
+        cliente.setId(9L);
+        cliente.setNombreInvitado("Ana");
+        cliente.setApellidoPInvitado("Pérez");
+        cliente.setActivo(true);
+
+        Usuario uTrabajador = new Usuario(2L, "Camila", "Silva", "c@s.cl", "123");
+        Servicio servicio = new Servicio(1L, "Corte", "Desc", 45, new BigDecimal("15000"), true);
+        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of(servicio));
+        LocalDateTime inicio = LocalDateTime.now().plusDays(2).withHour(10).withMinute(0).withSecond(0).withNano(0);
+
+        CitaCreateDTO dto = new CitaCreateDTO(null, 1L, 1L, inicio, "Primera visita");
+        dto.setClienteNombre(" Ana ");
+        dto.setClienteApellidoP(" Pérez ");
+        dto.setClienteCorreo("ana@example.com");
+        dto.setClienteTelefono("+56912345678");
+
+        HorarioDisponibilidad horario = new HorarioDisponibilidad(
+                1L, trabajador, inicio.getDayOfWeek().getValue(),
+                LocalTime.of(9, 0), LocalTime.of(18, 0), null, null, true
+        );
+        when(clienteService.crearInvitado(" Ana ", " Pérez ", "ana@example.com", "+56912345678")).thenReturn(cliente);
+        when(trabajadorRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trabajador));
+        when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
+        when(horarioDisponibilidadRepository.findByTrabajadorIdAndDiaSemanaAndActivoTrue(1L, inicio.getDayOfWeek().getValue()))
+                .thenReturn(Optional.of(horario));
+        when(citaRepository.existeSolapamiento(eq(1L), eq(inicio), any(LocalDateTime.class))).thenReturn(false);
+
+        Cita citaGuardada = new Cita();
+        citaGuardada.setId(101L);
+        citaGuardada.setCodigoReserva("RES-2026-GUEST01");
+        citaGuardada.setCliente(cliente);
+        citaGuardada.setTrabajador(trabajador);
+        citaGuardada.setServicio(servicio);
+        citaGuardada.setFechaHoraInicio(inicio);
+        citaGuardada.setFechaHoraFin(inicio.plusMinutes(45));
+        citaGuardada.setEstado(EstadoCita.PENDIENTE);
+        citaGuardada.setPrecioFinal(new BigDecimal("15000"));
+        when(citaRepository.save(any(Cita.class))).thenReturn(citaGuardada);
+        when(clienteService.toDTO(cliente)).thenReturn(new ClienteDTO());
+        when(trabajadorService.toPublicDTO(trabajador)).thenReturn(new TrabajadorDTO());
+        when(servicioService.toDTO(servicio)).thenReturn(new ServicioDTO());
+
+        CitaDTO result = citaService.agendar(dto);
+
+        assertEquals(101L, result.getId());
+        verify(clienteService).crearInvitado(" Ana ", " Pérez ", "ana@example.com", "+56912345678");
+        verify(citaRepository).save(any(Cita.class));
+    }
+
+    @Test
     @DisplayName("agendar - debe lanzar excepcion si existe solapamiento de horario")
     void debeLanzarExcepcionSiExisteSolapamiento() {
         Usuario uCliente = new Usuario(1L, "Martina", "Contreras", "m@c.cl", "123");
@@ -148,6 +201,34 @@ class CitaServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> citaService.agendar(dto));
         assertTrue(ex.getMessage().contains("ya tiene una cita agendada"));
+        verify(citaRepository, never()).save(any(Cita.class));
+    }
+
+    @Test
+    @DisplayName("agendar - debe rechazar tratamiento que cruza el inicio de colación")
+    void debeRechazarCitaQueCruzaInicioDeColacion() {
+        Usuario uCliente = new Usuario(1L, "Martina", "Contreras", "m@c.cl", "123");
+        Cliente cliente = new Cliente(1L, uCliente, "+569123", "12345678-9", null, null, true);
+        Usuario uTrabajador = new Usuario(2L, "Camila", "Silva", "c@s.cl", "123");
+        Servicio servicio = new Servicio(1L, "Manicura rusa", "Desc", 60, new BigDecimal("22000"), true);
+        Trabajador trabajador = new Trabajador(1L, uTrabajador, "98765432-1", "+569876", "Estilista", null, BigDecimal.ZERO, true, Set.of(servicio));
+        LocalDateTime inicio = LocalDateTime.now().plusDays(2).withHour(12).withMinute(0).withSecond(0).withNano(0);
+        CitaCreateDTO dto = new CitaCreateDTO(1L, 1L, 1L, inicio, null);
+        HorarioDisponibilidad horario = new HorarioDisponibilidad(
+                1L, trabajador, inicio.getDayOfWeek().getValue(),
+                LocalTime.of(9, 0), LocalTime.of(18, 0),
+                LocalTime.of(12, 30), LocalTime.of(13, 30), true
+        );
+
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(trabajadorRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trabajador));
+        when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
+        when(horarioDisponibilidadRepository.findByTrabajadorIdAndDiaSemanaAndActivoTrue(1L, inicio.getDayOfWeek().getValue()))
+                .thenReturn(Optional.of(horario));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> citaService.agendar(dto));
+
+        assertTrue(ex.getMessage().contains("periodo de descanso"));
         verify(citaRepository, never()).save(any(Cita.class));
     }
 

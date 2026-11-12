@@ -39,9 +39,8 @@ public class HorarioDisponibilidadService {
     }
 
     /**
-     * Cantidad de citas vigentes (pendientes, confirmadas o en atención) que, con la jornada guardada, quedan
-     * fuera de turno, en un día inactivo o dentro de la colación. Cambiar la jornada NO cancela ni mueve
-     * citas: se conservan y siguen ocupando su horario; esta cifra permite avisar al usuario.
+     * Cuenta cuántas citas activas quedan fuera del nuevo horario de trabajo o dentro de la hora de colación.
+     * Cambiar el horario no cancela ni mueve las citas que ya estaban agendadas.
      */
     @Transactional(readOnly = true)
     public long contarCitasFueraDeJornada(Long trabajadorId) {

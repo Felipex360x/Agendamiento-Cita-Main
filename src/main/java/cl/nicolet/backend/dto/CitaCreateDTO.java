@@ -1,8 +1,8 @@
 package cl.nicolet.backend.dto;
 
-import jakarta.validation.constraints.Size;
-
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
@@ -11,8 +11,24 @@ import java.util.Objects;
 public class CitaCreateDTO {
 
     @Schema(description = "ID del cliente que solicita la cita", example = "1")
-    @NotNull(message = "El clienteId es obligatorio")
     private Long clienteId;
+
+    @Schema(description = "Nombre del cliente invitado, sin cuenta")
+    @Size(max = 100)
+    private String clienteNombre;
+
+    @Schema(description = "Apellido del cliente invitado, sin cuenta")
+    @Size(max = 100)
+    private String clienteApellidoP;
+
+    @Schema(description = "Correo de contacto del cliente invitado")
+    @Email
+    @Size(max = 150)
+    private String clienteCorreo;
+
+    @Schema(description = "Teléfono de contacto del cliente invitado")
+    @Size(max = 20)
+    private String clienteTelefono;
 
     @Schema(description = "ID del trabajador seleccionado", example = "1")
     @NotNull(message = "El trabajadorId es obligatorio")
@@ -47,6 +63,38 @@ public class CitaCreateDTO {
 
     public void setClienteId(Long clienteId) {
         this.clienteId = clienteId;
+    }
+
+    public String getClienteNombre() {
+        return clienteNombre;
+    }
+
+    public void setClienteNombre(String clienteNombre) {
+        this.clienteNombre = clienteNombre;
+    }
+
+    public String getClienteApellidoP() {
+        return clienteApellidoP;
+    }
+
+    public void setClienteApellidoP(String clienteApellidoP) {
+        this.clienteApellidoP = clienteApellidoP;
+    }
+
+    public String getClienteCorreo() {
+        return clienteCorreo;
+    }
+
+    public void setClienteCorreo(String clienteCorreo) {
+        this.clienteCorreo = clienteCorreo;
+    }
+
+    public String getClienteTelefono() {
+        return clienteTelefono;
+    }
+
+    public void setClienteTelefono(String clienteTelefono) {
+        this.clienteTelefono = clienteTelefono;
     }
 
     public Long getTrabajadorId() {
@@ -86,6 +134,10 @@ public class CitaCreateDTO {
         if (this == o) return true;
         if (!(o instanceof CitaCreateDTO that)) return false;
         return Objects.equals(clienteId, that.clienteId)
+                && Objects.equals(clienteNombre, that.clienteNombre)
+                && Objects.equals(clienteApellidoP, that.clienteApellidoP)
+                && Objects.equals(clienteCorreo, that.clienteCorreo)
+                && Objects.equals(clienteTelefono, that.clienteTelefono)
                 && Objects.equals(trabajadorId, that.trabajadorId)
                 && Objects.equals(servicioId, that.servicioId)
                 && Objects.equals(fechaHoraInicio, that.fechaHoraInicio)
@@ -94,6 +146,7 @@ public class CitaCreateDTO {
 
     @Override
     public int hashCode() {
-        return Objects.hash(clienteId, trabajadorId, servicioId, fechaHoraInicio, notasCliente);
+        return Objects.hash(clienteId, clienteNombre, clienteApellidoP, clienteCorreo, clienteTelefono,
+                trabajadorId, servicioId, fechaHoraInicio, notasCliente);
     }
 }

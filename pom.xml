@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.2.5</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/> <!-- busca la versión base en el repositorio -->
     </parent>
     <groupId>cl.nicolet</groupId>
     <artifactId>backend</artifactId>
@@ -52,7 +52,7 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- JJWT (Java JWT) para tokens de autenticación -->
+        <!-- Librería para crear y leer tokens de sesión (JWT) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -82,7 +82,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Starter oficial de Testing (incluye JPA Test, Web Test, JUnit, Mockito) -->
+        <!-- Herramientas para pruebas automáticas -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -107,7 +107,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

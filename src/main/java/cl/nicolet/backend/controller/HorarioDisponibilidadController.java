@@ -33,7 +33,7 @@ public class HorarioDisponibilidadController {
     public ResponseEntity<List<HorarioDisponibilidadDTO>> actualizar(@PathVariable Long trabajadorId,
                                                                       @RequestBody List<HorarioDisponibilidadDTO> horarios) {
         List<HorarioDisponibilidadDTO> guardados = horarioService.actualizar(trabajadorId, horarios);
-        // Las citas existentes no se cancelan ni se mueven al cambiar la jornada; se informa cuántas quedan fuera.
+        // Cambiar el horario no cancela ni mueve las citas ya creadas; solo avisa cuántas quedan fuera.
         return ResponseEntity.ok()
                 .header("X-Citas-Fuera-De-Jornada", String.valueOf(horarioService.contarCitasFueraDeJornada(trabajadorId)))
                 .header("Access-Control-Expose-Headers", "X-Citas-Fuera-De-Jornada")

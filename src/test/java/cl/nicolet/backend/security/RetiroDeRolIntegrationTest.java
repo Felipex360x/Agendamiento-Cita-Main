@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** E06: «Sin rol» (tipoUsuarioId:null explícito) retira el rol; omitir el campo lo conserva. */
+/** Pruebas para verificar qué pasa cuando se quita o se mantiene el rol de un usuario. */
 @SpringBootTest
 @AutoConfigureMockMvc
 class RetiroDeRolIntegrationTest {
@@ -108,16 +108,16 @@ class RetiroDeRolIntegrationTest {
         actualizarComoAdmin(otroAdmin, "null");
 
         assertThat(usuarioRepository.findById(otroAdmin.getId()).orElseThrow().getTipoUsuario()).isNull();
-        // con el MISMO token: sin permisos de administrador ni de ningún otro tipo
+        // con su mismo token ya no tiene permisos
         mockMvc.perform(get("/api/v2/nicolet/usuarios").header(HttpHeaders.AUTHORIZATION, tokenAnterior))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/v2/nicolet/citas").header(HttpHeaders.AUTHORIZATION, tokenAnterior))
                 .andExpect(status().isForbidden());
-        // /me sigue disponible y NO le atribuye CLIENTE
+        // /me sigue funcionando y muestra que está SIN_ROL
         mockMvc.perform(get("/api/v2/nicolet/auth/me").header(HttpHeaders.AUTHORIZATION, tokenAnterior))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rol").value("SIN_ROL"));
-        // y no puede iniciar sesión de nuevo: credenciales válidas, sin rol -> 403 y sin token
+        // tampoco puede volver a iniciar sesión porque no tiene rol
         mockMvc.perform(post("/api/v2/nicolet/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"correo\":\"" + otroAdmin.getCorreo() + "\",\"password\":\"" + PASSWORD + "\"}"))
                 .andExpect(status().isForbidden())
@@ -150,15 +150,15 @@ class RetiroDeRolIntegrationTest {
     @DisplayName("Retirar el rol desactiva los perfiles de profesional y de cliente sin borrarlos")
     void retirarRolDesactivaPerfiles() throws Exception {
         Usuario pro = usuario("pro", "PROFESIONAL");
-        actualizarComoAdmin(pro, String.valueOf(pro.getTipoUsuario().getId())); // sincroniza: crea el perfil
+        actualizarComoAdmin(pro, String.valueOf(pro.getTipoUsuario().getId())); // crea el perfil del trabajador
         Trabajador t = trabajadorRepository.findByUsuarioId(pro.getId()).orElseThrow();
         assertThat(t.getActivo()).isTrue();
 
         actualizarComoAdmin(pro, "null");
 
         Trabajador despues = trabajadorRepository.findByUsuarioId(pro.getId()).orElseThrow();
-        assertThat(despues.getActivo()).isFalse();           // fuera del directorio y de la disponibilidad
-        assertThat(despues.getId()).isEqualTo(t.getId());    // el perfil y su historial se conservan
+        assertThat(despues.getActivo()).isFalse();           // queda inactivo para nuevas reservas
+        assertThat(despues.getId()).isEqualTo(t.getId());    // su ficha y su historial no se borran
 
         Usuario cli = usuario("cli", "CLIENTE");
         actualizarComoAdmin(cli, String.valueOf(cli.getTipoUsuario().getId()));

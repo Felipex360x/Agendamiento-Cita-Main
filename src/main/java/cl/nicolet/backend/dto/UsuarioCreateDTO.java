@@ -24,8 +24,9 @@ public class UsuarioCreateDTO {
     @Size(max = 150, message = "El correo electrónico no puede exceder los 150 caracteres")
     private String correo;
 
-    @Schema(description = "contraseña", example = "123124")
-    @Size(max = 72, message = "la contraseña no puede exceder los 72 caracteres")
+    @Schema(description = "contraseña (entre 8 y 72 caracteres)", example = "ClaveSegura123!")
+    // Vacía significa "no cambiar la contraseña" al editar un usuario.
+    @jakarta.validation.constraints.Pattern(regexp = "(?s)^$|^.{8,72}$", message = "la contraseña debe tener entre 8 y 72 caracteres")
     private String password;
 
     @Schema(description = "ID del tipo de usuario asignado", example = "1")
@@ -90,8 +91,8 @@ public class UsuarioCreateDTO {
     }
 
     /**
-     * Jackson solo invoca este setter cuando la propiedad viene en el JSON (incluso con valor null),
-     * lo que permite distinguir "no enviado" (sin cambio) de "null explícito" (retirar el rol).
+     * Se ejecuta cuando el campo viene en el JSON (incluso si es null).
+     * Así sabemos si no se envió (no cambia el rol) o si se envió null (quitar rol).
      */
     public void setTipoUsuarioId(Long tipoUsuarioId) {
         this.tipoUsuarioId = tipoUsuarioId;

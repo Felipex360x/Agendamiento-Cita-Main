@@ -89,7 +89,7 @@ public class UsuarioService {
             try {
                 emailService.enviarBienvenida(guardar);
             } catch (Exception ignored) {
-                // El envío de correo no debe interrumpir el alta del usuario
+                // Si falla el envío del correo, igual se termina de crear el usuario
             }
         }
 
@@ -97,8 +97,7 @@ public class UsuarioService {
     }
 
     /**
-     * Toda contraseña recibida por la API es texto de entrada y se codifica siempre, aunque empiece por
-     * "$2a$"/"$2b$". El límite de BCrypt (72 bytes UTF-8) se valida antes de codificar.
+     * Encripta siempre la contraseña recibida y revisa antes que no pase el límite de 72 bytes de BCrypt.
      */
     private String codificarPassword(String entrada) {
         if (entrada.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
@@ -129,8 +128,8 @@ public class UsuarioService {
                     .orElseThrow(() -> new RecursoNoEncontradoException("Tipo de usuario no encontrado: " + dto.getTipoUsuarioId()));
             u.setTipoUsuario(tipo);
         } else if (dto.isTipoUsuarioIdInformado()) {
-            // tipoUsuarioId enviado explícitamente como null: retirada de rol ("Sin rol").
-            // Omitir el campo deja el rol sin cambios.
+            // Si se envió tipoUsuarioId como null, se le quita el rol al usuario.
+            // Si no se envió el campo, conserva el rol que tenía.
             u.setTipoUsuario(null);
         }
 

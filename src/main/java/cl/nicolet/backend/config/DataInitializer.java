@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@org.springframework.core.annotation.Order(1)
 @ConditionalOnProperty(prefix = "app.demo-data", name = "enabled", havingValue = "true")
 public class DataInitializer implements CommandLineRunner {
 
@@ -54,6 +55,12 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private PerfilUsuarioService perfilUsuarioService;
 
+    @Autowired
+    private org.springframework.core.env.Environment environment;
+
+    @org.springframework.beans.factory.annotation.Value("${app.demo-data.password:}")
+    private String claveComun;
+
     @Override
     @Transactional
     public void run(String... args) {
@@ -63,31 +70,31 @@ public class DataInitializer implements CommandLineRunner {
         TipoUsuario tipoCliente = obtenerOCrearTipo("CLIENTE", "Cliente que solicita y agenda citas");
         TipoUsuario tipoPro = obtenerOCrearTipo("PROFESIONAL", "Profesional o especialista que atiende las citas");
 
-        obtenerOCrearUsuario("Maximo", "Rojas", "maximo.rojas@estudio.cl", "password_seguro_123", tipoAdmin);
-        obtenerOCrearUsuario("Admin", "Test", "admin.test@nicolet.cl", "AdminTest123!", tipoAdmin);
-        obtenerOCrearUsuario("Administrador", "Nicolet", "admin@nicolet.cl", "Admin123!", tipoAdmin);
-        obtenerOCrearUsuario("Nicolet", "Estudio", "contacto@nicollet.cl", "admin2026", tipoAdmin);
-        Usuario userMartina = obtenerOCrearUsuario("Martina", "Contreras", "martina.contreras@gmail.com", "123412", tipoCliente);
-        Usuario userCamila = obtenerOCrearUsuario("Camila", "Silva", "camila.silva@estudio.cl", "pro2026", tipoPro);
-        Usuario userMarit = obtenerOCrearUsuario("Martina", "Soto", "marit@gmail.com", "123456", tipoCliente);
-        Usuario userGale = obtenerOCrearUsuario("Felipe", "Galle", "gale@gmail.com", "123456", tipoCliente);
-        obtenerOCrearUsuario("Prueba", "Admin", "prueba1235@gmail.com", "123456", tipoAdmin);
+        obtenerOCrearUsuario("Maximo", "Rojas", "maximo.rojas@estudio.cl", tipoAdmin);
+        obtenerOCrearUsuario("Admin", "Test", "admin.test@nicolet.cl", tipoAdmin);
+        obtenerOCrearUsuario("Administrador", "Nicolet", "admin@nicolet.cl", tipoAdmin);
+        obtenerOCrearUsuario("Nicolet", "Estudio", "contacto@nicollet.cl", tipoAdmin);
+        Usuario userMartina = obtenerOCrearUsuario("Martina", "Contreras", "martina.contreras@gmail.com", tipoCliente);
+        Usuario userCamila = obtenerOCrearUsuario("Camila", "Silva", "camila.silva@estudio.cl", tipoPro);
+        Usuario userMarit = obtenerOCrearUsuario("Martina", "Soto", "marit@gmail.com", tipoCliente);
+        Usuario userGale = obtenerOCrearUsuario("Felipe", "Galle", "gale@gmail.com", tipoCliente);
+        obtenerOCrearUsuario("Prueba", "Admin", "prueba1235@gmail.com", tipoAdmin);
 
-        // Cuentas adicionales de demostración, creadas una sola vez por correo.
-        Usuario userValentina = obtenerOCrearUsuario("Valentina", "Pérez", "valentina.perez@demo.nicolet.cl", "Demo123!", tipoCliente);
-        Usuario userAntonia = obtenerOCrearUsuario("Antonia", "Muñoz", "antonia.munoz@demo.nicolet.cl", "Demo123!", tipoCliente);
-        Usuario userConstanza = obtenerOCrearUsuario("Constanza", "Díaz", "constanza.diaz@demo.nicolet.cl", "Demo123!", tipoCliente);
-        Usuario userFernanda = obtenerOCrearUsuario("Fernanda", "Castro", "fernanda.castro@demo.nicolet.cl", "Demo123!", tipoCliente);
-        Usuario userSofia = obtenerOCrearUsuario("Sofía", "Herrera", "sofia.herrera@demo.nicolet.cl", "Demo123!", tipoCliente);
-        Usuario userFrancisca = obtenerOCrearUsuario("Francisca", "Vidal", "francisca.vidal@demo.nicolet.cl", "Demo123!", tipoPro);
-        Usuario userValeria = obtenerOCrearUsuario("Valeria", "Araya", "valeria.araya@demo.nicolet.cl", "Demo123!", tipoPro);
-        Usuario userDaniela = obtenerOCrearUsuario("Daniela", "Muñoz", "daniela.munoz@demo.nicolet.cl", "Demo123!", tipoPro);
+        // Cuentas de ejemplo adicionales
+        Usuario userValentina = obtenerOCrearUsuario("Valentina", "Pérez", "valentina.perez@demo.nicolet.cl", tipoCliente);
+        Usuario userAntonia = obtenerOCrearUsuario("Antonia", "Muñoz", "antonia.munoz@demo.nicolet.cl", tipoCliente);
+        Usuario userConstanza = obtenerOCrearUsuario("Constanza", "Díaz", "constanza.diaz@demo.nicolet.cl", tipoCliente);
+        Usuario userFernanda = obtenerOCrearUsuario("Fernanda", "Castro", "fernanda.castro@demo.nicolet.cl", tipoCliente);
+        Usuario userSofia = obtenerOCrearUsuario("Sofía", "Herrera", "sofia.herrera@demo.nicolet.cl", tipoCliente);
+        Usuario userFrancisca = obtenerOCrearUsuario("Francisca", "Vidal", "francisca.vidal@demo.nicolet.cl", tipoPro);
+        Usuario userValeria = obtenerOCrearUsuario("Valeria", "Araya", "valeria.araya@demo.nicolet.cl", tipoPro);
+        Usuario userDaniela = obtenerOCrearUsuario("Daniela", "Muñoz", "daniela.munoz@demo.nicolet.cl", tipoPro);
 
-        // Encriptar contraseñas en texto plano si existen
+        // Guardar contraseñas encriptadas si están en texto normal
         List<Usuario> todosLosUsuarios = usuarioRepository.findAll();
         for (Usuario u : todosLosUsuarios) {
             if (u.getPassword() != null && !u.getPassword().startsWith("$2a$") && !u.getPassword().startsWith("$2b$")) {
-                log.info("Migrando contraseña en texto plano a BCrypt para usuario id={}, correo={}", u.getId(), u.getCorreo());
+                log.info("Migrando contraseña en texto plano a BCrypt para usuario id={}", u.getId());
                 u.setPassword(passwordEncoder.encode(u.getPassword()));
                 usuarioRepository.save(u);
             }
@@ -171,13 +178,13 @@ public class DataInitializer implements CommandLineRunner {
         Trabajador trabajadorValeria = obtenerOCrearTrabajadorDemo(userValeria, "16111112-0", "+56970002002", "Especialista en uñas", "Manicura y pedicure con técnicas de cuidado personalizado.", List.of(sManicura, sPedicure));
         Trabajador trabajadorDaniela = obtenerOCrearTrabajadorDemo(userDaniela, "16111113-9", "+56970002003", "Esteticista integral", "Tratamientos faciales, pestañas y bienestar.", List.of(sFacial, sCejas, sPestanas, sMasaje));
 
-        // Distribuye el catálogo completo entre los cuatro profesionales.
+        // Asignar servicios a cada trabajador
         agregarServicios(trabajadorCamila, List.of(sCorte, sManicura, sFacial, sCejas));
         agregarServicios(trabajadorFrancisca, List.of(sCorte, sBalayage));
         agregarServicios(trabajadorValeria, List.of(sManicura, sPedicure));
         agregarServicios(trabajadorDaniela, List.of(sFacial, sCejas, sPestanas, sMasaje));
 
-        // Horarios de atención de lunes a viernes
+        // Horarios de lunes a viernes
         List<HorarioDisponibilidad> horariosExistentes = horarioDisponibilidadRepository.findByTrabajadorId(trabajadorCamila.getId());
         Set<Integer> diasVistos = new HashSet<>();
         for (HorarioDisponibilidad hExistente : horariosExistentes) {
@@ -262,13 +269,13 @@ public class DataInitializer implements CommandLineRunner {
 
         LocalDate proximaSemana = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY)).plusWeeks(1);
         LocalDate semanaAnterior = proximaSemana.minusWeeks(2);
-        // Historial para que los perfiles y paneles de trabajadores tengan atenciones previas.
+        // Citas pasadas de ejemplo para el historial
         crearCitaDemo("RES-DEMO-0001", clienteValentina, trabajadorValeria, sManicura, semanaAnterior.atTime(10, 0), EstadoCita.COMPLETADA, "Manicura permanente", "Se realizó limpieza de cutículas y esmaltado nude.");
         crearCitaDemo("RES-DEMO-0002", clienteAntonia, trabajadorFrancisca, sCorte, semanaAnterior.plusDays(1).atTime(11, 0), EstadoCita.COMPLETADA, "Corte y brushing", "Corte de puntas y brushing con protector térmico.");
         crearCitaDemo("RES-DEMO-0003", clienteConstanza, trabajadorDaniela, sFacial, semanaAnterior.plusDays(2).atTime(15, 0), EstadoCita.COMPLETADA, "Tratamiento facial", "Limpieza e hidratación; se usaron productos para piel sensible.");
         crearCitaDemo("RES-DEMO-0004", clienteFernanda, trabajadorCamila, sCejas, semanaAnterior.plusDays(3).atTime(12, 0), EstadoCita.COMPLETADA, "Perfilado de cejas", "Diseño y perfilado según preferencia de la clienta.");
 
-        // Reservas futuras de ejemplo distribuidas entre profesionales y servicios.
+        // Citas futuras de ejemplo
         crearCitaDemo("RES-DEMO-0005", clienteSofia, trabajadorFrancisca, sBalayage, proximaSemana.atTime(9, 0), EstadoCita.CONFIRMADA, "Coloración y balayage", null);
         crearCitaDemo("RES-DEMO-0006", clienteGale, trabajadorValeria, sPedicure, proximaSemana.atTime(10, 0), EstadoCita.PENDIENTE, "Pedicure spa", null);
         crearCitaDemo("RES-DEMO-0007", clienteMartina, trabajadorDaniela, sPestanas, proximaSemana.plusDays(1).atTime(10, 0), EstadoCita.CONFIRMADA, "Lifting de pestañas", null);
@@ -289,7 +296,25 @@ public class DataInitializer implements CommandLineRunner {
         });
     }
 
-    private Usuario obtenerOCrearUsuario(String nombre, String apellido, String correo, String pass, TipoUsuario tipo) {
+    /**
+     * Contraseña de una cuenta de ejemplo. Nunca está escrita en el código: sale de
+     * app.demo-data.passwords[correo], si no de app.demo-data.password, y si tampoco existe
+     * se genera una al azar para esta ejecución (se muestra una sola vez en la consola).
+     */
+    private String claveSemilla(String correo) {
+        String propia = environment.getProperty("app.demo-data.passwords[" + correo + "]");
+        if (propia != null && !propia.isBlank()) return propia;
+        if (claveComun == null || claveComun.isBlank()) {
+            byte[] azar = new byte[18];
+            new java.security.SecureRandom().nextBytes(azar);
+            claveComun = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(azar);
+            log.warn("APP_DEMO_PASSWORD no está definida. Contraseña de las cuentas de ejemplo para esta ejecución: {}", claveComun);
+        }
+        return claveComun;
+    }
+
+    private Usuario obtenerOCrearUsuario(String nombre, String apellido, String correo, TipoUsuario tipo) {
+        String pass = claveSemilla(correo);
         String encodedPass = (passwordEncoder != null && !pass.startsWith("$2a$") && !pass.startsWith("$2b$"))
                 ? passwordEncoder.encode(pass)
                 : pass;

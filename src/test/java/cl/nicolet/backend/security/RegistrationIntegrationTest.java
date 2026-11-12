@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** E03 (registro atómico), E04 (límite de correo), E05 (contraseñas como texto de entrada). */
+/** Pruebas de registro de clientes, largo máximo del correo y validación de contraseñas. */
 @SpringBootTest
 @AutoConfigureMockMvc
 class RegistrationIntegrationTest {
@@ -82,7 +82,7 @@ class RegistrationIntegrationTest {
                 .content(mapper.writeValueAsString(Map.of("correo", correo, "password", password))));
     }
 
-    // ------------------------------------------------------------------ E03
+    // Registro de cuenta y perfil
 
     @Test
     @DisplayName("E03: alta válida crea cuenta y perfil, y devuelve sesión utilizable")
@@ -107,11 +107,11 @@ class RegistrationIntegrationTest {
 
         String respuesta = registrar(correo, "Clave-Valida-1", null).andExpect(status().isConflict())
                 .andReturn().getResponse().getContentAsString();
-        assertThat(respuesta).doesNotContain("ya se encuentra registrado"); // no se confunde con correo duplicado
+        assertThat(respuesta).doesNotContain("ya se encuentra registrado"); // no debe decir que el correo está repetido
 
         assertThat(usuarioRepository.findByCorreoIgnoreCase(correo)).as("sin usuario huérfano").isEmpty();
 
-        // y el correo no quedó ocupado: un alta posterior correcta funciona
+        // el correo queda libre y se puede registrar bien después
         reset(perfilUsuarioService);
         registrar(correo, "Clave-Valida-1", null).andExpect(status().isCreated());
     }
@@ -123,7 +123,7 @@ class RegistrationIntegrationTest {
         registrar(correo, "Clave-Valida-1", "9".repeat(300))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.telefono").exists());
         assertThat(usuarioRepository.findByCorreoIgnoreCase(correo)).isEmpty();
-        registrar(correo, "Clave-Valida-1", "9".repeat(20)).andExpect(status().isCreated()); // frontera válida
+        registrar(correo, "Clave-Valida-1", "9".repeat(20)).andExpect(status().isCreated()); // 20 caracteres sí es válido
     }
 
     @Test
@@ -137,9 +137,9 @@ class RegistrationIntegrationTest {
         assertThat(usuarioRepository.findAll().stream().filter(u -> u.getCorreo().equalsIgnoreCase(correo)).count()).isEqualTo(1);
     }
 
-    // ------------------------------------------------------------------ E04
+    // Límite de largo del correo
 
-    /** Correo válido (@Email: etiquetas <= 63) de exactamente `total` caracteres. */
+    /** Crea un correo válido con la cantidad exacta de caracteres indicada. */
     private String correoDeLongitud(int total) {
         String local = ("a".repeat(20) + UUID.randomUUID().toString().replace("-", "")).substring(0, 32);
         String dominio = "d".repeat(50) + "." + "e".repeat(50) + "." + "f".repeat(total - local.length() - 1 - 50 - 1 - 50 - 1);
@@ -160,26 +160,26 @@ class RegistrationIntegrationTest {
         login(correo151, "Clave-Valida-1").andExpect(status().isBadRequest());
     }
 
-    // ------------------------------------------------------------------ E05
+    // Validación de contraseñas
 
     @Test
     @DisplayName("E05: una contraseña que empieza por $2a$/$2b$ se trata como texto y permite iniciar sesión")
     void passwordConPrefijoBcrypt() throws Exception {
         for (String prefijo : new String[]{"$2a$10$", "$2b$12$"}) {
-            String password = prefijo + "abcdefghijklmnopqrstuv"; // 29 caracteres, "parece" un hash
+            String password = prefijo + "abcdefghijklmnopqrstuv"; // texto que empieza igual que un hash
             String correo = correoUnico();
             registrar(correo, password, null).andExpect(status().isCreated());
             login(correo, password).andExpect(status().isOk());
             var guardada = usuarioRepository.findByCorreoIgnoreCase(correo).orElseThrow().getPassword();
-            assertThat(guardada).isNotEqualTo(password).startsWith("$2a$"); // se codificó, no se guardó tal cual
+            assertThat(guardada).isNotEqualTo(password).startsWith("$2a$"); // se encriptó antes de guardar
         }
     }
 
     @Test
     @DisplayName("E05: límite BCrypt en bytes UTF-8 (72 ok, 74 rechazado aunque tenga 37 caracteres)")
     void limiteBcryptEnBytes() throws Exception {
-        String ok = "é".repeat(36);        // 36 caracteres = 72 bytes
-        String excede = "é".repeat(37);    // 37 caracteres = 74 bytes
+        String ok = "é".repeat(36);        // 36 letras con tilde ocupan 72 bytes
+        String excede = "é".repeat(37);    // 37 letras con tilde ocupan 74 bytes
         String correoOk = correoUnico();
         registrar(correoOk, ok, null).andExpect(status().isCreated());
         login(correoOk, ok).andExpect(status().isOk());

@@ -33,10 +33,10 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static UserDetailsImpl build(Usuario usuario) {
-        // Sin rol => sin autoridades (no se asume CLIENTE): la cuenta solo puede usar /auth/**.
+        // Si el usuario no tiene rol, queda sin permisos y solo puede consultar su sesión en /auth/**.
         List<GrantedAuthority> authorities = Collections.emptyList();
         if (usuario.getTipoUsuario() != null && usuario.getTipoUsuario().getNombre() != null) {
-            String rolNombre = usuario.getTipoUsuario().getNombre().toUpperCase();
+            String rolNombre = usuario.getTipoUsuario().getNombre().toUpperCase(java.util.Locale.ROOT);
             String roleAuthority = rolNombre.startsWith("ROLE_") ? rolNombre : "ROLE_" + rolNombre;
             authorities = Collections.singletonList(new SimpleGrantedAuthority(roleAuthority));
         }

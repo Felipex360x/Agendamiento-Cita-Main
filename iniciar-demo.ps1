@@ -28,7 +28,7 @@ function Wait-Http {
 }
 
 try {
-    # Defaults for the local MySQL service defined in docker-compose.yml.
+    # Valores por defecto para la base de datos local de docker-compose.yml.
     if ([string]::IsNullOrWhiteSpace($env:DB_USERNAME)) { $env:DB_USERNAME = 'desarrollador' }
     if ([string]::IsNullOrWhiteSpace($env:DB_PASSWORD)) { $env:DB_PASSWORD = 'password_seguro_123' }
     if ([string]::IsNullOrWhiteSpace($env:JWT_SECRET)) {
@@ -77,15 +77,16 @@ try {
     New-Item -ItemType Directory -Force -Path $logs | Out-Null
     $backendLog = Join-Path $logs 'backend.log'
     $frontendLog = Join-Path $logs 'frontend.log'
-    # /c (no /k): el cmd termina cuando termina el proceso real, asi se detecta que Spring o Vite cayeron.
+    # Usa /c para que la ventana se cierre si el programa falla, y así poder avisar del error.
     $backend = Start-Process -FilePath $env:ComSpec -ArgumentList @('/c', "call mvnw.cmd spring-boot:run > `"$backendLog`" 2>&1") -WorkingDirectory $projectRoot -PassThru -WindowStyle Minimized
     $launched.Add($backend)
-    $frontend = Start-Process -FilePath $env:ComSpec -ArgumentList @('/c', "call npm.cmd run dev -- --host 127.0.0.1 --port 5173 --strictPort > `"$frontendLog`" 2>&1") -WorkingDirectory $frontendRoot -PassThru -WindowStyle Minimized
+    # Se publica la version compilada (vite preview), no el servidor de desarrollo: este ultimo sirve el codigo fuente.
+    $frontend = Start-Process -FilePath $env:ComSpec -ArgumentList @('/c', "call npm.cmd run build > `"$frontendLog`" 2>&1 && call npm.cmd run preview -- --host 127.0.0.1 --port 5173 --strictPort >> `"$frontendLog`" 2>&1") -WorkingDirectory $frontendRoot -PassThru -WindowStyle Minimized
     $launched.Add($frontend)
 
-    # Salud real (con timeout) en lugar de una pausa fija: Spring directo, y Spring + frontend por la ruta de Vite.
+    # Espera a que cada servicio responda antes de abrir el túnel.
     Wait-Http -Name 'Spring Boot' -Url 'http://127.0.0.1:8080/actuator/health' -TimeoutSeconds 180 -Process $backend -LogPath $backendLog
-    Wait-Http -Name 'Frontend (Vite)' -Url 'http://127.0.0.1:5173/' -TimeoutSeconds 60 -Process $frontend -LogPath $frontendLog
+    Wait-Http -Name 'Frontend (Vite)' -Url 'http://127.0.0.1:5173/' -TimeoutSeconds 180 -Process $frontend -LogPath $frontendLog
     Wait-Http -Name 'Salud de Spring via Vite' -Url 'http://127.0.0.1:5173/actuator/health' -TimeoutSeconds 30
     if ($env:CLOUDFLARE_TUNNEL_TOKEN) {
         if (-not $env:TUNNEL_HOSTNAME) { throw 'Configuraste CLOUDFLARE_TUNNEL_TOKEN, pero falta TUNNEL_HOSTNAME.' }

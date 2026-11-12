@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, cleanup, fireEvent, within, act } from '@testing-library/react';
-import { businessToday } from '../dates.js';
+import { businessToday } from '../utils/dates.js';
 
 vi.mock('../api/client.js', () => ({
   api: {

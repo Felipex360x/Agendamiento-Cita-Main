@@ -53,9 +53,8 @@ public class TrabajadorService {
     }
 
     /**
-     * Resumen del profesional apto para clientes y para respuestas de citas: sin correo, RUT/DNI,
-     * teléfono ni comisión. Decisión: el teléfono NO es un dato público (igual que el directorio).
-     * Los datos administrativos se obtienen en GET /trabajadores/{id} (administrador o propietario).
+     * Datos básicos del trabajador para mostrar al público y en las citas (sin correo, RUT,
+     * teléfono ni comisión). Los datos completos solo los ve el administrador o el mismo trabajador.
      */
     public TrabajadorDTO toPublicDTO(Trabajador trabajador) {
         Usuario usuario = trabajador.getUsuario();
@@ -75,7 +74,7 @@ public class TrabajadorService {
                 ))
                 .collect(Collectors.toSet());
 
-        // Public directory only needs identity, specialty, biography and offered services.
+        // Para la vista pública solo enviamos nombre, especialidad, biografía y servicios.
         return new TrabajadorDTO(
                 trabajador.getId(), usuarioPublico, null, null,
                 trabajador.getCargoEspecialidad(), trabajador.getBiografia(), null,
@@ -167,7 +166,7 @@ public class TrabajadorService {
             t.setComisionPorcentaje(dto.getComisionPorcentaje());
         }
 
-        // servicioIds: null = sin cambios; [] = quitar todos; lista = reemplazar (todos los IDs deben existir).
+        // Si servicioIds es null no se toca; si está vacío se quitan todos; si trae datos se reemplazan.
         if (dto.getServicioIds() != null) {
             t.setServicios(resolverServicios(dto.getServicioIds()));
         }
@@ -175,7 +174,7 @@ public class TrabajadorService {
         return toDTO(trabajadorRepository.save(t));
     }
 
-    /** Resuelve los IDs a servicios existentes; rechaza elementos null e IDs inexistentes (no los omite). */
+    /** Busca los servicios por sus IDs y avisa con error si alguno viene vacío o no existe. */
     private Set<Servicio> resolverServicios(Set<Long> ids) {
         if (ids.isEmpty()) {
             return new HashSet<>();

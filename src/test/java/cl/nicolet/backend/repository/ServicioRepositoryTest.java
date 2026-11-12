@@ -31,7 +31,7 @@ class ServicioRepositoryTest {
     @Test
     @DisplayName("findByActivoTrue - debe retornar solo los servicios activos")
     void debeRetornarSoloActivos() {
-        int activosAntes = servicioRepository.findByActivoTrue().size(); // la BD puede traer filas previas
+        int activosAntes = servicioRepository.findByActivoTrue().size(); // contamos los servicios que ya estaban en la base de datos
         servicioRepository.save(new Servicio(null, "Servicio A", "Desc", 30, new BigDecimal("10000"), true));
         servicioRepository.save(new Servicio(null, "Servicio B", "Desc", 30, new BigDecimal("10000"), false));
 

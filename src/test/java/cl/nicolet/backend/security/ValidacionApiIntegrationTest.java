@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** E14 (límites de entrada alineados con la BD) y E22 (contrato de errores) con la seguridad real. */
+/** Pruebas de validación de datos de entrada y formato de respuestas de error. */
 @SpringBootTest
 @AutoConfigureMockMvc
 class ValidacionApiIntegrationTest {
@@ -77,7 +77,7 @@ class ValidacionApiIntegrationTest {
             enviar("/api/v2/nicolet/trabajadores", trabajador(invalida)).andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.errores.comisionPorcentaje").exists());
         }
-        // 0 y 100 pasan la validación de entrada (después el usuario inexistente/duplicado puede dar 404/409, nunca 400 por comisión)
+        // 0 y 100 son valores válidos para el porcentaje de comisión
         for (String valida : new String[]{"0", "100", "37.5"}) {
             enviar("/api/v2/nicolet/trabajadores", trabajador(valida)).andExpect(
                     org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errores.comisionPorcentaje").doesNotExist());
@@ -101,7 +101,7 @@ class ValidacionApiIntegrationTest {
         enviar("/api/v2/nicolet/servicios", "{no es json").andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("SOLICITUD_INVALIDA"))
                 .andExpect(jsonPath("$.mensaje").exists());
-        // correo ya registrado por el flujo de alta administrativa → 400 de negocio con contrato
+        // crear usuario con un correo que ya existe devuelve error 400
         enviar("/api/v2/nicolet/usuarios", "{\"nombre\":\"A\",\"apellidoP\":\"B\",\"correo\":\"maximo.rojas@estudio.cl\",\"password\":\"Clave-1234\"}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("SOLICITUD_INVALIDA"))

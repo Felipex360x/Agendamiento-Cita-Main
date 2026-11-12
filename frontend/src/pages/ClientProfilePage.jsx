@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
-import { SiteFooter, SiteHeader } from './SiteShell.jsx';
+import { SiteFooter, SiteHeader } from '../layouts/SiteShell.jsx';
 
 const blankProfile = { nombre: '', apellidoP: '', correo: '', telefono: '', rutDni: '', fechaNacimiento: '', notasPreferencias: '' };
 

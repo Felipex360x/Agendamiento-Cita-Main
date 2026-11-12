@@ -1,9 +1,8 @@
 import '@testing-library/jest-dom';
 
-// Node >= 25 expone un `localStorage`/`sessionStorage` global que vale `undefined`
-// si no se pasa --localstorage-file, y eso tapa el Storage de jsdom (en Vitest,
-// `window === globalThis`). Solo cuando el global no es utilizable se instala
-// un Storage en memoria con la misma interfaz que usa la aplicación.
+// En versiones nuevas de Node, `localStorage` y `sessionStorage` pueden venir vacíos
+// si no se indica un archivo, y eso impide que funcionen en las pruebas.
+// Si no están listos para usarse, se crea una versión simple en memoria para los tests.
 class MemoryStorage {
   #data = new Map();
   get length() { return this.#data.size; }

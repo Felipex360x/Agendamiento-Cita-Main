@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
-import { AdminShell, EmptyState, RequestMessage, personName } from './AdminShell.jsx';
-import { computeDashboard } from './dashboardStats.js';
-import { businessToday } from '../dates.js';
-import { DashboardSkeleton, KpiCard, PeriodFilter, RankingList, RevenueChart, StatusBreakdown, formatMoney } from './DashboardWidgets.jsx';
+import { AdminShell, EmptyState, RequestMessage, personName } from '../layouts/AdminShell.jsx';
+import { computeDashboard } from '../utils/dashboardStats.js';
+import { businessToday } from '../utils/dates.js';
+import { DashboardSkeleton, KpiCard, PeriodFilter, RankingList, RevenueChart, StatusBreakdown, formatMoney } from '../components/DashboardWidgets.jsx';
 
 const asDate = (value) => value ? new Date(`${value.slice(0, 10)}T12:00:00`) : null;
 const dateKey = (value) => value instanceof Date ? `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}` : '';
@@ -25,7 +25,7 @@ export function StaffAgendaPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const administrator = user?.rol?.toUpperCase().includes('ADMIN');
-  const monday = mondayOf(new Date(`${businessToday()}T12:00:00`)); // semana actual según la zona del negocio
+  const monday = mondayOf(new Date(`${businessToday()}T12:00:00`)); // semana actual según la hora de Chile
   monday.setDate(monday.getDate() + weekOffset * 7);
 
   useEffect(() => {

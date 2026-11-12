@@ -100,12 +100,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/servicios/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/trabajadores/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/disponibilidad/**").permitAll()
-                .requestMatchers("/api/v2/nicolet/correos/**").permitAll()
                 .requestMatchers("/doc/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // Rutas protegidas
-                // Una cuenta sin rol (sin autoridades) queda autenticada pero sin acceso a la API protegida.
+                // Rutas que piden sesión iniciada
+                // Si el usuario no tiene rol asignado, no puede entrar a estas rutas.
                 .requestMatchers("/api/v2/nicolet/**").access((authentication, context) -> {
                     var actual = authentication.get();
                     boolean conRol = actual != null && actual.isAuthenticated()

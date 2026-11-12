@@ -1,36 +1,37 @@
-version: '3.8'
-
 services:
   # Servidor de Base de Datos MySQL
+  # Los puertos se publican solo en 127.0.0.1: la base no queda accesible desde otros equipos de la red.
+  # Las contraseñas se pueden cambiar en el archivo .env (DB_PASSWORD, MYSQL_ROOT_PASSWORD); los valores
+  # por defecto son solo para desarrollo local. MySQL las aplica únicamente al crear el volumen.
   mysql_usuario:
     image: mysql:8.0
     container_name: mysql_usuario
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_123}
       MYSQL_DATABASE: universidad_backend
-      MYSQL_USER: desarrollador
-      MYSQL_PASSWORD: password_seguro_123
+      MYSQL_USER: ${DB_USERNAME:-desarrollador}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password_seguro_123}
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
       - mysql_data:/var/lib/mysql
     networks:
       - red_agendamiento
 
-  # Panel de administración visual phpMyAdmin (Opcional - acceso en http://localhost:8081)
+  # Panel phpMyAdmin (opcional): docker compose --profile herramientas up -d
+  # Acceso en http://localhost:8081, solo desde este equipo y pidiendo usuario y contraseña.
   phpmyadmin:
-    image: phpmyadmin:latest
+    image: phpmyadmin:5.2
     container_name: phpmyadmin_usuario
-    restart: always
+    profiles: ["herramientas"]
+    restart: unless-stopped
     ports:
-      - "8081:80"
+      - "127.0.0.1:8081:80"
     environment:
       PMA_HOST: mysql_usuario
       PMA_PORT: 3306
-      PMA_USER: desarrollador
-      PMA_PASSWORD: password_seguro_123
     depends_on:
       - mysql_usuario
     networks:

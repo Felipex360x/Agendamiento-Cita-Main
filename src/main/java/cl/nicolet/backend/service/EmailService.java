@@ -39,6 +39,8 @@ public class EmailService {
     private static final DateTimeFormatter HORA_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter FECHA_HORA_FMT = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 
+    private static final int MAX_BANDEJA = 200;
+
     private final AtomicLong secuenciaId = new AtomicLong(1);
     private final CopyOnWriteArrayList<CorreoEnviadoDTO> bandejaEnviados = new CopyOnWriteArrayList<>();
 
@@ -69,13 +71,11 @@ public class EmailService {
                 this.mailHost, this.mailPort, this.mailUsername, isSmtpConfigurado());
     }
 
-    public synchronized void configurarSmtp(String host, Integer port, String username, String password) {
-        if (host != null && !host.isBlank()) {
-            this.mailHost = host.trim();
-        }
-        if (port != null && port > 0) {
-            this.mailPort = port;
-        }
+    /**
+     * Cambia solo el remitente y su contraseña de aplicación. El servidor y el puerto SMTP
+     * se definen únicamente por configuración y no se pueden modificar en ejecución.
+     */
+    public synchronized void configurarCredencialesSmtp(String username, String password) {
         if (username != null && !username.isBlank()) {
             this.mailUsername = username.trim();
         }
@@ -83,8 +83,8 @@ public class EmailService {
             // Las contraseñas de aplicación de Google suelen copiarse con espacios cada 4 letras
             this.mailPassword = password.replace(" ", "").trim();
         }
-        log.info("Configuración SMTP actualizada: host={}, port={}, username={}, passwordConfigurada={}",
-                this.mailHost, this.mailPort, this.mailUsername, isSmtpConfigurado());
+        log.info("Credenciales SMTP actualizadas: host={}, port={}, passwordConfigurada={}",
+                this.mailHost, this.mailPort, isSmtpConfigurado());
     }
 
     public boolean isSmtpConfigurado() {
@@ -332,7 +332,8 @@ public class EmailService {
                     detalleError += " -> " + e.getCause().getMessage();
                 }
                 estadoEnvio = "ERROR_SMTP";
-                detalleEnvio = "Error SMTP (" + detalleError + "). El correo quedó guardado en la bandeja local.";
+                // El detalle técnico queda solo en el log del servidor.
+                detalleEnvio = "No se pudo entregar al servidor SMTP. El correo quedó guardado en la bandeja local.";
                 log.warn("No se pudo enviar por SMTP el correo [{}] a {}: {}", tipo, destinatario, detalleError, e);
             }
         } else {
@@ -352,6 +353,10 @@ public class EmailService {
                 html
         );
         bandejaEnviados.add(0, dto);
+        // La bandeja vive en memoria: se descartan los más antiguos para que no crezca sin límite.
+        while (bandejaEnviados.size() > MAX_BANDEJA) {
+            bandejaEnviados.remove(bandejaEnviados.size() - 1);
+        }
         return dto;
     }
 
@@ -401,7 +406,8 @@ public class EmailService {
                 .replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
-                .replace("\"", "&quot;");
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private static String valor(String v, String porDefecto) {
