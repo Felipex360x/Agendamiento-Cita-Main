@@ -30,7 +30,7 @@ services:
       DB_USERNAME: desarrollador
       DB_PASSWORD: password_seguro_123
       JWT_SECRET: superSecretJwtKeyNicoletStudioFantasyAgendamiento2026Secure256Bit
-      APP_FRONTEND_URL: http://13.216.213.135
+      APP_FRONTEND_URL: http://52.87.43.82
       TRUSTED_PROXIES: 127.0.0.1,::1
       MAIL_HOST: smtp.gmail.com
       MAIL_PORT: 587
