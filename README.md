@@ -1,189 +1,472 @@
-# Nicolett Studio Fantasy: Belleza a tu ritmo y sin barreras
+# Nicolet Estudio: Belleza a tu ritmo y sin barreras
 
-Sistema web para gestionar el agendamiento de citas de Nicolett Studio Fantasy: Belleza a tu ritmo y sin barreras. El proyecto separa la interfaz React del backend Spring Boot y usa MySQL como base de datos.
+Sistema web integral para la gestión y agendamiento de citas de estética y salón de belleza. La plataforma separa completamente la interfaz de usuario (SPA en React) del backend de lógica de negocio (API RESTful en Spring Boot 3), utilizando MySQL 8 como motor de base de datos relacional y Nginx como proxy inverso.
 
-## Contenido
+---
 
-- [Tecnologías](#tecnologías)
-- [Estructura](#estructura)
-- [Inicio rápido en Windows](#inicio-rápido-en-windows)
-- [Inicio rápido en Linux](#inicio-rápido-en-linux)
-- [Desarrollo local](#desarrollo-local)
-- [Compartir una demo por Internet](#compartir-una-demo-por-internet)
-- [API](#api)
-- [Verificaciones](#verificaciones)
+## Tabla de Contenidos
 
-## Tecnologías
+1. [Descripción del Proyecto](#descripción-del-proyecto)
+2. [Tecnologías Utilizadas](#tecnologías-utilizadas)
+3. [Arquitectura del Sistema](#arquitectura-del-sistema)
+   - [Tipo de Arquitectura](#tipo-de-arquitectura)
+   - [Mapa de Arquitectura](#mapa-de-arquitectura)
+   - [Modelo de Capas (Layered Architecture)](#modelo-de-capas-layered-architecture)
+4. [Base de Datos](#base-de-datos)
+   - [Tipo de Base de Datos](#tipo-de-base-de-datos)
+   - [Mapa Entidad-Relación (Diagrama ER)](#mapa-entidad-relación-diagrama-er)
+5. [Despliegue en AWS EC2](#despliegue-en-aws-ec2)
+   - [Arranque Automático "A la primera" (User Data)](#arranque-automático-a-la-primera-user-data)
+   - [Manejo de IP Dinámica y AWS Academy](#manejo-de-ip-dinámica-y-aws-academy)
+   - [Despliegue Continuo (CI/CD) con GitHub Actions](#despliegue-continuo-cicd-con-github-actions)
+   - [Variables de Entorno en Producción](#variables-de-entorno-en-producción)
+6. [Inicio en Local](#inicio-en-local)
+   - [Inicio Rápido en Windows](#inicio-rápido-en-windows)
+   - [Inicio Rápido en Linux](#inicio-rápido-en-linux)
+   - [Ejecución Manual por Componentes](#ejecución-manual-por-componentes)
+   - [Despliegue Local con Docker Compose](#despliegue-local-con-docker-compose)
+7. [API y Documentación](#api-y-documentación)
+   - [Swagger UI](#swagger-ui)
+   - [Contratos y Reglas de Negocio](#contratos-y-reglas-de-negocio)
+8. [Pruebas y Verificaciones](#pruebas-y-verificaciones)
 
-- **Interfaz:** React 18 y Vite.
-- **Backend:** Java 17, Spring Boot 3.2.5 (rama sin soporte abierto: ver «Mantenimiento y versiones»), Spring Security y JWT.
-- **Base de datos:** MySQL 8 o MariaDB.
-- **Acceso temporal desde Internet:** Cloudflare Quick Tunnel.
+---
 
-La interfaz es React: todas las páginas se renderizan con componentes de `frontend/src`. Spring Boot funciona como API. Durante el desarrollo local, Vite sirve la interfaz y reenvía `/api`, `/doc` y solo la sonda `/actuator/health` al backend.
+## Descripción del Proyecto
 
-## Estructura
+Nicolet Estudio resuelve la problemática de reserva y coordinación de servicios estéticos, ofreciendo flujos diferenciados según el rol del usuario:
 
-```text
-frontend/                       Aplicación React (Vite)
-  index.html                    HTML de entrada
-  src/
-    pages/                      Páginas (una por ruta)
-    layouts/                    Estructuras comunes: sitio público (SiteShell) y panel (AdminShell)
-    components/                 Componentes reutilizables
-    api/                        Cliente HTTP de la API
-    auth/                       Contexto de sesión
-    utils/                      Fechas, estadísticas y utilidades de texto
-    styles/                     Hojas de estilo
-    assets/                     Imágenes e ícono
-    __tests__/                  Pruebas (Vitest)
-    routes.js                   Registro único de rutas
-src/main/java/                  API Spring Boot (controller, service, repository, model, dto, security…)
-src/main/resources/             Configuración y plantillas de correo
-src/test/                       Pruebas del backend (JUnit)
-db/                             Inicialización y documentación de la base de datos
-scripts/start.cmd, start.ps1    Inicia solo el backend en Windows
-.github/workflows/ci.yml        Integración continua (backend y frontend)
-docker-compose.yml              MySQL y phpMyAdmin
-iniciar-demo.cmd                Lanzador de Spring, React y Cloudflare Tunnel (Windows)
-iniciar-demo.ps1                Lógica del lanzador de Windows
-iniciar.sh                      Lanzador para Linux (base de datos si hace falta, Spring y React)
+- **Clientes (Registrados o Invitados):** Exploración del catálogo de servicios, selección de especialistas, visualización de disponibilidad de agenda en tiempo real y reserva de citas con validación de conflictos.
+- **Profesionales / Especialistas:** Consulta de su agenda de atención, control de estados de las citas asignadas y configuración de turnos laborales y descansos.
+- **Administradores:** Panel de control centralizado para la administración de usuarios, asignación de roles, gestión de tarifas y catálogo de servicios, auditoría de citas, métricas de atención y diagnóstico del sistema.
+
+Incluye notificaciones automáticas por correo electrónico vía SMTP y control de concurrencia mediante bloqueo de recursos para evitar la sobre-reserva simultánea de un mismo profesional.
+
+---
+
+## Tecnologías Utilizadas
+
+| Capa / Área | Tecnología | Versión / Detalle |
+|---|---|---|
+| **Frontend** | React | 18 (SPA basada en hooks y contextos funcionales) |
+| | Vite | 4.x / 5.x (Empaquetador y dev server ultrarrápido) |
+| | React Router DOM | Enrutamiento declarativo del lado del cliente |
+| | Lucide React | Iconografía modular y accesible |
+| | Vitest & Testing Library | Suite de pruebas unitarias y de renderizado |
+| **Backend** | Java | 17 LTS |
+| | Spring Boot | 3.2.5 |
+| | Spring Security | 6.x (Autenticación sin estado mediante tokens JWT) |
+| | Spring Data JPA / Hibernate | Mapeo objeto-relacional y consultas optimizadas |
+| | Spring Boot Starter Mail | Notificaciones SMTP con JavaMail |
+| | Springdoc OpenAPI | Documentación Swagger UI integrada (OpenAPI 3) |
+| | JUnit 5 & Mockito | Pruebas unitarias y de integración con BD H2 en memoria |
+| **Base de Datos** | MySQL | 8.0 (Motor InnoDB, codificación `utf8mb4_unicode_ci`) |
+| **DevOps / Infra** | Docker & Docker Compose | Contenerización multi-servicio |
+| | Nginx | 1.25+ (Proxy inverso y servidor web estático) |
+| | AWS EC2 | Computación en la nube (Ubuntu 22.04 / 24.04 o Amazon Linux 2023) |
+| | Systemd | Orquestación de servicio local en la instancia EC2 |
+| | GitHub Actions | Canalización CI/CD automatizada |
+| | Cloudflare Tunnel | Túnel seguro para demostraciones públicas sin abrir puertos |
+
+---
+
+## Arquitectura del Sistema
+
+### Tipo de Arquitectura
+
+El sistema implementa una **Arquitectura Cliente-Servidor Desacoplada (Decoupled Client-Server / Modular Web Monolith)**:
+
+1. **Frontend Desacoplado (SPA):** La interfaz de React se ejecuta enteramente en el navegador del cliente. No hay renderizado en servidor (SSR), lo que alivia el consumo de recursos de la API.
+2. **Backend Stateless (API RESTful):** Spring Boot expone servicios HTTP REST bajo la convención `/api/v2/nicolet/*`. La autenticación se valida en cada petición mediante tokens JWT firmados (HMAC-SHA256/384).
+3. **Proxy Inverso Unificado (Nginx):** Actúa como único punto de entrada en el puerto 80. Sirve los archivos estáticos de la SPA, despacha las rutas del navegador (`try_files`), reenvía peticiones API al backend preservando encabezados de cliente (`X-Forwarded-For`), e intercepta sondas de salud.
+
+### Mapa de Arquitectura
+
+```mermaid
+flowchart TD
+    subgraph Internet ["Clientes e Internet"]
+        UserBrowser["Navegador Web / Cliente"]
+        AdminBrowser["Navegador Administrador"]
+    end
+
+    subgraph AWS ["Instancia AWS EC2 (Docker Compose)"]
+        subgraph Port80 ["Puerto 80: HTTP Público"]
+            Nginx["Nginx Reverse Proxy"]
+        end
+
+        subgraph Contenedores ["Red Interna Docker (nicolet_net)"]
+            ReactApp["Frontend React SPA (HTML/JS/CSS)"]
+            SpringBoot["Backend Spring Boot (Puerto 8080)"]
+            MySQLDB["MySQL 8.0 Engine (Puerto 3306)"]
+        end
+
+        subgraph Almacenamiento ["Persistencia"]
+            VolMySQL[("Volumen Docker: mysql_prod_data")]
+        end
+    end
+
+    subgraph Externos ["Servicios Externos"]
+        SMTPGmail["Servidor SMTP Gmail (Puerto 587)"]
+        GitHubCI["GitHub Actions CI/CD"]
+    end
+
+    UserBrowser -->|Petición HTTP| Nginx
+    AdminBrowser -->|Petición HTTP / Panel| Nginx
+
+    Nginx -->|Rutas SPA / Estáticos| ReactApp
+    Nginx -->|Proxy /api/* y /actuator/*| SpringBoot
+
+    SpringBoot -->|JDBC / JPA| MySQLDB
+    MySQLDB -->|Persistencia| VolMySQL
+    SpringBoot -->|Envío de Correos| SMTPGmail
+
+    GitHubCI -->|Despliegue continuo via SSH| AWS
 ```
 
-## Inicio rápido en Windows
+### Modelo de Capas (Layered Architecture)
 
-Desde la carpeta del proyecto, ejecuta un único comando para iniciar la base de datos si hace falta, Spring Boot, React y el túnel público:
+El backend de Spring Boot aplica una arquitectura en capas con responsabilidades bien delimitadas:
+
+```mermaid
+flowchart LR
+    subgraph CapaPresentacion ["1. Presentación (API)"]
+        Controllers["REST Controllers\n(@RestController)"]
+        DTOs["DTOs de Petición y Respuesta\n(Validación con @Valid)"]
+    end
+
+    subgraph CapaSeguridad ["2. Seguridad y Filtros"]
+        SecurityFilter["JwtAuthenticationFilter"]
+        IpResolver["ClientIpResolver\n(Anti-Bruteforce & Proxies)"]
+    end
+
+    subgraph CapaNegocio ["3. Lógica de Negocio"]
+        Services["Servicios de Negocio\n(@Service)"]
+        StateEngine["Máquina de Estados de Citas"]
+    end
+
+    subgraph CapaDatos ["4. Acceso a Datos"]
+        Repositories["Spring Data JPA Repositories\n(Bloqueo pesimista & JPQL)"]
+    end
+
+    subgraph CapaDominio ["5. Dominio & Persistencia"]
+        Entities["Entidades JPA (@Entity)\n(Cliente, Trabajador, Cita...)"]
+        DB[(MySQL 8.0)]
+    end
+
+    Controllers --> SecurityFilter
+    SecurityFilter --> IpResolver
+    SecurityFilter --> Services
+    Controllers --> Services
+    Services --> StateEngine
+    Services --> Repositories
+    Repositories --> Entities
+    Entities --> DB
+```
+
+1. **Capa de Controladores (`controller`):** Exponen los endpoints REST, definen los códigos de estado HTTP y aplican validaciones declarativas mediante Jakarta Validation (`@NotNull`, `@Size`, `@Email`).
+2. **Capa de Seguridad (`security`):** Extrae y valida tokens JWT, resuelve la IP real del cliente considerando los proxies de confianza configurados (`TRUSTED_PROXIES`), y limita intentos de inicio de sesión por dirección IP.
+3. **Capa de Negocio (`service`):** Valida la disponibilidad horaria del profesional, verifica que el profesional atienda el servicio seleccionado, asegura la transición legal de estados de las citas y gestiona notificaciones por email.
+4. **Capa de Acceso a Datos (`repository`):** Extiende `JpaRepository`, permitiendo consultas automáticas por firma de método y consultas JPQL con bloqueos explícitos para serializar reservas concurrentes.
+5. **Capa de Dominio (`model`):** Clases entidad que mapean las tablas de MySQL mediante anotaciones Hibernate (`@Table`, `@ManyToOne`, `@JoinColumn`).
+
+---
+
+## Base de Datos
+
+### Tipo de Base de Datos
+
+- **Motor:** **MySQL 8.0 Relacional (RDBMS)**.
+- **Motor de Almacenamiento:** **InnoDB** (soporte total de transacciones ACID, claves foráneas e integridad referencial).
+- **Juego de Caracteres y Colación:** `utf8mb4` con `utf8mb4_unicode_ci` (compatibilidad universal con tildes en español, caracteres especiales y emojis).
+
+### Mapa Entidad-Relación (Diagrama ER)
+
+```mermaid
+erDiagram
+    TIPO_USUARIO ||--o{ USUARIO : "clasifica a"
+    USUARIO ||--o| CLIENTE : "tiene perfil"
+    USUARIO ||--o| TRABAJADOR : "tiene perfil"
+    TRABAJADOR ||--o{ TRABAJADOR_SERVICIO : "ofrece"
+    SERVICIO ||--o{ TRABAJADOR_SERVICIO : "es ofrecido por"
+    TRABAJADOR ||--o{ HORARIO_DISPONIBILIDAD : "atiende en"
+    CLIENTE ||--o{ CITA : "solicita"
+    TRABAJADOR ||--o{ CITA : "atiende"
+    SERVICIO ||--o{ CITA : "es reservado en"
+
+    TIPO_USUARIO {
+        bigint id PK
+        varchar nombre UK
+        varchar descripcion
+    }
+
+    USUARIO {
+        bigint id PK
+        varchar nombre
+        varchar apellidop
+        varchar correo UK
+        varchar password
+        bigint tipo_usuario_id FK
+        timestamp created_at
+    }
+
+    CLIENTE {
+        bigint id PK
+        bigint usuario_id FK "NULL para invitados"
+        varchar nombre_invitado
+        varchar apellido_p_invitado
+        varchar correo_invitado
+        varchar telefono
+        varchar rut_dni UK
+        date fecha_nacimiento
+        text notas_preferencias
+        boolean activo
+    }
+
+    TRABAJADOR {
+        bigint id PK
+        bigint usuario_id FK
+        varchar rut_dni UK
+        varchar telefono
+        varchar cargo_especialidad
+        text biografia
+        decimal comision_porcentaje
+        boolean activo
+    }
+
+    SERVICIO {
+        bigint id PK
+        varchar nombre UK
+        text descripcion
+        int duracion_minutos
+        decimal precio
+        boolean activo
+    }
+
+    TRABAJADOR_SERVICIO {
+        bigint trabajador_id PK,FK
+        bigint servicio_id PK,FK
+    }
+
+    HORARIO_DISPONIBILIDAD {
+        bigint id PK
+        bigint trabajador_id FK
+        tinyint dia_semana "1=Lunes .. 7=Domingo"
+        time hora_inicio
+        time hora_fin
+        time hora_inicio_descanso
+        time hora_fin_descanso
+        boolean activo
+    }
+
+    CITA {
+        bigint id PK
+        varchar codigo_reserva UK
+        bigint cliente_id FK
+        bigint trabajador_id FK
+        bigint servicio_id FK
+        datetime fecha_hora_inicio
+        datetime fecha_hora_fin
+        enum estado "PENDIENTE, CONFIRMADA, EN_ATENCION, COMPLETADA, CANCELADA, NO_ASISTIO"
+        decimal precio_final
+        text notas_cliente
+        text notas_trabajador
+        varchar motivo_cancelacion
+        timestamp created_at
+        timestamp updated_at
+    }
+```
+
+---
+
+## Despliegue en AWS EC2
+
+El proyecto cuenta con un sistema de aprovisionamiento automatizado diseñado para instancias EC2 (como `t2.micro` o `t3.micro` con 1 GB de RAM).
+
+### Arranque Automático "A la primera" (User Data)
+
+Al crear una nueva instancia en la consola de AWS EC2 (con Ubuntu 22.04/24.04 o Amazon Linux 2023), ve a **Advanced details > User data** y pega el siguiente script de una sola línea:
+
+```bash
+#!/bin/bash
+curl -fsSL --retry 5 --retry-connrefused https://raw.githubusercontent.com/Felipex360x/Agendamiento-Cita-Main/main/scripts/ec2-bootstrap.sh | bash
+```
+
+#### ¿Qué realiza este script de manera 100% desatendida?
+1. **Instalación de Software:** Instala Docker, Docker Compose y Git de forma nativa.
+2. **Memoria Swap (2 GB):** Configura y activa swap automáticamente si la máquina cuenta con menos de 2 GB de RAM, impidiendo que el compilador de Java o Node caiga por falta de memoria (OOM).
+3. **Clonado del Repositorio:** Descarga el código en `~/app` configurando los permisos para el usuario del sistema (`ubuntu` o `ec2-user`).
+4. **Generación de Secretos Seguros (`.env`):** Si no existe un `.env`, genera claves aleatorias criptográficas para MySQL, JWT y Administrador. Si la máquina ya tenía una base de datos previa, preserva las contraseñas para mantener compatibilidad.
+5. **Servicio Systemd `nicolet.service`:** Registra y habilita un servicio en el sistema operativo para que la aplicación se inicie automáticamente cada vez que la máquina física o virtual se encienda o reinicie.
+6. **Compilación y Arranque:** Levanta `docker compose -f docker-compose.prod.yml up -d --build` y espera a que el endpoint de salud `http://127.0.0.1/actuator/health` responda `{"status":"UP"}`.
+
+Para seguir el progreso del aprovisionamiento en tiempo real:
+```bash
+sudo tail -f /var/log/cloud-init-output.log
+```
+
+### Manejo de IP Dinámica y AWS Academy
+
+En entornos como **AWS Academy**, las instancias se detienen al finalizar cada sesión de laboratorio y reciben una nueva dirección IP pública al volver a encenderse.
+
+Para solucionar este escenario:
+- El servicio systemd ejecuta automáticamente `scripts/refresh-public-ip.sh` antes de arrancar los contenedores.
+- Dicho script consulta los metadatos de AWS (IMDSv2) y el servicio de verificación de IP de AWS (`checkip.amazonaws.com`), actualizando la variable `APP_FRONTEND_URL` en el archivo `.env` con la IP vigente.
+- De esta manera, los enlaces enviados por correo electrónico siempre apuntan a la dirección activa sin intervención manual.
+
+> **Importante:** Si la IP cambia, solo recuerda actualizar el secreto `EC2_HOST` en GitHub Actions para que el despliegue por SSH continúe conectándose al host correcto.
+
+### Despliegue Continuo (CI/CD) con GitHub Actions
+
+El flujo [.github/workflows/ci.yml](file:///home/felipe/Proyectos/Personales/Agendamiento-Cita-Main/.github/workflows/ci.yml) automatiza las pruebas y el despliegue:
+
+1. **Job `backend`:** Compila Java 17 y corre los 178 tests unitarios e integrados con base en memoria.
+2. **Job `frontend`:** Instala dependencias con `npm ci`, audita vulnerabilidades con `npm audit`, ejecuta los 116 tests con Vitest y genera el build de producción con Vite.
+3. **Job `deploy`:** Al confirmarse un push en la rama `main`, se conecta vía SSH a la instancia EC2, ejecuta `git pull origin main` y reconstruye los contenedores en segundo plano.
+
+#### Secretos requeridos en el repositorio de GitHub:
+- `EC2_HOST`: IP pública o elástica de la instancia EC2.
+- `EC2_USER`: Usuario SSH (`ubuntu` para Ubuntu Server o `ec2-user` para Amazon Linux).
+- `EC2_SSH_KEY`: Clave privada SSH (contenido completo del archivo `.pem`).
+
+### Variables de Entorno en Producción
+
+La plantilla de variables para el servidor se encuentra en [.env.prod.example](file:///home/felipe/Proyectos/Personales/Agendamiento-Cita-Main/.env.prod.example):
+
+```bash
+# Copiar plantilla en la instancia si se configura manualmente:
+cp .env.prod.example ~/app/.env
+```
+
+---
+
+## Inicio en Local
+
+### Inicio Rápido en Windows
+
+El proyecto incluye lanzadores automáticos que gestionan Docker, la base de datos, Spring Boot y React con un solo comando.
+
+Abre PowerShell en la raíz del proyecto y ejecuta:
 
 ```powershell
 .\iniciar-demo.cmd
 ```
 
-Necesitas Java 17 y Node.js (`^22.22.2`, `^24.15.0` o `>=26`; se usa la versión de `frontend/.nvmrc`, hoy 26) con npm. Para iniciar MySQL automáticamente, también necesitas Docker Desktop; si ya tienes MySQL activo en el puerto `3306`, el lanzador lo reutiliza.
+- **Requisitos:** Java 17, Node.js (según `frontend/.nvmrc`) y Docker Desktop (opcional si ya cuentas con MySQL local en el puerto 3306).
+- **Funcionamiento:** Inicia el contenedor MySQL, espera a que acepte conexiones, levanta Spring Boot en `http://localhost:8080`, inicia Vite en `http://localhost:5173` y abre un túnel temporal de Cloudflare para compartir la aplicación por Internet si lo requieres.
+- Presiona `Ctrl+C` en la ventana principal para detener todos los procesos de forma limpia.
 
-Cuando cloudflared muestre una dirección `https://....trycloudflare.com`, compártela con quien deba revisar la demo. Mantén el PC y las ventanas abiertas. Presiona `Ctrl+C` en la ventana principal para detener Spring Boot, React y el túnel.
+### Inicio Rápido en Linux
 
-La base de datos puede permanecer activa después de cerrar la aplicación.
-
-## Inicio rápido en Linux
+En distribuciones Linux (Ubuntu, Debian, Fedora, Arch, etc.):
 
 ```bash
+chmod +x iniciar.sh
 ./iniciar.sh
 ```
 
-Inicia la base de datos con Docker solo si no hay una disponible en `127.0.0.1:3306` (si ya hay MySQL, la reutiliza), luego Spring Boot y React, y espera a que respondan de verdad (Spring, Vite y la salud de Spring a través de Vite, cada una con tiempo máximo). Los registros quedan en `logs/`. Ctrl+C detiene solo Spring Boot y React; la base de datos queda activa.
+- **Opciones disponibles:**
+  - `./iniciar.sh`: Arranca MySQL en Docker (si no hay uno activo), el backend y el frontend, verificando la salud de cada componente.
+  - `./iniciar.sh --sin-docker`: Omite el inicio de contenedores Docker (útil si utilizas un servicio MySQL nativo).
+  - `./iniciar.sh --ayuda`: Muestra todas las variables de entorno configurables.
+- Los registros de ejecución se guardan en la carpeta `logs/`.
 
-- Necesita Java 17+, Node.js (ver `frontend/.nvmrc`), `curl` y `ss`; Docker solo si debe iniciar MySQL. Instala las dependencias del frontend (`npm ci`) si faltan.
-- Si el puerto 8080 o 5173 está ocupado, informa quién lo usa y termina: **no detiene procesos ajenos**.
-- Opciones: `--sin-docker` (no intenta iniciar MySQL) y `--ayuda`. Variables: `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` (por defecto las de `docker-compose.yml`) y `JWT_SECRET` (si falta, se genera uno por ejecución).
-- No incluye el túnel de Cloudflare: para compartir la demo, en otra terminal ejecuta `cloudflared tunnel --url http://127.0.0.1:5173`.
+---
 
-## Desarrollo local
+### Ejecución Manual por Componentes
 
-Si prefieres ejecutar cada parte por separado, inicia primero MySQL y luego Spring Boot:
+Si prefieres ejecutar cada servicio en terminales independientes:
 
-```powershell
+#### 1. Iniciar la Base de Datos (Docker)
+```bash
 docker compose up -d mysql_usuario
-$env:DB_USERNAME = 'desarrollador'
-$env:DB_PASSWORD = 'password_seguro_123'
-$jwtBytes = New-Object byte[] 32
-$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-$rng.GetBytes($jwtBytes)
-$rng.Dispose()
-$env:JWT_SECRET = [Convert]::ToBase64String($jwtBytes)
+```
+
+#### 2. Iniciar el Backend (Spring Boot)
+En Windows (PowerShell):
+```powershell
+$env:DB_HOST = "127.0.0.1"
+$env:DB_USERNAME = "desarrollador"
+$env:DB_PASSWORD = "password_seguro_123"
+$env:JWT_SECRET = "superSecretJwtKeyNicoletStudioFantasyAgendamiento2026Secure256Bit"
 .\mvnw.cmd spring-boot:run
 ```
 
-En otra terminal, inicia React:
+En Linux / macOS (Bash):
+```bash
+export DB_HOST="127.0.0.1"
+export DB_USERNAME="desarrollador"
+export DB_PASSWORD="password_seguro_123"
+export JWT_SECRET="superSecretJwtKeyNicoletStudioFantasyAgendamiento2026Secure256Bit"
+./mvnw spring-boot:run
+```
 
-```powershell
+El backend quedará escuchando en `http://localhost:8080`.
+
+#### 3. Iniciar el Frontend (React + Vite)
+```bash
 cd frontend
 npm ci
 npm run dev
 ```
 
-Abre `http://localhost:5173`. El backend queda disponible en `http://localhost:8080`. La configuración de conexión a la base de datos está en `src/main/resources/application.properties` y permite definir host, puerto, usuario y contraseña mediante variables de entorno.
+La interfaz web quedará disponible en `http://localhost:5173`. Durante el desarrollo, Vite reenvía automáticamente las peticiones de `/api/*` y `/actuator/health` al backend en el puerto 8080.
 
-Para generar los archivos de producción de React:
+---
 
-```powershell
-cd frontend
-npm run build
+### Despliegue Local con Docker Compose
+
+Para replicar el entorno exacto de producción en tu equipo local:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-El resultado queda en `frontend/dist`.
+Abre `http://localhost` en el navegador (puerto 80 servido por Nginx).
 
-## Compartir una demo por Internet
+---
 
-`iniciar-demo.cmd` espera la salud real de Spring y de Vite (con tiempo máximo) antes de abrir el túnel, escribe los registros en `logs/` y se detiene si algún proceso cae. Para iniciar solo el backend en Windows usa `scripts\start.cmd`: no detiene procesos que usen el puerto 8080, informa quién lo ocupa y termina.
+## API y Documentación
 
-`iniciar-demo.cmd` inicia un Quick Tunnel temporal hacia React. Comparte la dirección que imprime cloudflared; no uses `localhost` ni `127.0.0.1` en el dispositivo remoto. La dirección cambia cuando se crea un túnel nuevo y deja de funcionar cuando el túnel se cierra. Cualquier persona que tenga el enlace podrá abrir la demo.
+### Swagger UI
 
-Para usar un dominio propio, configura un túnel administrado desde tu cuenta de Cloudflare y define las variables antes de iniciar el lanzador:
+Con el backend en ejecución, accede a la documentación interactiva OpenAPI en:
+- **Swagger UI:** `http://localhost:8080/doc/swagger-ui.html` (o `http://<IP-EC2>/doc/swagger-ui.html` en producción).
+- **Especificación OpenAPI (JSON):** `http://localhost:8080/v3/api-docs`
+- **Ruta base de endpoints:** `/api/v2/nicolet`
 
-```powershell
-$env:TUNNEL_HOSTNAME = 'agenda.tudominio.cl'
-$env:CLOUDFLARE_TUNNEL_TOKEN = '<token-del-tunnel>'
-.\iniciar-demo.cmd
+### Contratos y Reglas de Negocio
+
+- **Zona Horaria del Negocio:** Todas las fechas y horas se procesan bajo la zona horaria comercial configurada en `app.timezone` (por defecto `America/Santiago`). Las validaciones de "cita en horario pasado" se calculan con respecto a esta hora.
+- **Ciclo de Vida de una Cita:**
+  - `PENDIENTE` $\rightarrow$ `CONFIRMADA` o `CANCELADA`.
+  - `CONFIRMADA` $\rightarrow$ `EN_ATENCION`, `COMPLETADA`, `CANCELADA` o `NO_ASISTIO`.
+  - `EN_ATENCION` $\rightarrow$ `COMPLETADA` o `CANCELADA`.
+  - Los estados `COMPLETADA`, `CANCELADA` y `NO_ASISTIO` son terminales.
+- **Formato Unificado de Errores:** Todos los errores de la API devuelven una estructura consistente con código de error (`VALIDACION`, `CONFLICTO`, `NO_ENCONTRADO`, `SOLICITUD_INVALIDA`), mensaje descriptivo y detalle por campo.
+- **Protección contra Fuerza Bruta:** Se utiliza `ClientIpResolver` para leer la cabecera `X-Forwarded-For` únicamente cuando la petición proviene de proxies de confianza (`TRUSTED_PROXIES`). Se aplica rate limiting en memoria para intentos de autenticación y registros por hora.
+
+---
+
+## Pruebas y Verificaciones
+
+### Backend (178 pruebas)
+```bash
+# Linux / macOS
+./mvnw -B -ntp clean test
+
+# Windows
+.\mvnw.cmd -B -ntp clean test
 ```
 
-El hostname debe estar configurado en Cloudflare para ese túnel. No guardes el token en el repositorio.
-
-## Despliegue en AWS EC2
-
-El script `scripts/ec2-bootstrap.sh` instala Docker, clona el repositorio en `~/app`, genera `~/app/.env` con secretos aleatorios (la clave del administrador queda en `APP_ADMIN_PASSWORD`), instala el servicio `systemd` `nicolet` y levanta MySQL, backend y frontend. Es idempotente y no pisa un `.env` existente.
-
-- **Instancia nueva:** pega esto en *Advanced details > User data* al lanzarla (corre una sola vez, como root):
-
-  ```bash
-  #!/bin/bash
-  curl -fsSL --retry 5 --retry-connrefused https://raw.githubusercontent.com/Felipex360x/Agendamiento-Cita-Main/main/scripts/ec2-bootstrap.sh | bash
-  ```
-
-- **Instancia ya creada:** `sudo bash ~/app/scripts/ec2-bootstrap.sh`.
-- **Reinicios:** el servicio `nicolet` y `restart: always` levantan todo solo al iniciar la instancia.
-- **AWS Academy:** al iniciar el lab y encender la instancia todo sube solo (el *User data* corre una vez; el servicio `nicolet` corre en cada arranque). Asocia una IP elástica; si la IP cambia, el servicio actualiza `APP_FRONTEND_URL` solo, pero el secret `EC2_HOST` del deploy hay que cambiarlo a mano.
-- **Requisitos:** puertos 80 y 22 abiertos en el grupo de seguridad e IP elástica. Los despliegues siguientes los hace el job `deploy` de GitHub Actions (`git pull` + `docker compose up -d --build`).
-- Revisa el progreso con `sudo tail -f /var/log/cloud-init-output.log` y el estado con `sudo docker ps`. La plantilla de variables es `.env.prod.example`.
-
-## API
-
-Con Spring Boot iniciado, la documentación interactiva está en:
-
-- Swagger UI: `http://localhost:8080/doc/swagger-ui.html`
-- API base: `/api/v2/nicolet`
-
-Los recursos principales incluyen autenticación, citas, disponibilidad, servicios, trabajadores, clientes y usuarios. Las rutas protegidas requieren autenticación; Swagger muestra los métodos y modelos disponibles.
-
-## Contratos de la API
-
-**Zona horaria y fechas.** Las fechas y horas de la API son *hora de pared* del negocio, en la zona `app.timezone` (por defecto `America/Santiago`; `VITE_BUSINESS_TIMEZONE` en el frontend debe coincidir). «Hoy» y «hora pasada» se calculan con esa zona en servidor y navegador. Las columnas siguen siendo `DATETIME`.
-
-**Errores.** Toda respuesta de error incluye `status`, `codigo` (`VALIDACION`, `CONFLICTO`, `NO_ENCONTRADO`, `SOLICITUD_INVALIDA`…), `mensaje` y `error` (igual a `mensaje`, por compatibilidad). Las validaciones añaden `errores: {campo: mensaje}` y repiten cada campo al nivel superior (comportamiento anterior; preferir `errores`). Conflictos de integridad → 409.
-
-**Sesión.** El JWT identifica al usuario por su ID permanente (`ver=2`); los permisos se leen siempre de la base de datos. Los tokens del formato anterior (subject = correo) se rechazan con 401 y el frontend cierra la sesión. Cerrar sesión en el navegador no revoca copias del token (no hay lista de revocación). Una cuenta *sin rol* no tiene permisos: puede existir pero no iniciar sesión (403) ni usar la API protegida.
-
-**Citas.** Estados: `PENDIENTE → CONFIRMADA | CANCELADA`; `CONFIRMADA → EN_ATENCION | COMPLETADA | CANCELADA | NO_ASISTIO`; `EN_ATENCION → COMPLETADA | CANCELADA`. `COMPLETADA`, `CANCELADA` y `NO_ASISTIO` son finales (no se reactivan; se crea otra reserva). Cancelar exige motivo (máx. 255). Las reservas de un profesional se serializan con un bloqueo de su fila y solo se aceptan si el profesional ofrece el servicio. Cambiar la jornada no cancela citas: `PUT /horarios/trabajador/{id}` informa en la cabecera `X-Citas-Fuera-De-Jornada` cuántas quedan fuera.
-
-**Límite de intentos de login.** El intento se reserva de forma atómica antes de verificar la contraseña. La IP del cliente se toma de `X-Forwarded-For` solo si la conexión directa viene de un proxy de confianza (`app.security.trusted-proxies` / variable `TRUSTED_PROXIES`, por defecto loopback, que cubre Cloudflare → Vite → Spring). Con otro despliegue, configura esa lista; los contadores viven en memoria de cada instancia.
-
-## Mantenimiento y versiones
-
-- Spring Boot 3.2.5 ya no tiene soporte abierto. Las ramas con soporte (4.0 hasta 2026‑12‑31 y 4.1 hasta 2027‑07‑31, según páginas de fin de soporte; confirmar en spring.io) implican Spring Framework 7, Hibernate 7 y Jackson 3, y obligan a migrar las anotaciones `@MockBean`/`@SpyBean` de las pruebas. Se planifica como un cambio aparte, coordinado con la decisión de base de datos.
-- Node: `engines` y `.nvmrc` fijan el runtime; CI usa el mismo `.nvmrc`. En Node ≥ 25 el `localStorage` global es `undefined` sin `--localstorage-file`; `frontend/src/test/setup.js` lo suple en las pruebas.
-- Tras editar código Java, ejecuta `mvnw clean test` (una compilación incremental obsoleta puede impedir que el contexto de Spring cargue).
-
-## Verificaciones
-
-Backend:
-
-```powershell
-.\mvnw.cmd test
-```
-
-Frontend:
-
-```powershell
+### Frontend (116 pruebas)
+```bash
 cd frontend
 npm test
 npm run build
 ```
+
+---
+
+## Licencia y Créditos
+
+Proyecto desarrollado para **Nicolet Estudio**. Diseñado con estándares de alta disponibilidad, seguridad por defecto y portabilidad en contenedores.
