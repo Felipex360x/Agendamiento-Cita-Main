@@ -19,7 +19,7 @@ import java.util.Base64;
 /**
  * Crea el primer administrador cuando la base no tiene ninguno, para que el repositorio
  * no tenga que traer cuentas con contraseñas conocidas. Si ya existe un administrador
- * no hace nada: nunca modifica ni restablece cuentas existentes.
+ * no hace nada a menos que se active explícitamente app.admin.reset-password=true.
  */
 @Component
 @Order(2)
@@ -34,28 +34,56 @@ public class AdminInicialInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final String correoConfigurado;
     private final String passwordConfigurada;
+    private final boolean resetPasswordConfigurado;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public AdminInicialInitializer(UsuarioRepository usuarioRepository,
                                    TipoUsuarioRepository tipoUsuarioRepository,
                                    PasswordEncoder passwordEncoder,
                                    @Value("${app.admin.email:}") String correoConfigurado,
-                                   @Value("${app.admin.password:}") String passwordConfigurada) {
+                                   @Value("${app.admin.password:}") String passwordConfigurada,
+                                   @Value("${app.admin.reset-password:false}") boolean resetPasswordConfigurado) {
         this.usuarioRepository = usuarioRepository;
         this.tipoUsuarioRepository = tipoUsuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.correoConfigurado = correoConfigurado;
         this.passwordConfigurada = passwordConfigurada;
+        this.resetPasswordConfigurado = resetPasswordConfigurado;
+    }
+
+    public AdminInicialInitializer(UsuarioRepository usuarioRepository,
+                                   TipoUsuarioRepository tipoUsuarioRepository,
+                                   PasswordEncoder passwordEncoder,
+                                   String correoConfigurado,
+                                   String passwordConfigurada) {
+        this(usuarioRepository, tipoUsuarioRepository, passwordEncoder, correoConfigurado, passwordConfigurada, false);
     }
 
     @Override
     @Transactional
     public void run(String... args) {
-        if (usuarioRepository.existsByTipoUsuarioNombreIgnoreCase(ROL_ADMIN)) {
-            return;
-        }
         String correo = correoConfigurado == null || correoConfigurado.isBlank()
                 ? CORREO_POR_DEFECTO
                 : correoConfigurado.trim().toLowerCase();
+
+        if (usuarioRepository.existsByTipoUsuarioNombreIgnoreCase(ROL_ADMIN)) {
+            if (resetPasswordConfigurado && passwordConfigurada != null && !passwordConfigurada.isBlank()) {
+                if (passwordConfigurada.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+                    log.error("APP_ADMIN_PASSWORD supera los 72 bytes que admite BCrypt; no se restableció la contraseña.");
+                    return;
+                }
+                Usuario admin = usuarioRepository.findByCorreoIgnoreCase(correo).orElse(null);
+                if (admin != null) {
+                    admin.setPassword(passwordEncoder.encode(passwordConfigurada));
+                    usuarioRepository.save(admin);
+                    log.info("Se restableció la contraseña del administrador {} usando APP_ADMIN_PASSWORD.", correo);
+                } else {
+                    log.warn("app.admin.reset-password está activo pero no se encontró un administrador con el correo {}", correo);
+                }
+            }
+            return;
+        }
+
         if (usuarioRepository.existsByCorreoIgnoreCase(correo)) {
             log.warn("No hay administradores y el correo configurado en APP_ADMIN_EMAIL ya pertenece a otra cuenta; "
                     + "no se creó el administrador inicial. Define otro correo en APP_ADMIN_EMAIL.");

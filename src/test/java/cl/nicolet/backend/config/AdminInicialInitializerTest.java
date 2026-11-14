@@ -96,4 +96,19 @@ class AdminInicialInitializerTest {
 
         verify(usuarios, never()).save(any());
     }
+
+    @Test
+    @DisplayName("Restablece la contraseña del administrador existente si reset-password está activo")
+    void restableceContrasenaDeAdminExistenteSiSeActivaReset() {
+        when(usuarios.existsByTipoUsuarioNombreIgnoreCase("ADMINISTRADOR")).thenReturn(true);
+        Usuario adminExistente = new Usuario();
+        adminExistente.setCorreo("admin@nicolet.cl");
+        adminExistente.setPassword("antigua_hash");
+        when(usuarios.findByCorreoIgnoreCase("admin@nicolet.cl")).thenReturn(Optional.of(adminExistente));
+
+        new AdminInicialInitializer(usuarios, tipos, encoder, "admin@nicolet.cl", "NuevaClave-2026!", true).run();
+
+        assertThat(encoder.matches("NuevaClave-2026!", adminExistente.getPassword())).isTrue();
+        verify(usuarios).save(adminExistente);
+    }
 }

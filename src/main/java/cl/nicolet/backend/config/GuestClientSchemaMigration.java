@@ -36,5 +36,17 @@ public class GuestClientSchemaMigration implements ApplicationRunner {
 
         jdbcTemplate.execute("ALTER TABLE cliente MODIFY COLUMN usuario_id BIGINT NULL");
         log.info("Esquema de clientes actualizado para permitir perfiles de invitados");
+
+        // Corrección de caracteres corruptos (mojibake) en servicios si la base se importó sin UTF-8
+        try {
+            jdbcTemplate.update(
+                "UPDATE servicio SET descripcion = 'Limpieza profunda de cutículas y esmaltado de alta duración' WHERE id = 2 AND (descripcion LIKE '%Ã%' OR descripcion LIKE '%cut%')"
+            );
+            jdbcTemplate.update(
+                "UPDATE servicio SET descripcion = 'Limpieza profunda, exfoliación y mascarilla regeneradora' WHERE id = 3 AND (descripcion LIKE '%Ã%' OR descripcion LIKE '%exfoli%')"
+            );
+        } catch (Exception e) {
+            log.warn("No se pudo verificar o corregir la codificación de servicios: {}", e.getMessage());
+        }
     }
 }

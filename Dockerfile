@@ -3,8 +3,12 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
-# Las pruebas se ejecutan también al construir la imagen (no se omiten).
-RUN mvn -B clean package
+ARG SKIP_TESTS=false
+RUN if [ "$SKIP_TESTS" = "true" ]; then \
+        mvn -B clean package -DskipTests; \
+    else \
+        mvn -B clean package; \
+    fi
 
 # Ejecución
 FROM eclipse-temurin:17-jre-jammy

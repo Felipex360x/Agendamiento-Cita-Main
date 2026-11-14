@@ -1,4 +1,6 @@
 -- Esquema de base de datos y datos iniciales
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
 
 CREATE DATABASE IF NOT EXISTS universidad_backend CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE universidad_backend;
@@ -162,6 +164,7 @@ INSERT INTO servicio (id, nombre, descripcion, duracion_minutos, precio, activo)
 (2, 'Manicura Rusa con Esmaltado Permanente', 'Limpieza profunda de cutículas y esmaltado de alta duración', 60, 22000.00, TRUE),
 (3, 'Tratamiento Facial Hidratante', 'Limpieza profunda, exfoliación y mascarilla regeneradora', 60, 28000.00, TRUE)
 ON DUPLICATE KEY UPDATE
+    nombre = VALUES(nombre),
     descripcion = VALUES(descripcion),
     duracion_minutos = VALUES(duracion_minutos),
     precio = VALUES(precio);

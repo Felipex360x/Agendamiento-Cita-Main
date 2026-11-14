@@ -7,6 +7,7 @@ services:
     image: mysql:8.0
     container_name: mysql_usuario
     restart: always
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_123}
       MYSQL_DATABASE: universidad_backend
