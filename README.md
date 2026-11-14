@@ -141,6 +141,7 @@ El script `scripts/ec2-bootstrap.sh` instala Docker, clona el repositorio en `~/
 
 - **Instancia ya creada:** `sudo bash ~/app/scripts/ec2-bootstrap.sh`.
 - **Reinicios:** el servicio `nicolet` y `restart: always` levantan todo solo al iniciar la instancia.
+- **AWS Academy:** al iniciar el lab y encender la instancia todo sube solo (el *User data* corre una vez; el servicio `nicolet` corre en cada arranque). Asocia una IP elástica; si la IP cambia, el servicio actualiza `APP_FRONTEND_URL` solo, pero el secret `EC2_HOST` del deploy hay que cambiarlo a mano.
 - **Requisitos:** puertos 80 y 22 abiertos en el grupo de seguridad e IP elástica. Los despliegues siguientes los hace el job `deploy` de GitHub Actions (`git pull` + `docker compose up -d --build`).
 - Revisa el progreso con `sudo tail -f /var/log/cloud-init-output.log` y el estado con `sudo docker ps`. La plantilla de variables es `.env.prod.example`.
 

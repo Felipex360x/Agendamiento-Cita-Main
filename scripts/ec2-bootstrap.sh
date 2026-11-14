@@ -6,7 +6,8 @@
 #   2. Agrega swap si la instancia tiene poca RAM (el build de Maven/Node se queda sin memoria en 1 GB).
 #   3. Clona o actualiza el repositorio en ~/app (la misma ruta que usa el CD de GitHub Actions).
 #   4. Crea ~/app/.env con secretos aleatorios si no existe (nunca pisa uno existente).
-#   5. Instala el servicio systemd "nicolet" para que todo se levante en cada arranque de la instancia.
+#   5. Instala el servicio systemd "nicolet": en cada arranque de la instancia (también al encender un
+#      lab de AWS Academy) actualiza la IP pública en .env y levanta todo sin intervención.
 #   6. Construye y levanta los contenedores y espera a que el backend responda.
 #
 # Uso A: como "User data" al crear la instancia (corre una vez, como root, en el primer arranque):
@@ -161,6 +162,7 @@ Wants=network-online.target
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=$APP_DIR
+ExecStartPre=-/bin/bash $APP_DIR/scripts/refresh-public-ip.sh $APP_DIR/.env
 ExecStart=/usr/bin/docker compose -f $COMPOSE_FILE up -d
 ExecStop=/usr/bin/docker compose -f $COMPOSE_FILE stop
 TimeoutStartSec=900
