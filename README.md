@@ -128,6 +128,22 @@ $env:CLOUDFLARE_TUNNEL_TOKEN = '<token-del-tunnel>'
 
 El hostname debe estar configurado en Cloudflare para ese túnel. No guardes el token en el repositorio.
 
+## Despliegue en AWS EC2
+
+El script `scripts/ec2-bootstrap.sh` instala Docker, clona el repositorio en `~/app`, genera `~/app/.env` con secretos aleatorios (la clave del administrador queda en `APP_ADMIN_PASSWORD`), instala el servicio `systemd` `nicolet` y levanta MySQL, backend y frontend. Es idempotente y no pisa un `.env` existente.
+
+- **Instancia nueva:** pega esto en *Advanced details > User data* al lanzarla (corre una sola vez, como root):
+
+  ```bash
+  #!/bin/bash
+  curl -fsSL https://raw.githubusercontent.com/Felipex360x/Agendamiento-Cita-Main/main/scripts/ec2-bootstrap.sh | bash
+  ```
+
+- **Instancia ya creada:** `sudo bash ~/app/scripts/ec2-bootstrap.sh`.
+- **Reinicios:** el servicio `nicolet` y `restart: always` levantan todo solo al iniciar la instancia.
+- **Requisitos:** puertos 80 y 22 abiertos en el grupo de seguridad e IP elástica. Los despliegues siguientes los hace el job `deploy` de GitHub Actions (`git pull` + `docker compose up -d --build`).
+- Revisa el progreso con `sudo tail -f /var/log/cloud-init-output.log` y el estado con `sudo docker ps`. La plantilla de variables es `.env.prod.example`.
+
 ## API
 
 Con Spring Boot iniciado, la documentación interactiva está en:
