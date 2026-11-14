@@ -59,9 +59,6 @@ jobs:
           script: |
             cd ~/app
             git pull origin main
-            if [ ! -f .env ]; then
-              sudo bash scripts/ec2-bootstrap.sh
-            else
-              sudo docker compose -f docker-compose.prod.yml up -d --build
-            fi
+            [ -f .env ] || sudo bash scripts/ec2-bootstrap.sh
+            sudo docker compose -f docker-compose.prod.yml up -d --build
 
