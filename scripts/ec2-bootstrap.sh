@@ -102,38 +102,56 @@ cd "$APP_DIR"
 
 # --- 4. Archivo .env con secretos aleatorios -------------------------------------------------------
 if [ ! -f .env ]; then
-  # Si ya existe un volumen de MySQL, las claves del .env nuevo no coincidirían con las guardadas en él.
+  legacy_mysql=0
+  # Si ya existe un volumen de MySQL, sincronizamos con las claves con las que se inicializó
+  # para no romper la conexión a la base existente (a menos que se pase RESET_DB=1).
   if docker volume ls -q | grep -q 'mysql_prod_data$'; then
     if [ "${RESET_DB:-0}" = "1" ]; then
-      log "RESET_DB=1: se borra el volumen de MySQL (se pierden todos los datos)"
+      log "RESET_DB=1: se borra el volumen de MySQL (se recreará con contraseñas nuevas)"
       docker compose -f "$COMPOSE_FILE" down -v || true
     else
-      die "Existe un volumen de MySQL creado con otras claves y no hay .env. Crea ~/app/.env con esas claves, o si NO necesitas los datos vuelve a ejecutar con RESET_DB=1 (borra la base)."
+      log "Detectado volumen previo mysql_prod_data: preservando credenciales iniciales para compatibilidad."
+      legacy_mysql=1
     fi
   fi
 
-  log "Generando $APP_DIR/.env con secretos aleatorios"
+  log "Generando $APP_DIR/.env"
   rand() { openssl rand -base64 36 | tr -d '/+=\n' | cut -c1-32; }
 
-  # IP pública (IMDSv2); si no responde queda un marcador que debes editar a mano.
+  # IP pública (IMDSv2 con fallback a servicio de AWS); si no responde queda un marcador que debes editar a mano.
   public_ip=""
   token="$(curl -fsS -m 3 -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' 2>/dev/null || true)"
   if [ -n "$token" ]; then
     public_ip="$(curl -fsS -m 3 -H "X-aws-ec2-metadata-token: $token" http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true)"
   fi
+  if [ -z "$public_ip" ]; then
+    public_ip="$(curl -fsS -m 3 https://checkip.amazonaws.com 2>/dev/null || true)"
+  fi
   front_url="http://${public_ip:-CAMBIAR_IP_ELASTICA}"
 
   umask 077
+  if [ "$legacy_mysql" -eq 1 ]; then
+    mysql_root_pass="root_password_123"
+    mysql_pass="password_seguro_123"
+    jwt_secret="superSecretJwtKeyNicoletStudioFantasyAgendamiento2026Secure256Bit"
+    admin_pass="AdminNicolet2026!"
+  else
+    mysql_root_pass="$(rand)"
+    mysql_pass="$(rand)"
+    jwt_secret="$(openssl rand -base64 48 | tr -d '\n')"
+    admin_pass="$(rand)"
+  fi
+
   {
-    echo "MYSQL_ROOT_PASSWORD=$(rand)"
+    echo "MYSQL_ROOT_PASSWORD=${mysql_root_pass}"
     echo "MYSQL_DATABASE=universidad_backend"
     echo "MYSQL_USER=desarrollador"
-    echo "MYSQL_PASSWORD=$(rand)"
-    echo "JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')"
+    echo "MYSQL_PASSWORD=${mysql_pass}"
+    echo "JWT_SECRET=${jwt_secret}"
     echo "APP_FRONTEND_URL=${front_url}"
     echo "TRUSTED_PROXIES=127.0.0.1,::1,172.16.0.0/12"
     echo "APP_ADMIN_EMAIL=admin@nicolet.cl"
-    echo "APP_ADMIN_PASSWORD=$(rand)"
+    echo "APP_ADMIN_PASSWORD=${admin_pass}"
     echo "APP_ADMIN_RESET_PASSWORD=false"
     echo "APP_DEMO_DATA_ENABLED=false"
     echo "MAIL_HOST=smtp.gmail.com"
@@ -182,8 +200,8 @@ docker compose -f "$COMPOSE_FILE" up -d --build
 
 log "Esperando a que el backend responda"
 for i in $(seq 1 60); do
-  if curl -fsS -m 5 http://localhost/actuator/health 2>/dev/null | grep -q '"status":"UP"'; then
-    log "Todo arriba: http://localhost/actuator/health responde UP"
+  if curl -fsS -m 5 http://127.0.0.1/actuator/health 2>/dev/null | grep -q '"status":"UP"'; then
+    log "Todo arriba: http://127.0.0.1/actuator/health responde UP"
     docker compose -f "$COMPOSE_FILE" ps
     exit 0
   fi

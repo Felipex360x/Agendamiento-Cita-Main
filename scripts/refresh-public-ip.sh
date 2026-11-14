@@ -16,6 +16,7 @@ if [ -z "$ip" ]; then
     [ -n "$ip" ] && break
     sleep 3
   done
+  [ -z "$ip" ] && ip="$(curl -fsS -m 3 https://checkip.amazonaws.com 2>/dev/null || true)"
 fi
 printf '%s' "$ip" | grep -Eq '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' || exit 0
 

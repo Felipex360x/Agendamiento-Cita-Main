@@ -136,7 +136,7 @@ El script `scripts/ec2-bootstrap.sh` instala Docker, clona el repositorio en `~/
 
   ```bash
   #!/bin/bash
-  curl -fsSL https://raw.githubusercontent.com/Felipex360x/Agendamiento-Cita-Main/main/scripts/ec2-bootstrap.sh | bash
+  curl -fsSL --retry 5 --retry-connrefused https://raw.githubusercontent.com/Felipex360x/Agendamiento-Cita-Main/main/scripts/ec2-bootstrap.sh | bash
   ```
 
 - **Instancia ya creada:** `sudo bash ~/app/scripts/ec2-bootstrap.sh`.
