@@ -7,28 +7,30 @@ Sistema web integral para la gestión y agendamiento de citas de estética y sal
 ## Tabla de Contenidos
 
 1. [Descripción del Proyecto](#descripción-del-proyecto)
-2. [Tecnologías Utilizadas](#tecnologías-utilizadas)
-3. [Arquitectura del Sistema](#arquitectura-del-sistema)
+2. [Estructura del Repositorio](#estructura-del-repositorio)
+3. [Tecnologías Utilizadas](#tecnologías-utilizadas)
+4. [Arquitectura del Sistema](#arquitectura-del-sistema)
    - [Tipo de Arquitectura](#tipo-de-arquitectura)
    - [Mapa de Arquitectura](#mapa-de-arquitectura)
    - [Modelo de Capas (Layered Architecture)](#modelo-de-capas-layered-architecture)
-4. [Base de Datos](#base-de-datos)
+   - [¿Capas Estrictas o Relajadas?](#capas-estrictas-o-relajadas)
+5. [Base de Datos](#base-de-datos)
    - [Tipo de Base de Datos](#tipo-de-base-de-datos)
    - [Mapa Entidad-Relación (Diagrama ER)](#mapa-entidad-relación-diagrama-er)
-5. [Despliegue en AWS EC2](#despliegue-en-aws-ec2)
+6. [Despliegue en AWS EC2](#despliegue-en-aws-ec2)
    - [Arranque Automático "A la primera" (User Data)](#arranque-automático-a-la-primera-user-data)
    - [Manejo de IP Dinámica y AWS Academy](#manejo-de-ip-dinámica-y-aws-academy)
    - [Despliegue Continuo (CI/CD) con GitHub Actions](#despliegue-continuo-cicd-con-github-actions)
    - [Variables de Entorno en Producción](#variables-de-entorno-en-producción)
-6. [Inicio en Local](#inicio-en-local)
+7. [Inicio en Local](#inicio-en-local)
    - [Inicio Rápido en Windows](#inicio-rápido-en-windows)
    - [Inicio Rápido en Linux](#inicio-rápido-en-linux)
    - [Ejecución Manual por Componentes](#ejecución-manual-por-componentes)
    - [Despliegue Local con Docker Compose](#despliegue-local-con-docker-compose)
-7. [API y Documentación](#api-y-documentación)
+8. [API y Documentación](#api-y-documentación)
    - [Swagger UI](#swagger-ui)
    - [Contratos y Reglas de Negocio](#contratos-y-reglas-de-negocio)
-8. [Pruebas y Verificaciones](#pruebas-y-verificaciones)
+9. [Pruebas y Verificaciones](#pruebas-y-verificaciones)
 
 ---
 
@@ -44,14 +46,29 @@ Incluye notificaciones automáticas por correo electrónico vía SMTP y control 
 
 ---
 
+## Estructura del Repositorio
+
+| Ruta | Contenido |
+|---|---|
+| `src/main/java/` | API Spring Boot: controladores, servicios, entidades, repositorios y seguridad |
+| `src/main/resources/` | Configuración del backend y plantillas HTML de correo |
+| `src/test/` | Pruebas automatizadas del backend |
+| `frontend/src/` | Aplicación React, páginas, componentes, estilos y pruebas de Vitest |
+| `db/init.sql` | Inicialización del esquema y catálogo inicial de MySQL |
+| `scripts/` | Lanzadores y aprovisionamiento de EC2 |
+| `docker-compose.yml` | MySQL local y phpMyAdmin opcional |
+| `docker-compose.prod.yml` | Aplicación completa en contenedores para producción |
+| `.env.example` / `.env.prod.example` | Plantillas de configuración para desarrollo y producción |
+
+---
+
 ## Tecnologías Utilizadas
 
 | Capa / Área | Tecnología | Versión / Detalle |
 |---|---|---|
 | **Frontend** | React | 18 (SPA basada en hooks y contextos funcionales) |
-| | Vite | 4.x / 5.x (Empaquetador y dev server ultrarrápido) |
-| | React Router DOM | Enrutamiento declarativo del lado del cliente |
-| | Lucide React | Iconografía modular y accesible |
+| | Vite | 6.x (Empaquetador y servidor de desarrollo) |
+| | Enrutamiento propio | Resolución de páginas y rutas de administración en `frontend/src/routes.js` |
 | | Vitest & Testing Library | Suite de pruebas unitarias y de renderizado |
 | **Backend** | Java | 17 LTS |
 | | Spring Boot | 3.2.5 |
@@ -76,7 +93,7 @@ Incluye notificaciones automáticas por correo electrónico vía SMTP y control 
 
 El sistema implementa una **Arquitectura Cliente-Servidor Desacoplada (Decoupled Client-Server / Modular Web Monolith)**:
 
-1. **Frontend Desacoplado (SPA):** La interfaz de React se ejecuta enteramente en el navegador del cliente. No hay renderizado en servidor (SSR), lo que alivia el consumo de recursos de la API.
+1. **Frontend Desacoplado (SPA):** La interfaz de React se ejecuta en el navegador. Las rutas de páginas se resuelven en el cliente y Nginx devuelve `index.html` para permitir recargas directas.
 2. **Backend Stateless (API RESTful):** Spring Boot expone servicios HTTP REST bajo la convención `/api/v2/nicolet/*`. La autenticación se valida en cada petición mediante tokens JWT firmados (HMAC-SHA256/384).
 3. **Proxy Inverso Unificado (Nginx):** Actúa como único punto de entrada en el puerto 80. Sirve los archivos estáticos de la SPA, despacha las rutas del navegador (`try_files`), reenvía peticiones API al backend preservando encabezados de cliente (`X-Forwarded-For`), e intercepta sondas de salud.
 
@@ -168,6 +185,21 @@ flowchart LR
 3. **Capa de Negocio (`service`):** Valida la disponibilidad horaria del profesional, verifica que el profesional atienda el servicio seleccionado, asegura la transición legal de estados de las citas y gestiona notificaciones por email.
 4. **Capa de Acceso a Datos (`repository`):** Extiende `JpaRepository`, permitiendo consultas automáticas por firma de método y consultas JPQL con bloqueos explícitos para serializar reservas concurrentes.
 5. **Capa de Dominio (`model`):** Clases entidad que mapean las tablas de MySQL mediante anotaciones Hibernate (`@Table`, `@ManyToOne`, `@JoinColumn`).
+
+### ¿Capas Estrictas o Relajadas?
+
+El backend implementa una **Arquitectura en Capas Relajada o Abierta (*Relaxed / Open Layered Architecture*)**, no una arquitectura de capas estrictas (*Strict / Closed*):
+
+| Criterio | Capas Estrictas (*Strict Layering*) | Capas Relajadas (*Relaxed Layering - Nicolet*) |
+|---|---|---|
+| **Regla de comunicación** | Una capa superior **solo** puede comunicarse con la capa inmediatamente inferior (`Controller` $\rightarrow$ `Service` $\rightarrow$ `Repository`). | Una capa puede comunicarse con capas no adyacentes si aporta simplicidad pragmática. |
+| **Acceso a Repositorios** | Prohibido en controladores. Solo los servicios pueden invocar repositorios. | Mayoritariamente en servicios, pero controladores como `AuthController` inyectan y usan `UsuarioRepository` y `TipoUsuarioRepository` directamente. |
+| **Aislamiento de Dominio** | La presentación únicamente conoce y manipula DTOs; las entidades `@Entity` nunca llegan al controlador. | La mayoría usa DTOs, pero controladores como `AuthController` y `CorreoController` manipulan entidades (`Usuario`, `Cita`, `Cliente`) directamente. |
+| **Lógica de Orquestación** | Los controladores solo reciben peticiones HTTP y delegan el 100% de la lógica a un servicio. | Ciertos flujos transversales (rate-limiting por IP, migración de contraseñas legacy en texto plano a BCrypt) se orquestan directamente en el controlador. |
+
+#### Distribución en el código del proyecto:
+- **Núcleo de Negocio (Estilo por Capas Estándar con DTOs):** Los módulos de `Cita`, `Servicio`, `Cliente`, `Trabajador`, `HorarioDisponibilidad` y `Disponibilidad` respetan el flujo estricto `Controller` $\rightarrow$ `Service` $\rightarrow$ `Repository` $\rightarrow$ `Entity`, aislando las peticiones y respuestas mediante DTOs con validaciones declarativas.
+- **Módulos Transversales (Capas Relajadas / Pragmáticas):** `AuthController` (orquestación directa de `AuthenticationManager`, `LoginAttemptService`, `UsuarioRepository` y `JwtUtils` para migración de contraseñas legacy) y `CorreoController` (simulación de flujo con entidades directas) adoptan un enfoque abierto para simplificar operaciones sin crear capas intermedias artificiales.
 
 ---
 
@@ -317,11 +349,11 @@ Para solucionar este escenario:
 
 ### Despliegue Continuo (CI/CD) con GitHub Actions
 
-El flujo [.github/workflows/ci.yml](file:///home/felipe/Proyectos/Personales/Agendamiento-Cita-Main/.github/workflows/ci.yml) automatiza las pruebas y el despliegue:
+El flujo [`.github/workflows/ci.yml`](.github/workflows/ci.yml) automatiza las verificaciones y el despliegue:
 
-1. **Job `backend`:** Compila Java 17 y corre los 178 tests unitarios e integrados con base en memoria.
-2. **Job `frontend`:** Instala dependencias con `npm ci`, audita vulnerabilidades con `npm audit`, ejecuta los 116 tests con Vitest y genera el build de producción con Vite.
-3. **Job `deploy`:** Al confirmarse un push en la rama `main`, se conecta vía SSH a la instancia EC2, ejecuta `git pull origin main` y reconstruye los contenedores en segundo plano.
+1. **Job `backend`:** Compila con Java 17 y ejecuta `./mvnw -B -ntp clean verify`.
+2. **Job `frontend`:** Usa Node según `frontend/.nvmrc`, instala dependencias con `npm ci`, ejecuta `npm audit --audit-level=high`, las pruebas con Vitest y el build de producción.
+3. **Job `deploy`:** Solo después de que los dos jobs anteriores terminen correctamente, y ante un push a `main`, se conecta por SSH a EC2, actualiza el repositorio y reconstruye los contenedores.
 
 #### Secretos requeridos en el repositorio de GitHub:
 - `EC2_HOST`: IP pública o elástica de la instancia EC2.
@@ -330,7 +362,7 @@ El flujo [.github/workflows/ci.yml](file:///home/felipe/Proyectos/Personales/Age
 
 ### Variables de Entorno en Producción
 
-La plantilla de variables para el servidor se encuentra en [.env.prod.example](file:///home/felipe/Proyectos/Personales/Agendamiento-Cita-Main/.env.prod.example):
+La plantilla de variables para el servidor se encuentra en [`.env.prod.example`](.env.prod.example):
 
 ```bash
 # Copiar plantilla en la instancia si se configura manualmente:
@@ -340,6 +372,16 @@ cp .env.prod.example ~/app/.env
 ---
 
 ## Inicio en Local
+
+### Requisitos
+
+- Git.
+- Java 17 o superior para ejecutar el backend fuera de Docker.
+- Node.js y npm según [`frontend/.nvmrc`](frontend/.nvmrc) (Node 26 actualmente) para el frontend y los lanzadores locales.
+- Docker con el plugin Docker Compose para iniciar MySQL o ejecutar toda la aplicación en contenedores.
+- Puertos `3306` (MySQL), `8080` (API) y `5173` (frontend) disponibles para el desarrollo local. El modo Docker Compose completo publica HTTP en el puerto `80`.
+
+Para Docker Compose o el lanzador `./iniciar.sh`, puedes copiar `.env.example` como `.env` y ajustar las credenciales a tu entorno. En PowerShell, configura las variables en la sesión antes de iniciar el backend. No compartas el archivo `.env`; los valores por defecto de Compose son solo para desarrollo local.
 
 ### Inicio Rápido en Windows
 
@@ -351,8 +393,8 @@ Abre PowerShell en la raíz del proyecto y ejecuta:
 .\iniciar-demo.cmd
 ```
 
-- **Requisitos:** Java 17, Node.js (según `frontend/.nvmrc`) y Docker Desktop (opcional si ya cuentas con MySQL local en el puerto 3306).
-- **Funcionamiento:** Inicia el contenedor MySQL, espera a que acepte conexiones, levanta Spring Boot en `http://localhost:8080`, inicia Vite en `http://localhost:5173` y abre un túnel temporal de Cloudflare para compartir la aplicación por Internet si lo requieres.
+- **Requisitos:** Java 17 o superior, Node.js y npm (según `frontend/.nvmrc`), dependencias del frontend instaladas (`cd frontend; npm ci`) y `cloudflared` disponible como comando o como `cloudflared.exe` en la raíz. Docker Desktop se necesita si no tienes MySQL local en el puerto 3306.
+- **Funcionamiento:** Inicia MySQL si hace falta, levanta Spring Boot en `http://localhost:8080`, compila y sirve el frontend en `http://localhost:5173`, y abre un túnel de Cloudflare. Si defines `CLOUDFLARE_TUNNEL_TOKEN`, también debes definir `TUNNEL_HOSTNAME` para usar un túnel configurado; sin token crea una URL temporal `trycloudflare.com`.
 - Presiona `Ctrl+C` en la ventana principal para detener todos los procesos de forma limpia.
 
 ### Inicio Rápido en Linux
@@ -369,6 +411,7 @@ chmod +x iniciar.sh
   - `./iniciar.sh --sin-docker`: Omite el inicio de contenedores Docker (útil si utilizas un servicio MySQL nativo).
   - `./iniciar.sh --ayuda`: Muestra todas las variables de entorno configurables.
 - Los registros de ejecución se guardan en la carpeta `logs/`.
+- Requiere Java 17 o superior, Node.js/npm compatibles con `frontend/.nvmrc`, `curl`, `ss`, `setsid` y `timeout`. Si no hay una base MySQL disponible, necesita Docker Compose salvo que uses `--sin-docker`.
 
 ---
 
@@ -384,23 +427,28 @@ docker compose up -d mysql_usuario
 #### 2. Iniciar el Backend (Spring Boot)
 En Windows (PowerShell):
 ```powershell
+$bytes = New-Object byte[] 48
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
 $env:DB_HOST = "127.0.0.1"
 $env:DB_USERNAME = "desarrollador"
 $env:DB_PASSWORD = "password_seguro_123"
-$env:JWT_SECRET = "superSecretJwtKeyNicoletStudioFantasyAgendamiento2026Secure256Bit"
 .\mvnw.cmd spring-boot:run
 ```
 
 En Linux / macOS (Bash):
 ```bash
+export JWT_SECRET="$(openssl rand -base64 48)"
 export DB_HOST="127.0.0.1"
 export DB_USERNAME="desarrollador"
 export DB_PASSWORD="password_seguro_123"
-export JWT_SECRET="superSecretJwtKeyNicoletStudioFantasyAgendamiento2026Secure256Bit"
 ./mvnw spring-boot:run
 ```
 
 El backend quedará escuchando en `http://localhost:8080`.
+
+Si ejecutas el backend manualmente, define un `JWT_SECRET` aleatorio codificado en Base64 (al menos 256 bits; los ejemplos generan 48 bytes aleatorios) y las credenciales de la base de datos. Puedes definir `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD` para el primer administrador; si no indicas contraseña, la aplicación genera una y la muestra una sola vez en el log de arranque.
 
 #### 3. Iniciar el Frontend (React + Vite)
 ```bash
@@ -423,6 +471,16 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 Abre `http://localhost` en el navegador (puerto 80 servido por Nginx).
 
+Comandos útiles para revisar el estado y los registros:
+
+```bash
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs -f backend
+docker compose -f docker-compose.prod.yml logs -f frontend
+```
+
+Para detener los contenedores sin borrar la base de datos: `docker compose -f docker-compose.prod.yml down`. Los datos de MySQL se guardan en un volumen Docker.
+
 ---
 
 ## API y Documentación
@@ -436,7 +494,7 @@ Con el backend en ejecución, accede a la documentación interactiva OpenAPI en:
 
 ### Contratos y Reglas de Negocio
 
-- **Zona Horaria del Negocio:** Todas las fechas y horas se procesan bajo la zona horaria comercial configurada en `app.timezone` (por defecto `America/Santiago`). Las validaciones de "cita en horario pasado" se calculan con respecto a esta hora.
+- **Zona Horaria del Negocio:** Las fechas y horas se procesan con la propiedad `app.timezone` (por defecto `America/Santiago`). Las validaciones de "cita en horario pasado" se calculan con respecto a esta hora.
 - **Ciclo de Vida de una Cita:**
   - `PENDIENTE` $\rightarrow$ `CONFIRMADA` o `CANCELADA`.
   - `CONFIRMADA` $\rightarrow$ `EN_ATENCION`, `COMPLETADA`, `CANCELADA` o `NO_ASISTIO`.
@@ -449,7 +507,7 @@ Con el backend en ejecución, accede a la documentación interactiva OpenAPI en:
 
 ## Pruebas y Verificaciones
 
-### Backend (178 pruebas)
+### Backend
 ```bash
 # Linux / macOS
 ./mvnw -B -ntp clean test
@@ -458,7 +516,7 @@ Con el backend en ejecución, accede a la documentación interactiva OpenAPI en:
 .\mvnw.cmd -B -ntp clean test
 ```
 
-### Frontend (116 pruebas)
+### Frontend
 ```bash
 cd frontend
 npm test
