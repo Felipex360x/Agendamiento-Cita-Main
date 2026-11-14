@@ -8,10 +8,10 @@ services:
     restart: always
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Falta MYSQL_ROOT_PASSWORD en el archivo .env (copia .env.prod.example)}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_123}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-universidad_backend}
       MYSQL_USER: ${MYSQL_USER:-desarrollador}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Falta MYSQL_PASSWORD en el archivo .env (copia .env.prod.example)}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-${DB_PASSWORD:-password_seguro_123}}
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
       - mysql_prod_data:/var/lib/mysql
@@ -37,8 +37,8 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USERNAME: ${MYSQL_USER:-desarrollador}
-      DB_PASSWORD: ${MYSQL_PASSWORD:?Falta MYSQL_PASSWORD en el archivo .env (copia .env.prod.example)}
-      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en el archivo .env (copia .env.prod.example)}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-${DB_PASSWORD:-password_seguro_123}}
+      JWT_SECRET: ${JWT_SECRET:-superSecretJwtKeyNicoletStudioFantasyAgendamiento2026Secure256Bit}
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://52.87.43.82}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1,::1,172.16.0.0/12}
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
@@ -46,8 +46,7 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-nacuna888@gmail.com}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL:-admin@nicolet.cl}
-      # Sin contraseña no se crea el admin con una conocida: el backend genera una aleatoria y la imprime una vez en el log.
-      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:-}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:-AdminNicolet2026!}
       APP_ADMIN_RESET_PASSWORD: ${APP_ADMIN_RESET_PASSWORD:-false}
       APP_DEMO_DATA_ENABLED: ${APP_DEMO_DATA_ENABLED:-false}
     depends_on:
