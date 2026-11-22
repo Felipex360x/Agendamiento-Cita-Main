@@ -3,6 +3,7 @@ import { api } from '../api/client.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import DaySelector from '../components/DaySelector.jsx';
 import { businessToday } from '../utils/dates.js';
+import { redirectToWebpay } from '../utils/payments.js';
 import { SiteFooter, SiteHeader } from '../layouts/SiteShell.jsx';
 
 const money = (value) => new Intl.NumberFormat('es-CL', {
@@ -39,6 +40,11 @@ export default function BookingPage() {
   const [error, setError] = useState('');
   const [booking, setBooking] = useState(null);
   const [notes, setNotes] = useState('');
+  // ONLINE: paga con Webpay y la hora queda bloqueada hasta pagar. LOCAL: paga en el estudio.
+  const [payMode, setPayMode] = useState('ONLINE');
+  // Cita ya creada que espera el pago; si Webpay falla se reintenta el pago sin crear otra cita.
+  const [pendingAppointment, setPendingAppointment] = useState(null);
+  const [redirecting, setRedirecting] = useState(false);
 
   const service = services.find((item) => String(item.id) === String(serviceId));
   const worker = workers.find((item) => String(item.id) === String(workerId));
@@ -124,7 +130,7 @@ export default function BookingPage() {
 
   async function confirmBooking(event) {
     event.preventDefault();
-    if (!selectedSlotAvailable) {
+    if (!pendingAppointment && !selectedSlotAvailable) {
       setError('El horario seleccionado ya no está disponible. Elige otro horario para continuar.');
       setStep(3);
       return;
@@ -133,21 +139,33 @@ export default function BookingPage() {
     setError('');
     const data = new FormData(event.currentTarget);
     try {
-      let customerUser = user;
-      if (!customerUser) {
-        customerUser = await register(
-          data.get('nombre'), data.get('apellidoP'), data.get('correo'), data.get('password'), data.get('telefono'),
-        );
+      let created = pendingAppointment;
+      if (!created) {
+        let customerUser = user;
+        if (!customerUser) {
+          customerUser = await register(
+            data.get('nombre'), data.get('apellidoP'), data.get('correo'), data.get('password'), data.get('telefono'),
+          );
+        }
+        const customer = await api.clientePorUsuario(customerUser.id);
+        created = await api.crearCita({
+          clienteId: customer.id,
+          trabajadorId: Number(workerId),
+          servicioId: Number(serviceId),
+          fechaHoraInicio: `${date}T${time}:00`,
+          notasCliente: notes.trim() || null,
+          estado: 'PENDIENTE',
+          modalidadPago: payMode,
+        });
       }
-      const customer = await api.clientePorUsuario(customerUser.id);
-      const created = await api.crearCita({
-        clienteId: customer.id,
-        trabajadorId: Number(workerId),
-        servicioId: Number(serviceId),
-        fechaHoraInicio: `${date}T${time}:00`,
-        notasCliente: notes.trim() || null,
-        estado: 'PENDIENTE',
-      });
+      if (payMode === 'ONLINE') {
+        // La hora ya quedó bloqueada; ahora se lleva al cliente al formulario de Webpay.
+        setPendingAppointment(created);
+        const payment = await api.iniciarPagoWebpay(created.id);
+        setRedirecting(true);
+        redirectToWebpay(payment.url, payment.token);
+        return;
+      }
       setBooking(created);
     } catch (requestError) {
       setError(requestError.message);
@@ -164,6 +182,8 @@ export default function BookingPage() {
     setDate('');
     setTime('');
     setNotes('');
+    setPendingAppointment(null);
+    setRedirecting(false);
   }
 
   return <><SiteHeader active="reserva" /><main className="site-section site-booking">
@@ -176,7 +196,7 @@ export default function BookingPage() {
       {step === 1 && <section className="site-booking-panel"><h2>1. Elige tu servicio</h2><div className="site-booking-options">{services.map((item) => <button key={item.id} type="button" className={`site-booking-option ${String(item.id) === String(serviceId) ? 'selected' : ''}`} onClick={() => chooseService(item.id)}><span><strong>{item.nombre}</strong><small>{item.duracionMinutos} min</small></span><strong>{money(item.precio)}</strong></button>)}</div></section>}
       {step === 2 && <section className="site-booking-panel"><h2>2. Elige a tu especialista</h2><div className="site-booking-options">{!compatibleWorkers.length && <p className="site-message" role="status">Por ahora ningún profesional ofrece este servicio. Elige otro servicio.</p>}{compatibleWorkers.map((item) => <button key={item.id} type="button" className={`site-booking-option ${String(item.id) === String(workerId) ? 'selected' : ''}`} onClick={() => chooseWorker(item.id)}><span><strong>{workerName(item)}</strong><small>{item.cargoEspecialidad || 'Especialista'}</small></span><span aria-hidden="true">→</span></button>)}</div><button type="button" className="site-text-button" onClick={() => setStep(1)}>Cambiar servicio</button></section>}
       {step === 3 && <section className="site-booking-panel"><h2>3. Selecciona fecha y hora</h2><p className="site-muted">{service?.nombre} · {workerName(worker)}</p><div className="site-booking-date-picker"><DaySelector label="Elige un día" value={date} onChange={(selectedDate) => { setDate(selectedDate); setTime(''); }} minDate={localDate()} /></div>{date && <div className="site-slot-grid">{slotsLoading ? <p role="status">Consultando disponibilidad…</p> : slots.length ? slots.map((slot) => { const available = Boolean(slot.disponible); const label = timeLabel(slot.horaInicio); return <button type="button" key={slot.horaInicio} disabled={!available} title={available ? 'Disponible' : unavailableLabel(slot.motivoNoDisponible)} aria-label={`${label}, ${available ? 'disponible' : unavailableLabel(slot.motivoNoDisponible)}`} className={`${available ? '' : 'unavailable'} ${label === time ? 'selected' : ''}`} onClick={() => available && setTime(label)}>{label}{!available && <small>{unavailableLabel(slot.motivoNoDisponible)}</small>}</button>; }) : !error && <p>No hay horas disponibles para esta fecha. Prueba otro día.</p>}</div>}{selectedSlotConflictsWithBreak && <p className="site-form-error" role="alert">El horario de las {time} entra en conflicto con la colación: el servicio dura {service?.duracionMinutos} minutos e invade el descanso de la profesional. Elige otro horario para continuar.</p>}{!selectedSlotConflictsWithBreak && !slotsLoading && slots.some((slot) => slot.motivoNoDisponible === 'DESCANSO') && <p className="site-message" role="status">Los horarios marcados como “Conflicto con colación” no se pueden reservar porque la duración del servicio invade el descanso de la profesional.</p>}<div className="site-booking-actions"><button type="button" className="site-button site-button-outline" onClick={() => setStep(2)}>Atrás</button><button type="button" className="site-button" disabled={!date || !time || selectedSlotConflictsWithBreak || (slots.length > 0 && !selectedSlotAvailable)} onClick={() => setStep(4)}>Continuar</button></div></section>}
-      {step === 4 && <section className="site-booking-panel"><h2>4. Confirma tus datos</h2>{user && !isClient ? <div className="site-message"><p>La sesión activa no tiene un perfil de cliente para reservar.</p><button type="button" className="site-text-button" onClick={logout}>Cerrar sesión y continuar como cliente</button></div> : <form onSubmit={confirmBooking}>{!user && <><p className="site-muted">Crea tu cuenta para guardar la reserva y administrar tus citas. ¿Ya tienes una cuenta? <a href={loginHref}>Inicia sesión</a>.</p><label>Nombre<input name="nombre" autoComplete="given-name" required /></label><label>Apellido paterno<input name="apellidoP" autoComplete="family-name" required /></label><label>Correo<input name="correo" type="email" autoComplete="email" required /></label><label>Contraseña<input name="password" type="password" minLength={6} maxLength={72} autoComplete="new-password" required /></label><label>Teléfono (opcional)<input name="telefono" type="tel" autoComplete="tel" /></label></>}{user && <p className="site-muted">Reserva para {user.nombre} ({user.correo})</p>}<label>Notas para tu especialista<textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} /></label><div className="site-booking-actions"><button type="button" className="site-button site-button-outline" onClick={() => setStep(3)}>Atrás</button><button type="submit" className="site-button" disabled={busy}>{busy ? 'Agendando…' : 'Confirmar reserva'}</button></div></form>}</section>}
+      {step === 4 && <section className="site-booking-panel"><h2>4. Confirma tus datos</h2>{user && !isClient ? <div className="site-message"><p>La sesión activa no tiene un perfil de cliente para reservar.</p><button type="button" className="site-text-button" onClick={logout}>Cerrar sesión y continuar como cliente</button></div> : <form onSubmit={confirmBooking}>{!user && <><p className="site-muted">Crea tu cuenta para guardar la reserva y administrar tus citas. ¿Ya tienes una cuenta? <a href={loginHref}>Inicia sesión</a>.</p><label>Nombre<input name="nombre" autoComplete="given-name" required /></label><label>Apellido paterno<input name="apellidoP" autoComplete="family-name" required /></label><label>Correo<input name="correo" type="email" autoComplete="email" required /></label><label>Contraseña<input name="password" type="password" minLength={6} maxLength={72} autoComplete="new-password" required /></label><label>Teléfono (opcional)<input name="telefono" type="tel" autoComplete="tel" /></label></>}{user && <p className="site-muted">Reserva para {user.nombre} ({user.correo})</p>}<label>Notas para tu especialista<textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} /></label>{pendingAppointment ? <p className="site-message" role="status">Tu hora está bloqueada mientras completas el pago. Si no pudiste llegar a Webpay, vuelve a intentarlo.</p> : <fieldset className="site-pay-options"><legend>¿Cómo quieres pagar?</legend><label className={`site-pay-option ${payMode === 'ONLINE' ? 'selected' : ''}`}><input type="radio" name="modalidadPago" value="ONLINE" checked={payMode === 'ONLINE'} onChange={() => setPayMode('ONLINE')} /><span><strong>Pagar ahora con Webpay</strong><small>Tarjeta de crédito, débito o prepago. Tu hora queda bloqueada mientras pagas.</small></span></label><label className={`site-pay-option ${payMode === 'LOCAL' ? 'selected' : ''}`}><input type="radio" name="modalidadPago" value="LOCAL" checked={payMode === 'LOCAL'} onChange={() => setPayMode('LOCAL')} /><span><strong>Pagar en el estudio</strong><small>Reservas ahora y pagas el día de tu cita.</small></span></label></fieldset>}<div className="site-booking-actions"><button type="button" className="site-button site-button-outline" onClick={() => setStep(3)} disabled={Boolean(pendingAppointment)}>Atrás</button><button type="submit" className="site-button" disabled={busy || redirecting}>{redirecting ? 'Redirigiendo a Webpay…' : busy ? (payMode === 'ONLINE' ? 'Preparando el pago…' : 'Agendando…') : payMode === 'ONLINE' ? `Pagar ${money(service?.precio)} con Webpay` : 'Confirmar reserva'}</button></div></form>}</section>}
     </section><aside className="site-booking-summary"><p className="site-eyebrow">Resumen</p><h2>{service?.nombre || 'Elige un servicio'}</h2><p>{worker ? workerName(worker) : 'Especialista por elegir'}</p><p>{date || 'Fecha por elegir'} {time && `· ${time}`}</p>{service && <div className="site-booking-total"><span>{service.duracionMinutos} minutos</span><strong>{money(service.precio)}</strong></div>}</aside></div>}
     {booking && <section className="site-booking-panel site-booking-confirmation"><p className="site-eyebrow">Reserva recibida</p><h2>¡Gracias! Tu cita está agendada.</h2><p>El estado actual es <strong>{booking.estado}</strong>. El profesional podrá confirmarla desde su panel.</p><dl><div><dt>Código de reserva</dt><dd>{booking.codigoReserva}</dd></div><div><dt>Servicio</dt><dd>{service?.nombre}</dd></div><div><dt>Especialista</dt><dd>{workerName(worker)}</dd></div><div><dt>Fecha y hora</dt><dd>{date} · {time}</dd></div></dl><button type="button" className="site-button" onClick={restart}>Agendar otra cita</button></section>}
   </main><SiteFooter /></>;

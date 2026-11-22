@@ -1,6 +1,7 @@
 package cl.nicolet.backend.dto;
 
 import cl.nicolet.backend.model.EstadoCita;
+import cl.nicolet.backend.model.EstadoPago;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,6 +20,8 @@ public class CitaDTO {
     private String notasCliente;
     private String notasTrabajador;
     private String motivoCancelacion;
+    private EstadoPago estadoPago;
+    private LocalDateTime pagoExpiraEn;
 
     public CitaDTO() {
     }
@@ -38,6 +41,22 @@ public class CitaDTO {
         this.notasCliente = notasCliente;
         this.notasTrabajador = notasTrabajador;
         this.motivoCancelacion = motivoCancelacion;
+    }
+
+    public EstadoPago getEstadoPago() {
+        return estadoPago;
+    }
+
+    public void setEstadoPago(EstadoPago estadoPago) {
+        this.estadoPago = estadoPago;
+    }
+
+    public LocalDateTime getPagoExpiraEn() {
+        return pagoExpiraEn;
+    }
+
+    public void setPagoExpiraEn(LocalDateTime pagoExpiraEn) {
+        this.pagoExpiraEn = pagoExpiraEn;
     }
 
     public Long getId() {
@@ -151,12 +170,14 @@ public class CitaDTO {
                 && Objects.equals(precioFinal, that.precioFinal)
                 && Objects.equals(notasCliente, that.notasCliente)
                 && Objects.equals(notasTrabajador, that.notasTrabajador)
-                && Objects.equals(motivoCancelacion, that.motivoCancelacion);
+                && Objects.equals(motivoCancelacion, that.motivoCancelacion)
+                && estadoPago == that.estadoPago
+                && Objects.equals(pagoExpiraEn, that.pagoExpiraEn);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(id, codigoReserva, cliente, trabajador, servicio, fechaHoraInicio, fechaHoraFin,
-                estado, precioFinal, notasCliente, notasTrabajador, motivoCancelacion);
+                estado, precioFinal, notasCliente, notasTrabajador, motivoCancelacion, estadoPago, pagoExpiraEn);
     }
 }

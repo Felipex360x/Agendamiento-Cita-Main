@@ -1,7 +1,7 @@
 // Las fechas y horas del servidor usan la zona horaria del negocio definida en VITE_BUSINESS_TIMEZONE
 // (por defecto America/Santiago, igual que en el backend).
 // El día de hoy y la hora actual se calculan con esa zona, no con el reloj del navegador.
-export const BUSINESS_TIMEZONE = import.meta.env?.VITE_BUSINESS_TIMEZONE || 'America/Santiago';
+const BUSINESS_TIMEZONE = import.meta.env?.VITE_BUSINESS_TIMEZONE || 'America/Santiago';
 
 export function businessParts(now = new Date(), timeZone = BUSINESS_TIMEZONE) {
   const parts = Object.fromEntries(
@@ -13,4 +13,3 @@ export function businessParts(now = new Date(), timeZone = BUSINESS_TIMEZONE) {
 }
 
 export const businessToday = (now) => businessParts(now).date;
-export const businessNowTime = (now) => businessParts(now).time;

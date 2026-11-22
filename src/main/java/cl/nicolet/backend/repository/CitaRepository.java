@@ -1,8 +1,9 @@
 package cl.nicolet.backend.repository;
 
 import cl.nicolet.backend.model.Cita;
-import cl.nicolet.backend.model.EstadoCita;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,34 +21,12 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
 
     List<Cita> findByTrabajadorId(Long trabajadorId);
 
-    List<Cita> findByEstado(EstadoCita estado);
-
-    @Query("SELECT c FROM Cita c WHERE c.trabajador.id = :trabajadorId " +
-           "AND c.fechaHoraInicio >= :inicio AND c.fechaHoraInicio <= :fin ORDER BY c.fechaHoraInicio ASC")
-    List<Cita> findByTrabajadorAndRangoFechas(
-        @Param("trabajadorId") Long trabajadorId,
-        @Param("inicio") LocalDateTime inicio,
-        @Param("fin") LocalDateTime fin
-    );
-
     @Query("SELECT COUNT(c) > 0 FROM Cita c " +
            "WHERE c.trabajador.id = :trabajadorId " +
            "AND c.estado <> cl.nicolet.backend.model.EstadoCita.CANCELADA " +
            "AND (:inicio < c.fechaHoraFin AND :fin > c.fechaHoraInicio)")
     boolean existeSolapamiento(
         @Param("trabajadorId") Long trabajadorId,
-        @Param("inicio") LocalDateTime inicio,
-        @Param("fin") LocalDateTime fin
-    );
-
-    @Query("SELECT COUNT(c) > 0 FROM Cita c " +
-           "WHERE c.trabajador.id = :trabajadorId " +
-           "AND c.id <> :citaId " +
-           "AND c.estado <> cl.nicolet.backend.model.EstadoCita.CANCELADA " +
-           "AND (:inicio < c.fechaHoraFin AND :fin > c.fechaHoraInicio)")
-    boolean existeSolapamientoExcluyendoCita(
-        @Param("trabajadorId") Long trabajadorId,
-        @Param("citaId") Long citaId,
         @Param("inicio") LocalDateTime inicio,
         @Param("fin") LocalDateTime fin
     );
@@ -67,4 +46,14 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
            "AND c.estado IN (cl.nicolet.backend.model.EstadoCita.PENDIENTE, cl.nicolet.backend.model.EstadoCita.CONFIRMADA, cl.nicolet.backend.model.EstadoCita.EN_ATENCION) " +
            "AND c.fechaHoraFin > :desde ORDER BY c.fechaHoraInicio ASC")
     List<Cita> findVigentesDesde(@Param("trabajadorId") Long trabajadorId, @Param("desde") LocalDateTime desde);
+
+    /** Bloquea la cita mientras se confirma o vence su pago, para que no se hagan las dos cosas a la vez. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Cita c WHERE c.id = :id")
+    Optional<Cita> findByIdForUpdate(@Param("id") Long id);
+
+    /** Ids de citas que esperan pago y ya pasaron su plazo. */
+    @Query("SELECT c.id FROM Cita c WHERE c.estadoPago = cl.nicolet.backend.model.EstadoPago.PENDIENTE_PAGO " +
+           "AND c.estado = cl.nicolet.backend.model.EstadoCita.PENDIENTE AND c.pagoExpiraEn < :ahora")
+    List<Long> findIdsConPagoVencido(@Param("ahora") LocalDateTime ahora);
 }

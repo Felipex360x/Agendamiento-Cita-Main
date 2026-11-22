@@ -207,6 +207,9 @@ function EmailTemplatesContent() {
             >
               {editorOpen ? 'Ocultar datos' : 'Editar datos'}
             </button>
+            <a className="site-button site-button-outline" href="/admin/pagos">
+              Ver historial de pagos
+            </a>
           </div>
         </div>
 

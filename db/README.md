@@ -54,6 +54,7 @@ El repositorio no contiene cuentas de usuario ni contraseñas (tampoco sus hashe
 
 - **Primer administrador**: si la base no tiene ningun administrador, el backend crea uno al arrancar con `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. Si no defines la contraseña, genera una al azar y la muestra una unica vez en la consola. Si ya existe un administrador no modifica nada.
 - **Datos de ejemplo**: con `APP_DEMO_DATA_ENABLED=true` se cargan clientes, profesionales y citas de demostracion. Su contraseña es la de `APP_DEMO_PASSWORD`; si no la defines se genera una al azar en cada arranque y se muestra en la consola. No actives los datos de ejemplo en un entorno expuesto a Internet.
+- La carga ampliada incorpora 25 clientes, 4 profesionales, 14 servicios y 48 citas de demostración, además de los registros base. Es idempotente: al volver a iniciar no duplica esos registros. Para las cuentas de demostración cargadas en esta sesión, el correo usa dominios `@demo.nicolet.cl` y la contraseña común es `NicoletDemo#2026`.
 - Las contraseñas se guardan siempre como hash BCrypt.
 
 Si tu base se creo con una version anterior de `init.sql`, conserva las cuentas antiguas con contraseñas que estuvieron publicadas: cambialas o eliminalas (o recrea el volumen con `docker compose down -v`, que borra todos los datos).

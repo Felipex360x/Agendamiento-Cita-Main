@@ -101,6 +101,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/trabajadores/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v2/nicolet/disponibilidad/**").permitAll()
                 .requestMatchers("/doc/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").hasRole("ADMINISTRADOR")
+                // Regreso del cliente desde Webpay: llega por el navegador, sin sesión. Se valida con el token del pago.
+                .requestMatchers("/api/v2/nicolet/pagos/webpay/retorno").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Rutas que piden sesión iniciada

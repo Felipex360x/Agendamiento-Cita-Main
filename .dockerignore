@@ -1,0 +1,16 @@
+# Contexto de build del backend: solo pom.xml y src/ son necesarios.
+.git
+.github
+.env
+.env.*
+!.env.example
+target
+logs
+frontend
+db
+scripts
+.playwright-mcp
+.idea
+.vscode
+*.md
+*.log

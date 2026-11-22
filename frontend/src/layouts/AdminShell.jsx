@@ -9,6 +9,7 @@ const adminLinks = [
   ['/admin/servicios', 'Servicios'],
   ['/admin/disponibilidad', 'Disponibilidad'],
   ['/admin/historial', 'Historial'],
+  ['/admin/pagos', 'Pagos'],
   ['/admin/usuarios', 'Usuarios'],
   ['/admin/panel-trabajador', 'Portal profesional'],
   ['/correos', 'Correos'],

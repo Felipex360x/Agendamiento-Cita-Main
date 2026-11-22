@@ -115,9 +115,9 @@ class CorreoControllerTest {
     void administradorOperaLaBandeja() throws Exception {
         como(admin, json(post(BASE + "/probar-flujo"), FLUJO_VALIDO))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.enviados.length()").value(6))
+                .andExpect(jsonPath("$.enviados.length()").value(7))
                 .andExpect(jsonPath("$.correoCliente").value("clienta@correo.test"));
-        como(admin, get(BASE)).andExpect(status().isOk()).andExpect(jsonPath("$.correos.length()").value(6));
+        como(admin, get(BASE)).andExpect(status().isOk()).andExpect(jsonPath("$.correos.length()").value(7));
         como(admin, delete(BASE)).andExpect(status().isOk()).andExpect(jsonPath("$.correos.length()").value(0));
     }
 

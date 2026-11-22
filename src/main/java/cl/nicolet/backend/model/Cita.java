@@ -60,6 +60,19 @@ public class Cita {
     @Column(name = "motivo_cancelacion")
     private String motivoCancelacion;
 
+    /**
+     * Situación del pago. Las citas anteriores al pago en línea quedan como PAGO_EN_LOCAL
+     * (valor por defecto de la columna).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_pago", nullable = false, length = 20,
+            columnDefinition = "VARCHAR(20) NOT NULL DEFAULT 'PAGO_EN_LOCAL'")
+    private EstadoPago estadoPago = EstadoPago.PAGO_EN_LOCAL;
+
+    /** Hasta cuándo se mantiene bloqueado el horario esperando el pago (solo PENDIENTE_PAGO). */
+    @Column(name = "pago_expira_en")
+    private LocalDateTime pagoExpiraEn;
+
     public Cita() {
     }
 
@@ -170,6 +183,22 @@ public class Cita {
 
     public String getMotivoCancelacion() {
         return motivoCancelacion;
+    }
+
+    public EstadoPago getEstadoPago() {
+        return estadoPago;
+    }
+
+    public void setEstadoPago(EstadoPago estadoPago) {
+        this.estadoPago = estadoPago;
+    }
+
+    public LocalDateTime getPagoExpiraEn() {
+        return pagoExpiraEn;
+    }
+
+    public void setPagoExpiraEn(LocalDateTime pagoExpiraEn) {
+        this.pagoExpiraEn = pagoExpiraEn;
     }
 
     public void setMotivoCancelacion(String motivoCancelacion) {

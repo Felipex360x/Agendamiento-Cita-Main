@@ -18,6 +18,7 @@ import java.time.LocalTime;
 import java.time.DayOfWeek;
 import java.time.temporal.TemporalAdjusters;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -109,6 +110,23 @@ public class DataInitializer implements CommandLineRunner {
         Servicio sPestanas = obtenerOCrearServicio("Lifting de Pestañas", "Lifting, tinte y nutrición de pestañas", 60, new BigDecimal("25000.00"));
         Servicio sMasaje = obtenerOCrearServicio("Masaje Relajante", "Masaje corporal relajante de cuerpo completo", 60, new BigDecimal("32000.00"));
 
+        List<Servicio> serviciosExtra = List.of(
+                obtenerOCrearServicio("Botox Capilar", "Tratamiento nutritivo y anti-frizz para cabello", 120, new BigDecimal("48000.00")),
+                obtenerOCrearServicio("Alisado Orgánico", "Alisado de larga duración con productos orgánicos", 180, new BigDecimal("85000.00")),
+                obtenerOCrearServicio("Mechas y Reflejos", "Iluminación personalizada con diagnóstico de color", 150, new BigDecimal("58000.00")),
+                obtenerOCrearServicio("Coloración Completa", "Aplicación de color y sellado de brillo", 120, new BigDecimal("42000.00")),
+                obtenerOCrearServicio("Manicure Clásica", "Limado, cuidado de cutículas y esmalte tradicional", 45, new BigDecimal("14000.00")),
+                obtenerOCrearServicio("Manicure Soft Gel", "Extensión de uñas con sistema soft gel", 90, new BigDecimal("35000.00")),
+                obtenerOCrearServicio("Retiro de Esmaltado", "Retiro seguro de esmalte permanente", 30, new BigDecimal("8000.00")),
+                obtenerOCrearServicio("Pedicure Permanente", "Pedicure completo con esmaltado permanente", 90, new BigDecimal("32000.00")),
+                obtenerOCrearServicio("Limpieza Facial Profunda", "Limpieza, extracción e hidratación facial", 90, new BigDecimal("38000.00")),
+                obtenerOCrearServicio("Dermaplaning", "Exfoliación facial mediante técnica dermaplaning", 60, new BigDecimal("30000.00")),
+                obtenerOCrearServicio("Depilación de Bozo", "Depilación facial con técnica delicada", 15, new BigDecimal("6000.00")),
+                obtenerOCrearServicio("Laminado de Cejas", "Diseño, laminado y nutrición de cejas", 45, new BigDecimal("22000.00")),
+                obtenerOCrearServicio("Masaje Descontracturante", "Masaje focalizado para aliviar tensión muscular", 60, new BigDecimal("36000.00")),
+                obtenerOCrearServicio("Peinado para Evento", "Peinado profesional para ocasión especial", 60, new BigDecimal("30000.00"))
+        );
+
         Cliente clienteMartina = clienteRepository.findByUsuarioId(userMartina.getId()).orElseGet(() -> {
             log.info("Inicializando perfil de Cliente para {}", userMartina.getNombre());
             Cliente c = new Cliente();
@@ -151,6 +169,16 @@ public class DataInitializer implements CommandLineRunner {
         Cliente clienteFernanda = obtenerOCrearClienteDemo(userFernanda, "+56970001004", "17111114-7", LocalDate.of(1999, 4, 22), "Prefiere atención después del mediodía");
         Cliente clienteSofia = obtenerOCrearClienteDemo(userSofia, "+56970001005", "17111115-5", LocalDate.of(1996, 12, 11), "Sin preferencias registradas");
 
+        List<Cliente> clientesExtra = new ArrayList<>();
+        String[] nombresClientes = {"Isidora", "Josefa", "Catalina", "Amanda", "Javiera", "Trinidad", "Emilia", "Agustina", "Josefina", "Maite", "Renata", "Florencia", "Antonia", "Pilar", "Laura", "María José", "Ignacia", "Belén", "Natalia", "Carolina", "Paula", "Daniela", "Andrea", "Macarena", "Francisca"};
+        String[] apellidosClientes = {"González", "López", "Soto", "Sepúlveda", "Morales", "Rodríguez", "Fuentes", "Torres", "Reyes", "Gutiérrez", "Herrera", "Riquelme", "Castillo", "Molina", "Vargas", "Silva", "Espinoza", "Valdés", "Paredes", "Navarro", "Cortés", "Leiva", "Carrasco", "Núñez", "Tapia"};
+        String[] preferencias = {"Prefiere tonos naturales", "Piel sensible; consultar productos", "Prefiere horario de mañana", "Sin preferencias registradas", "Prefiere atención después del mediodía"};
+        for (int i = 0; i < nombresClientes.length; i++) {
+            String sufijo = String.format("%02d", i + 1);
+            Usuario usuario = obtenerOCrearUsuario(nombresClientes[i], apellidosClientes[i], "cliente" + sufijo + "@demo.nicolet.cl", tipoCliente);
+            clientesExtra.add(obtenerOCrearClienteDemo(usuario, "+5697100" + String.format("%04d", i + 1), "18" + String.format("%06d", 200 + i) + "-" + (i % 10), LocalDate.of(1988 + i % 18, 1 + i % 12, 1 + i % 27), preferencias[i % preferencias.length]));
+        }
+
         Trabajador trabajadorCamila = trabajadorRepository.findByUsuarioId(userCamila.getId()).orElseGet(() -> {
             log.info("Inicializando perfil de Trabajador para {}", userCamila.getNombre());
             Trabajador t = new Trabajador();
@@ -177,6 +205,21 @@ public class DataInitializer implements CommandLineRunner {
         Trabajador trabajadorFrancisca = obtenerOCrearTrabajadorDemo(userFrancisca, "16111111-1", "+56970002001", "Colorista y estilista", "Especialista en color, balayage y cuidado capilar.", List.of(sCorte, sBalayage));
         Trabajador trabajadorValeria = obtenerOCrearTrabajadorDemo(userValeria, "16111112-0", "+56970002002", "Especialista en uñas", "Manicura y pedicure con técnicas de cuidado personalizado.", List.of(sManicura, sPedicure));
         Trabajador trabajadorDaniela = obtenerOCrearTrabajadorDemo(userDaniela, "16111113-9", "+56970002003", "Esteticista integral", "Tratamientos faciales, pestañas y bienestar.", List.of(sFacial, sCejas, sPestanas, sMasaje));
+
+        List<Trabajador> trabajadoresExtra = new ArrayList<>();
+        String[] nombresProfesionales = {"Paola", "Andrea", "Carolina", "Javiera"};
+        String[] apellidosProfesionales = {"Mella", "Bravo", "Cárdenas", "Pinto"};
+        String[] especialidades = {"Colorista capilar", "Especialista en uñas", "Cosmetóloga", "Estilista integral"};
+        List<List<Servicio>> serviciosProfesionales = List.of(
+                List.of(sCorte, sBalayage, serviciosExtra.get(0), serviciosExtra.get(1), serviciosExtra.get(2), serviciosExtra.get(3), serviciosExtra.get(13)),
+                List.of(sManicura, sPedicure, serviciosExtra.get(4), serviciosExtra.get(5), serviciosExtra.get(6), serviciosExtra.get(7)),
+                List.of(sFacial, sCejas, sPestanas, sMasaje, serviciosExtra.get(8), serviciosExtra.get(9), serviciosExtra.get(10), serviciosExtra.get(11)),
+                List.of(sCorte, sBalayage, sManicura, sPedicure, serviciosExtra.get(12), serviciosExtra.get(13))
+        );
+        for (int i = 0; i < nombresProfesionales.length; i++) {
+            Usuario usuario = obtenerOCrearUsuario(nombresProfesionales[i], apellidosProfesionales[i], "profesional" + (i + 1) + "@demo.nicolet.cl", tipoPro);
+            trabajadoresExtra.add(obtenerOCrearTrabajadorDemo(usuario, "169" + String.format("%05d", 400 + i) + "-" + (i + 1), "+5697200" + String.format("%03d", i + 1), especialidades[i], "Profesional de Nicolet Estudio con experiencia y atención personalizada.", serviciosProfesionales.get(i)));
+        }
 
         // Asignar servicios a cada trabajador
         agregarServicios(trabajadorCamila, List.of(sCorte, sManicura, sFacial, sCejas));
@@ -211,6 +254,7 @@ public class DataInitializer implements CommandLineRunner {
         asegurarHorariosBase(trabajadorFrancisca);
         asegurarHorariosBase(trabajadorValeria);
         asegurarHorariosBase(trabajadorDaniela);
+        trabajadoresExtra.forEach(this::asegurarHorariosBase);
 
         // Citas iniciales de prueba
         if (citaRepository.findByCodigoReserva("RES-2026-0001").isEmpty()) {
@@ -282,6 +326,14 @@ public class DataInitializer implements CommandLineRunner {
         crearCitaDemo("RES-DEMO-0008", clienteValentina, trabajadorCamila, sCorte, proximaSemana.plusDays(1).atTime(11, 0), EstadoCita.PENDIENTE, "Corte de cabello", null);
         crearCitaDemo("RES-DEMO-0009", clienteAntonia, trabajadorValeria, sManicura, proximaSemana.plusDays(2).atTime(9, 30), EstadoCita.CONFIRMADA, "Manicura permanente", null);
         crearCitaDemo("RES-DEMO-0010", clienteConstanza, trabajadorDaniela, sMasaje, proximaSemana.plusDays(3).atTime(15, 0), EstadoCita.PENDIENTE, "Masaje relajante", null);
+
+        List<Cliente> todosClientesDemo = new ArrayList<>(List.of(clienteMartina, clienteMarit, clienteGale, clienteValentina, clienteAntonia, clienteConstanza, clienteFernanda, clienteSofia));
+        todosClientesDemo.addAll(clientesExtra);
+        List<Trabajador> todosProfesionalesDemo = new ArrayList<>(List.of(trabajadorCamila, trabajadorFrancisca, trabajadorValeria, trabajadorDaniela));
+        todosProfesionalesDemo.addAll(trabajadoresExtra);
+        List<Servicio> todosServiciosDemo = new ArrayList<>(List.of(sCorte, sManicura, sFacial, sBalayage, sPedicure, sCejas, sPestanas, sMasaje));
+        todosServiciosDemo.addAll(serviciosExtra);
+        crearCitasDemoMasivas(todosClientesDemo, todosProfesionalesDemo, todosServiciosDemo);
 
         perfilUsuarioService.crearPerfilesFaltantes();
         log.info("Datos iniciales verificados correctamente.");
@@ -432,5 +484,24 @@ public class DataInitializer implements CommandLineRunner {
         cita.setNotasCliente(notasCliente);
         cita.setNotasTrabajador(notasTrabajador);
         citaRepository.save(cita);
+    }
+
+    private void crearCitasDemoMasivas(List<Cliente> clientes, List<Trabajador> trabajadores, List<Servicio> servicios) {
+        LocalDate dia = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).minusWeeks(3);
+        int creadas = 0;
+        for (int i = 0; i < 48; i++) {
+            while (dia.getDayOfWeek() == DayOfWeek.SATURDAY || dia.getDayOfWeek() == DayOfWeek.SUNDAY) dia = dia.plusDays(1);
+            Trabajador trabajador = trabajadores.get(i % trabajadores.size());
+            Cliente cliente = clientes.get((i * 7 + 3) % clientes.size());
+            List<Servicio> asignados = trabajador.getServicios() == null ? List.of() : new ArrayList<>(trabajador.getServicios());
+            if (asignados.isEmpty()) continue;
+            Servicio servicio = asignados.get(i % asignados.size());
+            LocalDateTime inicio = dia.atTime(9 + (i / trabajadores.size()) % 7, (i % 2) * 30);
+            EstadoCita estado = dia.isBefore(LocalDate.now()) ? (i % 11 == 0 ? EstadoCita.NO_ASISTIO : i % 9 == 0 ? EstadoCita.CANCELADA : EstadoCita.COMPLETADA) : (i % 3 == 0 ? EstadoCita.CONFIRMADA : EstadoCita.PENDIENTE);
+            crearCitaDemo(String.format("RES-EXT-%04d", i + 1), cliente, trabajador, servicio, inicio, estado, "Reserva de demostración", estado == EstadoCita.COMPLETADA ? "Atención realizada correctamente." : null);
+            creadas++;
+            dia = dia.plusDays(1);
+        }
+        log.info("Citas de demostración verificadas: {} registros generados o ya existentes.", creadas);
     }
 }

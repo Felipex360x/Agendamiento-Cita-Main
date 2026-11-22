@@ -46,6 +46,10 @@ public class CitaCreateDTO {
     @Size(max = 1000, message = "Las notas no pueden exceder los 1000 caracteres")
     private String notasCliente;
 
+    @Schema(description = "Cómo se pagará: ONLINE (Webpay, el horario queda bloqueado hasta pagar) o LOCAL (en el estudio). Si no se indica, LOCAL.",
+            example = "ONLINE")
+    private ModalidadPago modalidadPago;
+
     public CitaCreateDTO() {
     }
 
@@ -55,6 +59,14 @@ public class CitaCreateDTO {
         this.servicioId = servicioId;
         this.fechaHoraInicio = fechaHoraInicio;
         this.notasCliente = notasCliente;
+    }
+
+    public ModalidadPago getModalidadPago() {
+        return modalidadPago;
+    }
+
+    public void setModalidadPago(ModalidadPago modalidadPago) {
+        this.modalidadPago = modalidadPago;
     }
 
     public Long getClienteId() {

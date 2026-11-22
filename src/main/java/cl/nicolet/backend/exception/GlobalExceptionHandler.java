@@ -16,7 +16,7 @@ import java.util.Map;
  * <ul>
  *   <li>{@code status}: código HTTP;</li>
  *   <li>{@code codigo}: tipo de error (VALIDACION, CONFLICTO, NO_ENCONTRADO, SOLICITUD_INVALIDA,
- *       SERVICIO_NO_DISPONIBLE);</li>
+ *       SERVICIO_NO_DISPONIBLE, PAGO_NO_DISPONIBLE);</li>
  *   <li>{@code mensaje}: texto claro para mostrar al usuario;</li>
  *   <li>{@code error}: mismo texto que {@code mensaje} por compatibilidad.</li>
  * </ul>
@@ -47,6 +47,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConflictoException.class)
     public ResponseEntity<Map<String, Object>> handleConflicto(ConflictoException e) {
         return respuesta(HttpStatus.CONFLICT, "CONFLICTO", e.getMessage());
+    }
+
+    @ExceptionHandler(cl.nicolet.backend.payment.WebpayException.class)
+    public ResponseEntity<Map<String, Object>> handleWebpay(cl.nicolet.backend.payment.WebpayException e) {
+        return respuesta(HttpStatus.BAD_GATEWAY, "PAGO_NO_DISPONIBLE",
+                "No fue posible comunicarse con Webpay. Intenta nuevamente en unos minutos.");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

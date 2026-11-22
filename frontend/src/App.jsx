@@ -11,6 +11,8 @@ import AdminDiagnosticsPage from './pages/AdminDiagnosticsPage.jsx';
 import { StaffAgendaPage, StaffClientsPage, StaffDashboardPage } from './pages/StaffPages.jsx';
 import ClientProfilePage from './pages/ClientProfilePage.jsx';
 import EmailTemplatesPage from './pages/EmailTemplatesPage.jsx';
+import AdminPaymentsPage from './pages/AdminPaymentsPage.jsx';
+import PaymentResultPage from './pages/PaymentResultPage.jsx';
 import { resolvePage } from './routes.js';
 
 export default function App() {
@@ -20,6 +22,7 @@ export default function App() {
   if (page === 'servicios.html') return <ServicesPage />;
   if (page === 'equipo.html') return <TeamPage />;
   if (page === 'mi-perfil.html') return <ClientProfilePage />;
+  if (page === 'pago-resultado.html') return <PaymentResultPage />;
   if (page === 'agenda.html') return <StaffAgendaPage />;
   if (page === 'dashboard.html') return <StaffDashboardPage />;
   if (page === 'clientas.html') return <StaffClientsPage />;
@@ -30,9 +33,10 @@ export default function App() {
   if (page === 'admin/usuarios.html') return <AdminUsersPage />;
   if (page === 'admin/disponibilidad.html') return <AdminAvailabilityPage />;
   if (page === 'admin/historial.html') return <AdminHistoryPage />;
+  if (page === 'admin/pagos.html') return <AdminPaymentsPage />;
   if (page === 'admin/panel-trabajador.html') return <WorkerPortalPage />;
   if (page === 'admin/mi-horario.html') return <WorkerSchedulePage />;
   if (page === 'admin/pruebas.html') return <AdminDiagnosticsPage />;
-  if (page === 'correos.html' || page === 'admin/correos.html') return <EmailTemplatesPage />;
+  if (page === 'admin/correos.html') return <EmailTemplatesPage />;
   return <main className="site-page-section"><h1>Página no encontrada</h1><a href="/">Volver al inicio</a></main>;
 }

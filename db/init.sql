@@ -124,6 +124,8 @@ CREATE TABLE IF NOT EXISTS cita (
     notas_cliente TEXT,
     notas_trabajador TEXT,
     motivo_cancelacion VARCHAR(255) NULL,
+    estado_pago VARCHAR(20) NOT NULL DEFAULT 'PAGO_EN_LOCAL',
+    pago_expira_en DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -143,6 +145,31 @@ CREATE TABLE IF NOT EXISTS cita (
     INDEX idx_cita_trabajador_fechas (trabajador_id, fecha_hora_inicio, fecha_hora_fin),
     INDEX idx_cita_cliente (cliente_id, fecha_hora_inicio),
     INDEX idx_cita_estado (estado)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla pago: intentos de pago de una cita con Webpay Plus (sin devoluciones en esta versión)
+CREATE TABLE IF NOT EXISTS pago (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cita_id BIGINT NOT NULL,
+    buy_order VARCHAR(26) NOT NULL UNIQUE,
+    session_id VARCHAR(61) NOT NULL,
+    token VARCHAR(64) NULL UNIQUE,
+    url_pago VARCHAR(255) NULL,
+    monto BIGINT NOT NULL,
+    estado VARCHAR(25) NOT NULL DEFAULT 'INICIADO',
+    response_code INT NULL,
+    authorization_code VARCHAR(10) NULL,
+    payment_type_code VARCHAR(5) NULL,
+    installments_number INT NULL,
+    card_last4 VARCHAR(4) NULL,
+    transaction_date VARCHAR(30) NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NULL,
+    CONSTRAINT fk_pago_cita
+        FOREIGN KEY (cita_id)
+        REFERENCES cita (id)
+        ON DELETE RESTRICT,
+    INDEX idx_pago_cita (cita_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Datos iniciales

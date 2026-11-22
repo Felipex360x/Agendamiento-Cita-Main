@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
+import { paymentLabel } from '../utils/payments.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { SiteFooter, SiteHeader } from '../layouts/SiteShell.jsx';
 
@@ -103,7 +104,7 @@ export default function ClientProfilePage() {
         <button className="site-button" type="submit" disabled={saving || loading}>{saving ? 'Guardando…' : 'Guardar cambios'}</button>
       </form></section>
       <section className="site-profile-card"><div className="site-profile-bookings-heading"><div><h2>Mis reservas</h2><p>Consulta las citas asociadas a tu cuenta.</p></div><a className="site-button" href="/reservar">Reservar hora</a></div>
-        {appointments.length ? <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Fecha</th><th>Servicio</th><th>Profesional</th><th>Estado</th><th>Código</th></tr></thead><tbody>{appointments.map((appointment) => <tr key={appointment.id}><td>{appointment.fechaHoraInicio?.replace('T', ' ').slice(0, 16)}</td><td>{appointment.servicio?.nombre || '—'}</td><td>{[appointment.trabajador?.usuario?.nombre, appointment.trabajador?.usuario?.apellidoP].filter(Boolean).join(' ') || '—'}</td><td><span className={`admin-status ${appointment.estado?.toLowerCase()}`}>{appointment.estado}</span></td><td>{appointment.codigoReserva}</td></tr>)}</tbody></table></div> : <p className="admin-empty">Todavía no tienes reservas.</p>}
+        {appointments.length ? <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Fecha</th><th>Servicio</th><th>Profesional</th><th>Estado</th><th>Código</th></tr></thead><tbody>{appointments.map((appointment) => <tr key={appointment.id}><td>{appointment.fechaHoraInicio?.replace('T', ' ').slice(0, 16)}</td><td>{appointment.servicio?.nombre || '—'}</td><td>{[appointment.trabajador?.usuario?.nombre, appointment.trabajador?.usuario?.apellidoP].filter(Boolean).join(' ') || '—'}</td><td><span className={`admin-status ${appointment.estado?.toLowerCase()}`}>{appointment.estado}</span>{paymentLabel(appointment) && <small className={`admin-payment-note ${appointment.estadoPago?.toLowerCase()}`}>{paymentLabel(appointment)}</small>}</td><td>{appointment.codigoReserva}</td></tr>)}</tbody></table></div> : <p className="admin-empty">Todavía no tienes reservas.</p>}
       </section>
     </div>}
   </main><SiteFooter /></>;

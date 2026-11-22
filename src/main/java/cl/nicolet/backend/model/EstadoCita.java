@@ -37,8 +37,4 @@ public enum EstadoCita {
     public boolean puedePasarA(EstadoCita nuevo) {
         return transicionesPermitidas().contains(nuevo);
     }
-
-    public boolean ocupaHorario() {
-        return this != CANCELADA;
-    }
 }

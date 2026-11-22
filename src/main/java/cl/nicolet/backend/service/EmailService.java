@@ -2,6 +2,7 @@ package cl.nicolet.backend.service;
 
 import cl.nicolet.backend.dto.CorreoEnviadoDTO;
 import cl.nicolet.backend.model.Cita;
+import cl.nicolet.backend.model.Pago;
 import cl.nicolet.backend.model.Servicio;
 import cl.nicolet.backend.model.Trabajador;
 import cl.nicolet.backend.model.Usuario;
@@ -21,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -130,18 +132,99 @@ public class EmailService {
     }
 
     /**
-     * 2. Correo de Comprobante de Pago y Solicitud de Reserva al cliente.
+     * 2a. Correo al cliente cuando reserva para pagar en el estudio (no hay pago que comprobar).
      */
-    public CorreoEnviadoDTO enviarComprobantePagoYReserva(Cita cita) {
+    public CorreoEnviadoDTO enviarReservaRecibida(Cita cita) {
         if (cita == null || cita.getCliente() == null || cita.getCliente().getUsuario() == null) return null;
         Usuario uCliente = cita.getCliente().getUsuario();
+        Map<String, String> vars = variablesDetalleCita(cita);
+        vars.put("nombreCliente", valor(uCliente.getNombre(), "Clienta"));
+        vars.put("urlMiPerfil", frontendBaseUrl + "/mi-perfil");
+
+        String asunto = "Reserva recibida " + vars.get("codigoReserva") + " | Nicolett Studio Fantasy";
+        String html = renderizarPlantilla("reserva-recibida.html", vars);
+        return despacharCorreo("RESERVA_RECIBIDA", uCliente.getCorreo(),
+                nombreCompleto(uCliente, "Clienta"), asunto, vars.get("codigoReserva"), html);
+    }
+
+    /**
+     * 2. Comprobante de pago y solicitud de reserva al cliente, con datos de ejemplo (prueba de correos).
+     */
+    public CorreoEnviadoDTO enviarComprobantePagoYReserva(Cita cita) {
+        return enviarComprobantePagoYReserva(cita, null);
+    }
+
+    /**
+     * 2. Comprobante de pago y solicitud de reserva al cliente. Con {@code pago} usa los datos reales
+     * que informó Webpay; sin él, datos de ejemplo.
+     */
+    public CorreoEnviadoDTO enviarComprobantePagoYReserva(Cita cita, Pago pago) {
+        if (cita == null || cita.getCliente() == null || cita.getCliente().getUsuario() == null) return null;
+        Usuario uCliente = cita.getCliente().getUsuario();
+        Map<String, String> vars = variablesDetalleCita(cita);
+        vars.put("nombreCliente", valor(uCliente.getNombre(), "Clienta"));
+        vars.putAll(variablesPago(cita, pago));
+        vars.put("urlMiPerfil", frontendBaseUrl + "/mi-perfil");
+
+        String asunto = "Comprobante de pago y solicitud de reserva " + vars.get("codigoReserva") + " | Nicolett Studio Fantasy";
+        String html = renderizarPlantilla("comprobante-pago.html", vars);
+        return despacharCorreo("PAGO_RESERVA", uCliente.getCorreo(),
+                nombreCompleto(uCliente, "Clienta"), asunto, vars.get("codigoReserva"), html);
+    }
+
+    /**
+     * 2b. Aviso a administración de que una cita fue pagada en línea. Va a cada correo de {@code destinatarios}.
+     */
+    public List<CorreoEnviadoDTO> enviarAvisoPagoAdministracion(Cita cita, Pago pago, List<String> destinatarios) {
+        List<CorreoEnviadoDTO> enviados = new ArrayList<>();
+        if (cita == null || destinatarios == null || destinatarios.isEmpty()) {
+            log.warn("No hay destinatarios de administración para avisar el pago de la cita {}",
+                    cita != null ? cita.getCodigoReserva() : "?");
+            return enviados;
+        }
+        Usuario uCliente = cita.getCliente() != null ? cita.getCliente().getUsuario() : null;
+        Map<String, String> vars = variablesDetalleCita(cita);
+        vars.put("nombreCliente", uCliente != null ? valor(uCliente.getNombre(), "Clienta") : "Clienta");
+        vars.put("correoCliente", uCliente != null ? valor(uCliente.getCorreo(), "") : "");
+        vars.putAll(variablesPago(cita, pago));
+        vars.put("urlPanelAdmin", frontendBaseUrl + "/admin/citas");
+
+        String asunto = "Cita pagada " + vars.get("codigoReserva") + " — " + vars.get("montoPagado")
+                + " | Nicolett Studio Fantasy";
+        String html = renderizarPlantilla("cita-pagada-admin.html", vars);
+        for (String destinatario : destinatarios) {
+            enviados.add(despacharCorreo("PAGO_ADMIN", destinatario, "Administración", asunto,
+                    vars.get("codigoReserva"), html));
+        }
+        return enviados;
+    }
+
+    /**
+     * 2c. Aviso al cliente de que su pago fue rechazado: no se cobró nada y la hora quedó libre.
+     */
+    public CorreoEnviadoDTO enviarPagoRechazado(Cita cita, Pago pago) {
+        if (cita == null || cita.getCliente() == null || cita.getCliente().getUsuario() == null) return null;
+        Usuario uCliente = cita.getCliente().getUsuario();
+        Map<String, String> vars = variablesDetalleCita(cita);
+        vars.put("nombreCliente", valor(uCliente.getNombre(), "Clienta"));
+        vars.putAll(variablesPago(cita, pago));
+        vars.put("urlReservar", frontendBaseUrl + "/reservar.html");
+
+        String asunto = "Pago rechazado de la reserva " + vars.get("codigoReserva") + " | Nicolett Studio Fantasy";
+        String html = renderizarPlantilla("pago-rechazado.html", vars);
+        return despacharCorreo("PAGO_RECHAZADO", uCliente.getCorreo(),
+                nombreCompleto(uCliente, "Clienta"), asunto, vars.get("codigoReserva"), html);
+    }
+
+    /** Datos de la cita que comparten los correos de reserva y de pago. */
+    private Map<String, String> variablesDetalleCita(Cita cita) {
+        Usuario uCliente = cita.getCliente() != null ? cita.getCliente().getUsuario() : null;
         Usuario uTrabajador = cita.getTrabajador() != null ? cita.getTrabajador().getUsuario() : null;
         Servicio servicio = cita.getServicio();
-
         LocalDateTime ahora = LocalDateTime.now(clock != null ? clock : Clock.systemDefaultZone());
+
         Map<String, String> vars = new LinkedHashMap<>();
-        vars.put("nombreCliente", valor(uCliente.getNombre(), "Clienta"));
-        vars.put("apellidoCliente", valor(uCliente.getApellidoP(), ""));
+        vars.put("apellidoCliente", uCliente != null ? valor(uCliente.getApellidoP(), "") : "");
         vars.put("codigoReserva", valor(cita.getCodigoReserva(), "RES-2026-000000"));
         vars.put("nombreServicio", servicio != null ? valor(servicio.getNombre(), "Servicio") : "Servicio");
         vars.put("duracionMinutos", servicio != null && servicio.getDuracionMinutos() != null
@@ -149,7 +232,26 @@ public class EmailService {
         vars.put("nombreTrabajador", nombreCompleto(uTrabajador, "Especialista"));
         vars.put("fechaCita", cita.getFechaHoraInicio() != null ? cita.getFechaHoraInicio().format(FECHA_FMT) : ahora.format(FECHA_FMT));
         vars.put("horaCita", cita.getFechaHoraInicio() != null ? cita.getFechaHoraInicio().format(HORA_FMT) : "10:00");
-        vars.put("ordenCompra", "OC-" + vars.get("codigoReserva").replace("RES-", ""));
+        return vars;
+    }
+
+    /** Datos del comprobante. Con {@code pago} vienen de Webpay; sin él son de ejemplo. */
+    private Map<String, String> variablesPago(Cita cita, Pago pago) {
+        LocalDateTime ahora = LocalDateTime.now(clock != null ? clock : Clock.systemDefaultZone());
+        Map<String, String> vars = new LinkedHashMap<>();
+        if (pago != null) {
+            vars.put("ordenCompra", valor(pago.getBuyOrder(), "-"));
+            vars.put("codigoAutorizacion", valor(pago.getAuthorizationCode(), "-"));
+            vars.put("tipoPago", descripcionTipoPago(pago.getPaymentTypeCode(), pago.getInstallmentsNumber()));
+            vars.put("ultimos4Digitos", valor(pago.getCardLast4(), "----"));
+            vars.put("fechaTransaccion", formatearFechaWebpay(pago.getTransactionDate(), ahora));
+            vars.put("montoPagado", formatearMoneda(pago.getMonto() != null
+                    ? BigDecimal.valueOf(pago.getMonto()) : cita.getPrecioFinal()));
+            return vars;
+        }
+        Servicio servicio = cita.getServicio();
+        String codigo = valor(cita.getCodigoReserva(), "RES-2026-000000");
+        vars.put("ordenCompra", "OC-" + codigo.replace("RES-", ""));
         vars.put("codigoAutorizacion", "1213");
         vars.put("tipoPago", "Venta Débito (VD)");
         vars.put("ultimos4Digitos", "6623");
@@ -157,12 +259,35 @@ public class EmailService {
         vars.put("montoPagado", formatearMoneda(cita.getPrecioFinal() != null
                 ? cita.getPrecioFinal()
                 : (servicio != null ? servicio.getPrecio() : BigDecimal.ZERO)));
-        vars.put("urlMiPerfil", frontendBaseUrl + "/mi-perfil");
+        return vars;
+    }
 
-        String asunto = "Comprobante de pago y solicitud de reserva " + vars.get("codigoReserva") + " | Nicolett Studio Fantasy";
-        String html = renderizarPlantilla("comprobante-pago.html", vars);
-        return despacharCorreo("PAGO_RESERVA", uCliente.getCorreo(),
-                nombreCompleto(uCliente, "Clienta"), asunto, vars.get("codigoReserva"), html);
+    static String descripcionTipoPago(String codigo, Integer cuotas) {
+        if (codigo == null || codigo.isBlank()) return "Tarjeta";
+        return switch (codigo.trim().toUpperCase(Locale.ROOT)) {
+            case "VD" -> "Venta Débito (VD)";
+            case "VP" -> "Venta Prepago (VP)";
+            case "VN" -> "Crédito en 1 pago (VN)";
+            case "VC" -> "Crédito en " + (cuotas != null && cuotas > 0 ? cuotas : "")
+                    + " cuotas (VC)";
+            case "SI", "S2", "NC" -> "Crédito en " + (cuotas != null && cuotas > 0 ? cuotas : "")
+                    + " cuotas sin interés (" + codigo.trim().toUpperCase(Locale.ROOT) + ")";
+            default -> "Tarjeta (" + codigo + ")";
+        };
+    }
+
+    /** Webpay informa la fecha en formato ISO con hora UTC; se muestra en la hora del negocio. */
+    private String formatearFechaWebpay(String iso, LocalDateTime porDefecto) {
+        if (iso != null && !iso.isBlank()) {
+            try {
+                return OffsetDateTime.parse(iso)
+                        .atZoneSameInstant((clock != null ? clock : Clock.systemDefaultZone()).getZone())
+                        .toLocalDateTime().format(FECHA_HORA_FMT);
+            } catch (Exception ignorada) {
+                // Si no se entiende la fecha se usa la hora actual.
+            }
+        }
+        return porDefecto.format(FECHA_HORA_FMT);
     }
 
     /**

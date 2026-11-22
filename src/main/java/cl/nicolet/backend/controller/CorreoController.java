@@ -109,6 +109,8 @@ public class CorreoController {
         generados.add(emailService.enviarBienvenida(uCliente));
         // 2. Comprobante de pago y reserva recibida al cliente
         generados.add(emailService.enviarComprobantePagoYReserva(cita));
+        // 2b. Pago rechazado (al cliente)
+        generados.add(emailService.enviarPagoRechazado(cita, null));
         // 3. Aviso al trabajador de que agendaron con él
         generados.add(emailService.enviarAvisoNuevaCitaTrabajador(cita));
         // 4. Confirmación del trabajador hacia el cliente

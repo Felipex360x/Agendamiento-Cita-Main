@@ -5,13 +5,15 @@ import { businessToday } from '../utils/dates.js';
 vi.mock('../api/client.js', () => ({
   api: {
     servicios: vi.fn(), trabajadores: vi.fn(), disponibilidad: vi.fn(),
-    clientePorUsuario: vi.fn(), crearCita: vi.fn(),
+    clientePorUsuario: vi.fn(), crearCita: vi.fn(), iniciarPagoWebpay: vi.fn(),
   },
 }));
+vi.mock('../utils/payments.js', () => ({ redirectToWebpay: vi.fn() }));
 const authState = { user: null, register: vi.fn(), logout: vi.fn() };
 vi.mock('../auth/AuthContext.jsx', () => ({ useAuth: () => authState }));
 
 import { api } from '../api/client.js';
+import { redirectToWebpay } from '../utils/payments.js';
 import BookingPage from '../pages/BookingPage.jsx';
 
 const addDays = (iso, days) => {
@@ -118,5 +120,58 @@ describe('BookingPage: servicio-profesional, enlaces parciales y borrador (E09, 
     fireEvent.submit(container.querySelector('form'));
     expect(await screen.findByRole('alert')).toHaveTextContent('ya tiene una cita agendada');
     expect(screen.queryByText('Reserva recibida')).not.toBeInTheDocument();
+  });
+  describe('pago en línea con Webpay', () => {
+    const CITA = { id: 90, codigoReserva: 'RES-2026-ABC123', estado: 'PENDIENTE', estadoPago: 'PENDIENTE_PAGO' };
+
+    async function openCheckout() {
+      authState.user = { id: 5, nombre: 'Ana', correo: 'ana@x.cl', rol: 'CLIENTE' };
+      api.clientePorUsuario.mockResolvedValue({ id: 77 });
+      const view = open(`?servicioId=1&trabajadorId=10&fecha=${FUTURE}&hora=10:00`);
+      fireEvent.click(await screen.findByRole('button', { name: 'Continuar' }));
+      await screen.findByText('4. Confirma tus datos');
+      return view;
+    }
+
+    it('por defecto se paga en línea: reserva con modalidad ONLINE y lleva al formulario de Webpay', async () => {
+      api.crearCita.mockResolvedValue(CITA);
+      api.iniciarPagoWebpay.mockResolvedValue({ token: 'tok-1', url: 'https://webpay3gint.transbank.cl/webpayserver/initTransaction' });
+      const { container } = await openCheckout();
+
+      expect(screen.getByRole('radio', { name: /Pagar ahora con Webpay/ })).toBeChecked();
+      fireEvent.submit(container.querySelector('form'));
+
+      await waitFor(() => expect(redirectToWebpay).toHaveBeenCalledWith('https://webpay3gint.transbank.cl/webpayserver/initTransaction', 'tok-1'));
+      expect(api.crearCita).toHaveBeenCalledWith(expect.objectContaining({ clienteId: 77, modalidadPago: 'ONLINE' }));
+      expect(api.iniciarPagoWebpay).toHaveBeenCalledWith(90);
+      expect(screen.queryByText('Reserva recibida')).not.toBeInTheDocument();
+    });
+
+    it('si falla el inicio del pago, el reintento reutiliza la cita ya bloqueada (no crea otra)', async () => {
+      api.crearCita.mockResolvedValue(CITA);
+      api.iniciarPagoWebpay.mockRejectedValueOnce(new Error('No fue posible comunicarse con Webpay.'))
+        .mockResolvedValueOnce({ token: 'tok-2', url: 'https://webpay3gint.transbank.cl/webpayserver/initTransaction' });
+      const { container } = await openCheckout();
+
+      fireEvent.submit(container.querySelector('form'));
+      expect(await screen.findByRole('alert')).toHaveTextContent('No fue posible comunicarse con Webpay');
+      fireEvent.submit(container.querySelector('form'));
+
+      await waitFor(() => expect(redirectToWebpay).toHaveBeenCalledWith(expect.any(String), 'tok-2'));
+      expect(api.crearCita).toHaveBeenCalledTimes(1);
+    });
+
+    it('pagar en el estudio crea la cita con modalidad LOCAL, sin ir a Webpay', async () => {
+      api.crearCita.mockResolvedValue({ id: 91, codigoReserva: 'RES-2026-ZZZ999', estado: 'PENDIENTE', estadoPago: 'PAGO_EN_LOCAL' });
+      const { container } = await openCheckout();
+
+      fireEvent.click(screen.getByRole('radio', { name: /Pagar en el estudio/ }));
+      fireEvent.submit(container.querySelector('form'));
+
+      expect(await screen.findByText('Reserva recibida')).toBeInTheDocument();
+      expect(api.crearCita).toHaveBeenCalledWith(expect.objectContaining({ modalidadPago: 'LOCAL' }));
+      expect(api.iniciarPagoWebpay).not.toHaveBeenCalled();
+      expect(redirectToWebpay).not.toHaveBeenCalled();
+    });
   });
 });

@@ -3,10 +3,12 @@ package cl.nicolet.backend.service;
 import cl.nicolet.backend.dto.CambioEstadoCitaDTO;
 import cl.nicolet.backend.dto.CitaCreateDTO;
 import cl.nicolet.backend.dto.CitaDTO;
+import cl.nicolet.backend.dto.ModalidadPago;
 import cl.nicolet.backend.exception.RecursoNoEncontradoException;
 import cl.nicolet.backend.model.Cita;
 import cl.nicolet.backend.model.Cliente;
 import cl.nicolet.backend.model.EstadoCita;
+import cl.nicolet.backend.model.EstadoPago;
 import cl.nicolet.backend.model.HorarioDisponibilidad;
 import cl.nicolet.backend.model.Servicio;
 import cl.nicolet.backend.model.Trabajador;
@@ -19,6 +21,7 @@ import cl.nicolet.backend.repository.TrabajadorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -67,9 +70,21 @@ public class CitaService {
     @Autowired(required = false)
     private EmailService emailService;
 
+    /** Minutos que se mantiene bloqueado un horario esperando el pago en línea. */
+    @Value("${webpay.hold-minutes:15}")
+    private long minutosBloqueoPago = 15;
+
     public boolean esClientePropio(Long clienteId, Long usuarioId) {
         return clienteRepository.findById(clienteId)
                 .map(cliente -> cliente.getUsuario() != null && cliente.getUsuario().getId().equals(usuarioId))
+                .orElse(false);
+    }
+
+    /** El cliente (con cuenta) dueño de la cita; es quien puede pagarla en línea. */
+    public boolean esClientePropioDeCita(Long citaId, Long usuarioId) {
+        return citaRepository.findById(citaId)
+                .map(cita -> cita.getCliente().getUsuario() != null
+                        && cita.getCliente().getUsuario().getId().equals(usuarioId))
                 .orElse(false);
     }
 
@@ -126,7 +141,10 @@ public class CitaService {
 
     public List<CitaDTO> findByTrabajador(Long trabajadorId) {
         log.info("Consultando citas del trabajador={}", trabajadorId);
-        return citaRepository.findByTrabajadorId(trabajadorId).stream().map(this::toDTO).collect(Collectors.toList());
+        // Las citas que esperan el pago en línea todavía no son del profesional: se muestran recién al pagarse.
+        return citaRepository.findByTrabajadorId(trabajadorId).stream()
+                .filter(c -> !esperandoPago(c))
+                .map(this::toDTO).collect(Collectors.toList());
     }
 
     public List<CitaDTO> findByCliente(Long clienteId) {
@@ -142,6 +160,11 @@ public class CitaService {
     public CitaDTO agendar(CitaCreateDTO dto) {
         log.info("Procesando agendamiento de cita para clienteId={}, trabajadorId={}, servicioId={}",
                 dto.getClienteId(), dto.getTrabajadorId(), dto.getServicioId());
+
+        boolean pagoEnLinea = dto.getModalidadPago() == ModalidadPago.ONLINE;
+        if (pagoEnLinea && dto.getClienteId() == null) {
+            throw new IllegalArgumentException("Para pagar en línea debes reservar con una cuenta de cliente");
+        }
 
         boolean guestDataProvided = (dto.getClienteNombre() != null && !dto.getClienteNombre().isBlank())
                 || (dto.getClienteApellidoP() != null && !dto.getClienteApellidoP().isBlank())
@@ -208,13 +231,21 @@ public class CitaService {
         cita.setEstado(EstadoCita.PENDIENTE);
         cita.setPrecioFinal(servicio.getPrecio());
         cita.setNotasCliente(dto.getNotasCliente());
+        if (pagoEnLinea) {
+            // El horario queda bloqueado hasta que se pague o venza el plazo.
+            cita.setEstadoPago(EstadoPago.PENDIENTE_PAGO);
+            cita.setPagoExpiraEn(LocalDateTime.now(clock).plusMinutes(minutosBloqueoPago));
+        } else {
+            cita.setEstadoPago(EstadoPago.PAGO_EN_LOCAL);
+        }
 
         Cita guardada = citaRepository.save(cita);
-        log.info("Cita agendada exitosamente con código={}", guardada.getCodigoReserva());
+        log.info("Cita agendada exitosamente con código={} (pago {})", guardada.getCodigoReserva(), guardada.getEstadoPago());
 
-        if (emailService != null) {
+        // Con pago en línea no se envía nada todavía: los avisos salen cuando Webpay aprueba el pago.
+        if (emailService != null && !pagoEnLinea) {
             try {
-                emailService.enviarComprobantePagoYReserva(guardada);
+                emailService.enviarReservaRecibida(guardada);
                 emailService.enviarAvisoNuevaCitaTrabajador(guardada);
             } catch (Exception e) {
                 log.warn("Error no bloqueante al enviar correos de agendamiento para cita {}: {}",
@@ -236,6 +267,10 @@ public class CitaService {
 
         EstadoCita actual = c.getEstado();
         EstadoCita nuevo = dto.getNuevoEstado();
+        boolean sinPagar = esperandoPago(c);
+        if (sinPagar && nuevo != EstadoCita.CANCELADA) {
+            throw new IllegalArgumentException("La cita está esperando el pago en línea; no se puede avanzar hasta que se complete");
+        }
         if (actual.esFinal()) {
             throw new IllegalArgumentException(switch (actual) {
                 case COMPLETADA -> "No se puede modificar el estado de una cita ya completada";
@@ -272,7 +307,10 @@ public class CitaService {
                     emailService.enviarCitaConfirmada(guardada);
                 } else if (nuevo == EstadoCita.CANCELADA) {
                     emailService.enviarCitaCancelada(guardada);
-                    emailService.enviarAvisoCancelacionTrabajador(guardada);
+                    // El profesional nunca supo de una cita que no llegó a pagarse.
+                    if (!sinPagar) {
+                        emailService.enviarAvisoCancelacionTrabajador(guardada);
+                    }
                 }
             } catch (Exception e) {
                 log.warn("Error no bloqueante al enviar correo por cambio de estado de cita {}: {}",
@@ -281,6 +319,10 @@ public class CitaService {
         }
 
         return toDTO(guardada);
+    }
+
+    private static boolean esperandoPago(Cita c) {
+        return c.getEstadoPago() == EstadoPago.PENDIENTE_PAGO && c.getEstado() == EstadoCita.PENDIENTE;
     }
 
     private void validarHorarioLaboral(Long trabajadorId, LocalDateTime inicio, LocalDateTime fin) {
@@ -322,7 +364,7 @@ public class CitaService {
     }
 
     public CitaDTO toDTO(Cita c) {
-        return new CitaDTO(
+        CitaDTO dto = new CitaDTO(
                 c.getId(),
                 c.getCodigoReserva(),
                 clienteService.toDTO(c.getCliente()),
@@ -336,5 +378,8 @@ public class CitaService {
                 c.getNotasTrabajador(),
                 c.getMotivoCancelacion()
         );
+        dto.setEstadoPago(c.getEstadoPago());
+        dto.setPagoExpiraEn(c.getPagoExpiraEn());
+        return dto;
     }
 }

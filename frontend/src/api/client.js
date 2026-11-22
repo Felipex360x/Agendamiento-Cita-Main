@@ -90,6 +90,8 @@ export const api = {
   },
   clientePorUsuario: (usuarioId) => apiRequest(`/clientes/usuario/${usuarioId}`),
   actualizarPerfilCliente: (id, perfil) => apiRequest(`/clientes/${id}/perfil`, { method: 'PUT', body: JSON.stringify(perfil) }),
+  iniciarPagoWebpay: (citaId) => apiRequest(`/pagos/webpay/citas/${citaId}/iniciar`, { method: 'POST' }),
+  citaPorCodigo: (codigo) => apiRequest(`/citas/codigo/${encodeURIComponent(codigo)}`),
   crearCita: (cita) => apiRequest('/citas', { method: 'POST', body: JSON.stringify(cita) }),
   citas: () => apiRequest('/citas'),
   citasDeTrabajador: (trabajadorId) => apiRequest(`/citas/trabajador/${trabajadorId}`),
@@ -110,6 +112,14 @@ export const api = {
   desactivarUsuario: (id, motivo) => apiRequest(`/usuarios/${id}/desactivar`, { method: 'PATCH', body: JSON.stringify({ motivo }) }),
   activarUsuario: (id) => apiRequest(`/usuarios/${id}/activar`, { method: 'PATCH' }),
   tiposUsuario: () => apiRequest('/tipos-usuario'),
+  historialPagos: ({ estado, desde, hasta } = {}) => {
+    const params = new URLSearchParams();
+    if (estado) params.set('estado', estado);
+    if (desde) params.set('desde', desde);
+    if (hasta) params.set('hasta', hasta);
+    const query = params.toString();
+    return apiRequest(`/pagos/webpay/historial${query ? `?${query}` : ''}`);
+  },
   correosBandeja: () => apiRequest('/correos'),
   probarFlujoCorreos: (datos) => apiRequest('/correos/probar-flujo', { method: 'POST', body: JSON.stringify(datos || {}) }),
   configurarSmtp: (config) => apiRequest('/correos/configurar-smtp', { method: 'POST', body: JSON.stringify(config) }),
