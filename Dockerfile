@@ -1,5 +1,5 @@
 # Compilación
-FROM maven:3.9-eclipse-temurin-17 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /app
 # Las dependencias se descargan en una capa aparte: solo se repite si cambia el pom.xml.
 COPY pom.xml .
