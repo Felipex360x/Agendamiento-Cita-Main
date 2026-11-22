@@ -13,7 +13,7 @@ RUN if [ "$SKIP_TESTS" = "true" ]; then \
     fi
 
 # Ejecución
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:22-jre-jammy
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 # La aplicación no se ejecuta como root dentro del contenedor.
