@@ -20,7 +20,6 @@ import cl.nicolet.backend.repository.ServicioRepository;
 import cl.nicolet.backend.repository.TrabajadorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -40,35 +39,39 @@ public class CitaService {
 
     private static final Logger log = LoggerFactory.getLogger(CitaService.class);
 
-    @Autowired
-    private Clock clock;
+    private final Clock clock;
+    private final CitaRepository citaRepository;
+    private final ClienteRepository clienteRepository;
+    private final TrabajadorRepository trabajadorRepository;
+    private final ServicioRepository servicioRepository;
+    private final HorarioDisponibilidadRepository horarioDisponibilidadRepository;
+    private final ClienteService clienteService;
+    private final TrabajadorService trabajadorService;
+    private final ServicioService servicioService;
+    private final EmailService emailService;
 
-    @Autowired
-    private CitaRepository citaRepository;
-
-    @Autowired
-    private ClienteRepository clienteRepository;
-
-    @Autowired
-    private TrabajadorRepository trabajadorRepository;
-
-    @Autowired
-    private ServicioRepository servicioRepository;
-
-    @Autowired
-    private HorarioDisponibilidadRepository horarioDisponibilidadRepository;
-
-    @Autowired
-    private ClienteService clienteService;
-
-    @Autowired
-    private TrabajadorService trabajadorService;
-
-    @Autowired
-    private ServicioService servicioService;
-
-    @Autowired(required = false)
-    private EmailService emailService;
+    public CitaService(
+        Clock clock,
+        CitaRepository citaRepository,
+        ClienteRepository clienteRepository,
+        TrabajadorRepository trabajadorRepository,
+        ServicioRepository servicioRepository,
+        HorarioDisponibilidadRepository horarioDisponibilidadRepository,
+        ClienteService clienteService,
+        TrabajadorService trabajadorService,
+        ServicioService servicioService,
+        EmailService emailService) {
+        this.clock = clock;
+        this.citaRepository = citaRepository;
+        this.clienteRepository = clienteRepository;
+        this.trabajadorRepository = trabajadorRepository;
+        this.servicioRepository = servicioRepository;
+        this.horarioDisponibilidadRepository = horarioDisponibilidadRepository;
+        this.clienteService = clienteService;
+        this.trabajadorService = trabajadorService;
+        this.servicioService = servicioService;
+        this.emailService = emailService;
+    }
 
     /** Minutos que se mantiene bloqueado un horario esperando el pago en línea. */
     @Value("${webpay.hold-minutes:15}")

@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,8 +27,11 @@ import java.util.List;
 @RequestMapping("/api/v2/nicolet/servicios")
 public class ServicioController {
 
-    @Autowired
-    private ServicioService servicioService;
+    private final ServicioService servicioService;
+
+    public ServicioController(ServicioService servicioService) {
+        this.servicioService = servicioService;
+    }
 
     @Operation(summary = "Listar todos los Servicios activos")
     @ApiResponse(responseCode = "200", description = "Lista de servicios obtenida")

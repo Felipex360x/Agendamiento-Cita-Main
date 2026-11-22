@@ -7,6 +7,7 @@ import { SiteFooter, SiteHeader } from '../layouts/SiteShell.jsx';
 import hairImage from '../assets/hair.jpg';
 import nailsImage from '../assets/nails.jpg';
 import salonImage from '../assets/salon-interior.jpg';
+import { serviceImages } from '../assets/servicios/index.js';
 
 const money = (value) => new Intl.NumberFormat('es-CL', {
   style: 'currency', currency: 'CLP', maximumFractionDigits: 0,
@@ -35,7 +36,7 @@ function ServiceCards({ services }) {
     <div className="site-card-grid">
       {services.map((service) => {
         const name = service.nombre || 'Servicio';
-        const image = /manic|uñ/i.test(name) ? nailsImage : /facial|piel/i.test(name) ? salonImage : hairImage;
+        const image = serviceImages[name] || (/manic|uñ/i.test(name) ? nailsImage : /facial|piel/i.test(name) ? salonImage : hairImage);
         return (
           <article className="site-service-card" key={service.id}>
             <img src={image} alt="" loading="lazy" />

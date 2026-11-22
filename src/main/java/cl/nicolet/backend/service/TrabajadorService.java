@@ -14,7 +14,6 @@ import cl.nicolet.backend.repository.TrabajadorRepository;
 import cl.nicolet.backend.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -31,17 +30,21 @@ public class TrabajadorService {
 
     private static final Logger log = LoggerFactory.getLogger(TrabajadorService.class);
 
-    @Autowired
-    private TrabajadorRepository trabajadorRepository;
+    private final TrabajadorRepository trabajadorRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final ServicioRepository servicioRepository;
+    private final PerfilUsuarioService perfilUsuarioService;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private ServicioRepository servicioRepository;
-
-    @Autowired
-    private PerfilUsuarioService perfilUsuarioService;
+    public TrabajadorService(
+        TrabajadorRepository trabajadorRepository,
+        UsuarioRepository usuarioRepository,
+        ServicioRepository servicioRepository,
+        PerfilUsuarioService perfilUsuarioService) {
+        this.trabajadorRepository = trabajadorRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.servicioRepository = servicioRepository;
+        this.perfilUsuarioService = perfilUsuarioService;
+    }
 
     public List<TrabajadorDTO> findAll() {
         log.info("Consultando todos los trabajadores activos");

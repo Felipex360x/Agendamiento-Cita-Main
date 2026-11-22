@@ -12,7 +12,6 @@ import cl.nicolet.backend.model.Usuario;
 import cl.nicolet.backend.service.EmailService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,8 +35,11 @@ import java.util.UUID;
 @RequestMapping("/api/v2/nicolet/correos")
 public class CorreoController {
 
-    @Autowired
-    private EmailService emailService;
+    private final EmailService emailService;
+
+    public CorreoController(EmailService emailService) {
+        this.emailService = emailService;
+    }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> obtenerBandejaYEstado() {

@@ -2,7 +2,6 @@ package cl.nicolet.backend.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,8 +30,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v2/nicolet/tipos-usuario")
 public class TipoUsuarioController {
 
-    @Autowired
-    private TipoUsuarioService tipoUsuarioService;
+    private final TipoUsuarioService tipoUsuarioService;
+
+    public TipoUsuarioController(TipoUsuarioService tipoUsuarioService) {
+        this.tipoUsuarioService = tipoUsuarioService;
+    }
 
     @Operation(summary = "Listar todos los tipos de usuario", description = "Retorna la lista de roles registrados en el sistema")
     @ApiResponse(responseCode = "200", description = "Lista obtenida exitosamente")

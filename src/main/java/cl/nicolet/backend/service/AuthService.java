@@ -6,7 +6,6 @@ import cl.nicolet.backend.model.TipoUsuario;
 import cl.nicolet.backend.model.Usuario;
 import cl.nicolet.backend.repository.TipoUsuarioRepository;
 import cl.nicolet.backend.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,18 +21,18 @@ public class AuthService {
     private final TipoUsuarioRepository tipoUsuarioRepository;
     private final PerfilUsuarioService perfilUsuarioService;
     private final PasswordEncoder passwordEncoder;
-
-    @Autowired(required = false)
-    private EmailService emailService;
+    private final EmailService emailService;
 
     public AuthService(UsuarioRepository usuarioRepository,
                        TipoUsuarioRepository tipoUsuarioRepository,
                        PerfilUsuarioService perfilUsuarioService,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       EmailService emailService) {
         this.usuarioRepository = usuarioRepository;
         this.tipoUsuarioRepository = tipoUsuarioRepository;
         this.perfilUsuarioService = perfilUsuarioService;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     /**

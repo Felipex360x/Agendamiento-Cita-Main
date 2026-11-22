@@ -12,7 +12,6 @@ import cl.nicolet.backend.repository.ClienteRepository;
 import cl.nicolet.backend.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,11 +25,15 @@ public class ClienteService {
 
     private static final Logger log = LoggerFactory.getLogger(ClienteService.class);
 
-    @Autowired
-    private ClienteRepository clienteRepository;
+    private final ClienteRepository clienteRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    public ClienteService(
+        ClienteRepository clienteRepository,
+        UsuarioRepository usuarioRepository) {
+        this.clienteRepository = clienteRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     public List<ClienteDTO> findAll() {
         log.info("Consultando todos los clientes");

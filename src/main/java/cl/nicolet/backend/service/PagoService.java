@@ -18,7 +18,6 @@ import cl.nicolet.backend.repository.PagoRepository;
 import cl.nicolet.backend.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -90,8 +89,7 @@ public class PagoService {
     private final WebpayPlusClient webpay;
     private final TransactionTemplate tx;
 
-    @Autowired(required = false)
-    private EmailService emailService;
+    private final EmailService emailService;
 
     @Value("${webpay.return-url}")
     private String returnUrl;
@@ -104,8 +102,9 @@ public class PagoService {
 
     public PagoService(Clock clock, CitaRepository citaRepository, PagoRepository pagoRepository,
                        UsuarioRepository usuarioRepository, WebpayPlusClient webpay,
-                       PlatformTransactionManager transactionManager) {
+                       PlatformTransactionManager transactionManager, EmailService emailService) {
         this.clock = clock;
+        this.emailService = emailService;
         this.citaRepository = citaRepository;
         this.pagoRepository = pagoRepository;
         this.usuarioRepository = usuarioRepository;

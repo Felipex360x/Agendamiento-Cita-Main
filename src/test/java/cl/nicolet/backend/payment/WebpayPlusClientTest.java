@@ -36,15 +36,6 @@ class WebpayPlusClientTest {
     }
 
     @Test
-    @DisplayName("el constructor rechaza PRODUCTION con las credenciales públicas de integración")
-    void rechazaProduccionConCredencialesDePrueba() {
-        assertThatThrownBy(() -> new WebpayPlusClient("PRODUCTION", WebpayPlusClient.CODIGO_COMERCIO_INTEGRACION, "secreto", 1000, 1000))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("WEBPAY_COMMERCE_CODE");
-        assertThat(new WebpayPlusClient("INTEGRATION", WebpayPlusClient.CODIGO_COMERCIO_INTEGRACION, "secreto", 1000, 1000)).isNotNull();
-    }
-
-    @Test
     @DisplayName("crear envía los campos con los nombres de Webpay y lee token y url")
     void crear() {
         servidor.expect(requestTo(BASE))

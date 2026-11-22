@@ -5,7 +5,6 @@ import cl.nicolet.backend.repository.*;
 import cl.nicolet.backend.service.PerfilUsuarioService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -29,35 +28,42 @@ public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
-    @Autowired
-    private TipoUsuarioRepository tipoUsuarioRepository;
+    private final TipoUsuarioRepository tipoUsuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
+    private final TrabajadorRepository trabajadorRepository;
+    private final ServicioRepository servicioRepository;
+    private final HorarioDisponibilidadRepository horarioDisponibilidadRepository;
+    private final CitaRepository citaRepository;
+    private final PagoRepository pagoRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final PerfilUsuarioService perfilUsuarioService;
+    private final org.springframework.core.env.Environment environment;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private ClienteRepository clienteRepository;
-
-    @Autowired
-    private TrabajadorRepository trabajadorRepository;
-
-    @Autowired
-    private ServicioRepository servicioRepository;
-
-    @Autowired
-    private HorarioDisponibilidadRepository horarioDisponibilidadRepository;
-
-    @Autowired
-    private CitaRepository citaRepository;
-
-    @Autowired
-    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private PerfilUsuarioService perfilUsuarioService;
-
-    @Autowired
-    private org.springframework.core.env.Environment environment;
+    public DataInitializer(
+        TipoUsuarioRepository tipoUsuarioRepository,
+        UsuarioRepository usuarioRepository,
+        ClienteRepository clienteRepository,
+        TrabajadorRepository trabajadorRepository,
+        ServicioRepository servicioRepository,
+        HorarioDisponibilidadRepository horarioDisponibilidadRepository,
+        CitaRepository citaRepository,
+        PagoRepository pagoRepository,
+        org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+        PerfilUsuarioService perfilUsuarioService,
+        org.springframework.core.env.Environment environment) {
+        this.tipoUsuarioRepository = tipoUsuarioRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.clienteRepository = clienteRepository;
+        this.trabajadorRepository = trabajadorRepository;
+        this.servicioRepository = servicioRepository;
+        this.horarioDisponibilidadRepository = horarioDisponibilidadRepository;
+        this.citaRepository = citaRepository;
+        this.pagoRepository = pagoRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.perfilUsuarioService = perfilUsuarioService;
+        this.environment = environment;
+    }
 
     @org.springframework.beans.factory.annotation.Value("${app.demo-data.password:}")
     private String claveComun;
@@ -334,6 +340,7 @@ public class DataInitializer implements CommandLineRunner {
         List<Servicio> todosServiciosDemo = new ArrayList<>(List.of(sCorte, sManicura, sFacial, sBalayage, sPedicure, sCejas, sPestanas, sMasaje));
         todosServiciosDemo.addAll(serviciosExtra);
         crearCitasDemoMasivas(todosClientesDemo, todosProfesionalesDemo, todosServiciosDemo);
+        crearPagosDemo();
 
         perfilUsuarioService.crearPerfilesFaltantes();
         log.info("Datos iniciales verificados correctamente.");
@@ -484,6 +491,58 @@ public class DataInitializer implements CommandLineRunner {
         cita.setNotasCliente(notasCliente);
         cita.setNotasTrabajador(notasTrabajador);
         citaRepository.save(cita);
+    }
+
+    /** Crea intentos ficticios para que el historial administrativo tenga ejemplos al activar datos demo. */
+    private void crearPagosDemo() {
+        LocalDateTime ahora = LocalDateTime.now().withNano(0);
+        crearPagoDemo("RES-DEMO-0001", 1, EstadoTransaccionPago.APROBADO, ahora.minusDays(1), 0,
+                "DEMO-001", "VD", 1, "4242");
+        crearPagoDemo("RES-DEMO-0002", 1, EstadoTransaccionPago.RECHAZADO, ahora.minusDays(2), -1,
+                null, null, null, null);
+        crearPagoDemo("RES-DEMO-0002", 2, EstadoTransaccionPago.APROBADO, ahora.minusDays(2).plusMinutes(4), 0,
+                "DEMO-002", "VN", 3, "1881");
+        crearPagoDemo("RES-DEMO-0003", 1, EstadoTransaccionPago.ANULADO_POR_USUARIO, ahora.minusDays(3), null,
+                null, null, null, null);
+        crearPagoDemo("RES-DEMO-0004", 1, EstadoTransaccionPago.EXPIRADO, ahora.minusDays(4), null,
+                null, null, null, null);
+        crearPagoDemo("RES-DEMO-0005", 1, EstadoTransaccionPago.INICIADO, ahora.minusMinutes(20), null,
+                null, null, null, null);
+    }
+
+    private void crearPagoDemo(String codigoReserva, int intento, EstadoTransaccionPago estado,
+                               LocalDateTime creadoEn, Integer responseCode, String authorizationCode,
+                               String paymentTypeCode, Integer installments, String cardLast4) {
+        String buyOrder = String.format("DEMO-%s-%02d", codigoReserva.substring(codigoReserva.length() - 4), intento);
+        if (pagoRepository.findByBuyOrder(buyOrder).isPresent()) return;
+
+        Cita cita = citaRepository.findByCodigoReserva(codigoReserva).orElse(null);
+        if (cita == null) {
+            log.warn("No se pudo crear pago de demostración para reserva inexistente {}", codigoReserva);
+            return;
+        }
+
+        Pago pago = new Pago();
+        pago.setCita(cita);
+        pago.setBuyOrder(buyOrder);
+        pago.setSessionId("SESSION-" + buyOrder);
+        pago.setMonto(cita.getPrecioFinal().longValue());
+        pago.setEstado(estado);
+        pago.setResponseCode(responseCode);
+        pago.setAuthorizationCode(authorizationCode);
+        pago.setPaymentTypeCode(paymentTypeCode);
+        pago.setInstallmentsNumber(installments);
+        pago.setCardLast4(cardLast4);
+        pago.setCreadoEn(creadoEn);
+        if (estado == EstadoTransaccionPago.APROBADO) {
+            pago.setActualizadoEn(creadoEn.plusMinutes(1));
+            pago.setTransactionDate(creadoEn.plusMinutes(1).toString());
+            cita.setEstadoPago(EstadoPago.PAGADO);
+            citaRepository.save(cita);
+        } else if (estado != EstadoTransaccionPago.INICIADO) {
+            pago.setActualizadoEn(creadoEn.plusMinutes(2));
+        }
+        pagoRepository.save(pago);
     }
 
     private void crearCitasDemoMasivas(List<Cliente> clientes, List<Trabajador> trabajadores, List<Servicio> servicios) {

@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import cl.nicolet.backend.dto.TipoUsuarioCreateDTO;
@@ -23,11 +22,15 @@ public class TipoUsuarioService {
 
     private static final Logger Log = LoggerFactory.getLogger(TipoUsuarioService.class);
 
-    @Autowired
-    private TipoUsuarioRepository tipoUsuarioRepository;
+    private final TipoUsuarioRepository tipoUsuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired(required = false)
-    private UsuarioRepository usuarioRepository;
+    public TipoUsuarioService(
+        TipoUsuarioRepository tipoUsuarioRepository,
+        UsuarioRepository usuarioRepository) {
+        this.tipoUsuarioRepository = tipoUsuarioRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     public List<TipoUsuarioDTO> findAll() {
         Log.info("Consultando todos los tipos de usuario");

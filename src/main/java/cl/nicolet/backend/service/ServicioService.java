@@ -7,7 +7,6 @@ import cl.nicolet.backend.model.Servicio;
 import cl.nicolet.backend.repository.ServicioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import cl.nicolet.backend.model.Trabajador;
@@ -25,11 +24,15 @@ public class ServicioService {
 
     private static final Logger log = LoggerFactory.getLogger(ServicioService.class);
 
-    @Autowired
-    private ServicioRepository servicioRepository;
+    private final ServicioRepository servicioRepository;
+    private final TrabajadorRepository trabajadorRepository;
 
-    @Autowired(required = false)
-    private TrabajadorRepository trabajadorRepository;
+    public ServicioService(
+        ServicioRepository servicioRepository,
+        TrabajadorRepository trabajadorRepository) {
+        this.servicioRepository = servicioRepository;
+        this.trabajadorRepository = trabajadorRepository;
+    }
 
     public List<ServicioDTO> findAll() {
         log.info("Consultando todos los servicios activos");

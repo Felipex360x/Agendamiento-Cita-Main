@@ -1,84 +1,11 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import { AdminShell } from '../layouts/AdminShell.jsx';
+import { EMAIL_SCREENS, INITIAL_DATA } from './emailTemplatesData.js';
 
 const money = (value) => new Intl.NumberFormat('es-CL', {
   style: 'currency', currency: 'CLP', maximumFractionDigits: 0,
 }).format(Number(value) || 0);
-
-const INITIAL_DATA = {
-  nombreCliente: 'Nicolás',
-  apellidoCliente: 'Acuña',
-  correoCliente: 'nacuna888@gmail.com',
-  nombreTrabajador: 'Felipe Acuña',
-  correoTrabajador: 'acunafelipe272@gmail.com',
-  cargoEspecialidad: 'Especialista en Coloración y Estilismo',
-  nombreServicio: 'Balayage + Hidratación Profunda',
-  duracionMinutos: '90',
-  precioServicio: '45000',
-  codigoReserva: 'RES-2026-A8F4C2',
-  fechaCita: '2026-11-06',
-  horaInicio: '15:30',
-  horaFin: '17:00',
-  notasCliente: 'Prefiero tonos cálidos avellana y tengo el cabello sensible.',
-  motivoCancelacion: 'Imprevisto médico del especialista; te invitamos a reagendar en horario preferente.',
-  ordenCompra: 'OC-20261103-88421',
-  codigoAutorizacion: '1213',
-  tipoPago: 'Venta Débito (VD)',
-  ultimos4Digitos: '6623',
-  fechaTransaccion: '03-11-2026 20:45',
-};
-
-export const EMAIL_SCREENS = [
-  {
-    id: 'bienvenida',
-    title: '1. Bienvenida',
-    recipientRole: 'Cliente',
-    trigger: 'Al registrarse una cuenta nueva (AuthService.registrarCliente)',
-    getSubject: (d) => `¡Bienvenida a Nicolett Studio Fantasy, ${d.nombreCliente}!`,
-    getTo: (d) => `${d.nombreCliente} ${d.apellidoCliente} <${d.correoCliente}>`,
-  },
-  {
-    id: 'pago',
-    title: '2. Pago y Reserva',
-    recipientRole: 'Cliente',
-    trigger: 'Al agendar y pagar la reserva (BookingPage / Webpay)',
-    getSubject: (d) => `Comprobante de pago y solicitud de reserva ${d.codigoReserva} | Nicolett Studio Fantasy`,
-    getTo: (d) => `${d.nombreCliente} ${d.apellidoCliente} <${d.correoCliente}>`,
-  },
-  {
-    id: 'trabajador-nueva-cita',
-    title: '3. Aviso al Trabajador',
-    recipientRole: 'Trabajador',
-    trigger: 'Cuando un cliente agenda con el profesional (CitaService.agendar)',
-    getSubject: (d) => `Nueva cita agendada contigo (${d.codigoReserva}) — ${d.nombreCliente} ${d.apellidoCliente}`,
-    getTo: (d) => `${d.nombreTrabajador} <${d.correoTrabajador}>`,
-  },
-  {
-    id: 'cita-confirmada',
-    title: '4. Cita Confirmada',
-    recipientRole: 'Cliente',
-    trigger: 'Cuando el trabajador confirma la cita (PENDIENTE → CONFIRMADA)',
-    getSubject: (d) => `¡Tu cita ${d.codigoReserva} fue confirmada por ${d.nombreTrabajador}!`,
-    getTo: (d) => `${d.nombreCliente} ${d.apellidoCliente} <${d.correoCliente}>`,
-  },
-  {
-    id: 'cita-cancelada',
-    title: '5. Cita Cancelada',
-    recipientRole: 'Cliente',
-    trigger: 'Cuando el trabajador o administrador cancela la cita con motivo',
-    getSubject: (d) => `Aviso de cancelación de tu reserva ${d.codigoReserva} | Nicolett Studio Fantasy`,
-    getTo: (d) => `${d.nombreCliente} ${d.apellidoCliente} <${d.correoCliente}>`,
-  },
-  {
-    id: 'recordatorio',
-    title: '6. Recordatorio 24h',
-    recipientRole: 'Cliente',
-    trigger: '24 horas antes de una cita CONFIRMADA',
-    getSubject: (d) => `Recordatorio: mañana tienes tu cita en Nicolett Studio Fantasy (${d.horaInicio} hrs)`,
-    getTo: (d) => `${d.nombreCliente} ${d.apellidoCliente} <${d.correoCliente}>`,
-  },
-];
 
 // La página muestra la bandeja real del servidor (datos de clientes) y permite configurar el
 // envío, así que solo se monta dentro de AdminShell, cuando hay sesión de administrador.

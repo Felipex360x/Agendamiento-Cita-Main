@@ -7,7 +7,6 @@ import cl.nicolet.backend.service.PagoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,8 +30,11 @@ import java.util.Locale;
 @RequestMapping("/api/v2/nicolet/pagos/webpay")
 public class PagoController {
 
-    @Autowired
-    private PagoService pagoService;
+    private final PagoService pagoService;
+
+    public PagoController(PagoService pagoService) {
+        this.pagoService = pagoService;
+    }
 
     @Value("${app.frontend.base-url:http://localhost:5173}")
     private String frontendBaseUrl;

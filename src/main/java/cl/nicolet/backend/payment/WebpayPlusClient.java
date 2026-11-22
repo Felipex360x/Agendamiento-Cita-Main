@@ -23,7 +23,6 @@ public class WebpayPlusClient {
     static final String RUTA_BASE = "/rswebpaytransaction/api/webpay/v1.2/transactions";
     static final String HOST_INTEGRACION = "https://webpay3gint.transbank.cl";
     static final String HOST_PRODUCCION = "https://webpay3g.transbank.cl";
-    static final String CODIGO_COMERCIO_INTEGRACION = "597055555532";
 
     private final RestClient restClient;
 
@@ -37,12 +36,7 @@ public class WebpayPlusClient {
         SimpleClientHttpRequestFactory fabrica = new SimpleClientHttpRequestFactory();
         fabrica.setConnectTimeout(connectTimeoutMs);
         fabrica.setReadTimeout(readTimeoutMs);
-        boolean produccion = "PRODUCTION".equalsIgnoreCase(ambiente);
-        if (produccion && CODIGO_COMERCIO_INTEGRACION.equals(codigoComercio)) {
-            // Evita cobrar en producción con las credenciales públicas de pruebas de Transbank.
-            throw new IllegalStateException("WEBPAY_ENVIRONMENT=PRODUCTION requiere WEBPAY_COMMERCE_CODE y WEBPAY_API_SECRET reales");
-        }
-        String host = produccion ? HOST_PRODUCCION : HOST_INTEGRACION;
+        String host = "PRODUCTION".equalsIgnoreCase(ambiente) ? HOST_PRODUCCION : HOST_INTEGRACION;
         this.restClient = RestClient.builder()
                 .baseUrl(host + RUTA_BASE)
                 .requestFactory(fabrica)

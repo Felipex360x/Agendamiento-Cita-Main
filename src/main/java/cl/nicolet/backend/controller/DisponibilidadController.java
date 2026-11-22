@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,8 +21,11 @@ import java.util.List;
 @RequestMapping("/api/v2/nicolet/disponibilidad")
 public class DisponibilidadController {
 
-    @Autowired
-    private DisponibilidadService disponibilidadService;
+    private final DisponibilidadService disponibilidadService;
+
+    public DisponibilidadController(DisponibilidadService disponibilidadService) {
+        this.disponibilidadService = disponibilidadService;
+    }
 
     @Operation(summary = "Consultar bloques horarios disponibles de un profesional en una fecha")
     @ApiResponse(responseCode = "200", description = "Lista de bloques horarios calculados con disponibilidad")

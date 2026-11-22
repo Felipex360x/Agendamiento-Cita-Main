@@ -3,7 +3,6 @@ package cl.nicolet.backend.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import org.slf4j.Logger;
@@ -25,22 +24,24 @@ public class UsuarioService {
 
     private static final Logger Log = LoggerFactory.getLogger(UsuarioService.class);
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final TipoUsuarioRepository tipoUsuarioRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final PerfilUsuarioService perfilUsuarioService;
+    private final EmailService emailService;
 
-    @Autowired(required = false)
-    private TipoUsuarioRepository tipoUsuarioRepository;
-
-
-
-    @Autowired
-    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private PerfilUsuarioService perfilUsuarioService;
-
-    @Autowired(required = false)
-    private EmailService emailService;
+    public UsuarioService(
+        UsuarioRepository usuarioRepository,
+        TipoUsuarioRepository tipoUsuarioRepository,
+        org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+        PerfilUsuarioService perfilUsuarioService,
+        EmailService emailService) {
+        this.usuarioRepository = usuarioRepository;
+        this.tipoUsuarioRepository = tipoUsuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.perfilUsuarioService = perfilUsuarioService;
+        this.emailService = emailService;
+    }
 
     public List<UsuarioDTO> findAll(){
         Log.info("Consultando a todos los usuarios");

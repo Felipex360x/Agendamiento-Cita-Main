@@ -14,7 +14,6 @@ import cl.nicolet.backend.repository.ServicioRepository;
 import cl.nicolet.backend.repository.TrabajadorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,20 +33,24 @@ public class DisponibilidadService {
 
     private static final Logger log = LoggerFactory.getLogger(DisponibilidadService.class);
 
-    @Autowired
-    private TrabajadorRepository trabajadorRepository;
+    private final TrabajadorRepository trabajadorRepository;
+    private final ServicioRepository servicioRepository;
+    private final HorarioDisponibilidadRepository horarioDisponibilidadRepository;
+    private final CitaRepository citaRepository;
+    private final Clock clock;
 
-    @Autowired
-    private ServicioRepository servicioRepository;
-
-    @Autowired
-    private HorarioDisponibilidadRepository horarioDisponibilidadRepository;
-
-    @Autowired
-    private CitaRepository citaRepository;
-
-    @Autowired
-    private Clock clock;
+    public DisponibilidadService(
+        TrabajadorRepository trabajadorRepository,
+        ServicioRepository servicioRepository,
+        HorarioDisponibilidadRepository horarioDisponibilidadRepository,
+        CitaRepository citaRepository,
+        Clock clock) {
+        this.trabajadorRepository = trabajadorRepository;
+        this.servicioRepository = servicioRepository;
+        this.horarioDisponibilidadRepository = horarioDisponibilidadRepository;
+        this.citaRepository = citaRepository;
+        this.clock = clock;
+    }
 
     public List<BloqueHorarioDTO> calcularDisponibilidad(Long trabajadorId, LocalDate fecha, Long servicioId) {
         log.info("Calculando disponibilidad para trabajadorId={}, fecha={}, servicioId={}", trabajadorId, fecha, servicioId);
