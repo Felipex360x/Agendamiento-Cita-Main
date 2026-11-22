@@ -59,7 +59,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Desplegar en AWS EC2 via SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
